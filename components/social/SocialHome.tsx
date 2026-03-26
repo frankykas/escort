@@ -3,7 +3,6 @@ import { createServerClient } from "@/lib/supabase/server";
 import { FeedList } from "./FeedList";
 import { FeedTabs } from "./FeedTabs";
 import { FavoriteFeed } from "./FavoriteFeed";
-import { NavAuth } from "./NavAuth";
 import { PublishButton } from "./PublishButton";
 
 export type FeedPostData = {
@@ -49,12 +48,11 @@ export async function SocialHome({ searchParams }: Props) {
   }
 
   return (
-    <main className="flex flex-col flex-1">
+    <main className="flex flex-col flex-1 bg-zinc-950">
       {/* Nav */}
-      <header className="border-b border-zinc-800 px-4 py-4 sm:px-6">
-        <div className="mx-auto flex max-w-lg items-center justify-between">
-          <span className="text-xl font-bold tracking-tight text-amber-400">Cleopatra</span>
-          <NavAuth />
+      <header className="sticky top-0 z-20 border-b border-white/5 bg-zinc-950/70 px-4 py-4 backdrop-blur-xl backdrop-saturate-150">
+        <div className="flex items-center justify-center">
+          <span className="text-2xl font-bold tracking-tight text-amber-400">Cleopatra</span>
         </div>
       </header>
 

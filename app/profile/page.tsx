@@ -18,6 +18,9 @@ import {
   Eye,
   LogOut,
   Lock,
+  ListOrdered,
+  User,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
@@ -217,6 +220,17 @@ export default function ProfilePage() {
           ))}
         </div>
       </div>
+
+      {profile.is_provider && (
+        <>
+          <SectionLabel>Provider</SectionLabel>
+          <ListCard>
+            <Row icon={ListOrdered} label="My Listings"       href="/profile/listings"  iconClassName="text-amber-400" />
+            <Row icon={User}        label="My Profile Page"   href={`/u/${profile.username}`} iconClassName="text-violet-400" />
+            <Row icon={Zap}         label="Availability"      href="/profile/availability" iconClassName="text-emerald-400" />
+          </ListCard>
+        </>
+      )}
 
       <SectionLabel>Activity</SectionLabel>
       <ListCard>

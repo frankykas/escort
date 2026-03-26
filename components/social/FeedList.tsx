@@ -58,10 +58,10 @@ export function FeedList({ posts }: Props) {
   }
 
   return (
-    <div className="w-full pb-24">
+    <div className="w-full pb-24 bg-zinc-950">
       <StoriesBar posts={posts} />
 
-      <div className="flex flex-col">
+      <div className="flex flex-col pt-1">
         {posts.map((post, index) => (
           <motion.div
             key={`${post.id}-${engagementLoaded}`}

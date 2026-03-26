@@ -25,7 +25,7 @@ export function StoriesBar({ posts }: Props) {
 
   return (
     <>
-      <div className="border-b border-zinc-800 bg-black">
+      <div className="border-b border-white/5 bg-zinc-950/70 backdrop-blur-xl backdrop-saturate-150">
         <div
           className="flex gap-4 overflow-x-auto px-4 py-3"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}

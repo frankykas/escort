@@ -52,7 +52,6 @@ function BottomNavInner() {
       icon: Compass,
       href: "/explore",
       active: pathname.startsWith("/explore"),
-      unbuilt: true,
     },
     {
       label: "Search",

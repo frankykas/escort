@@ -60,9 +60,9 @@ export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
   });
 
   return (
-    <article className="border-b border-zinc-800 bg-black">
+    <article className="mx-3 my-2 overflow-hidden rounded-2xl bg-gradient-to-b from-zinc-900 to-zinc-950 border border-white/5 shadow-md">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-3 py-3">
+      <div className="flex items-center justify-between px-3 py-3 border-b border-white/5">
         <Link href={`/u/${username}`} className="flex items-center gap-2.5">
           {/* Avatar with amber gradient ring */}
           <div className="rounded-full p-[2px] bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 flex-shrink-0">
@@ -172,9 +172,10 @@ export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
       {/* ── Caption ── */}
       {caption && (
         <div className="px-3 pt-1">
-          <p className="text-[13px] leading-relaxed text-zinc-100">
+          <p className="line-clamp-2 text-[13px] leading-relaxed text-zinc-100">
             <span className="font-semibold mr-1.5">{username}</span>
             {caption}
+            <span className="text-zinc-500"> more</span>
           </p>
         </div>
       )}
@@ -198,7 +199,7 @@ export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
       )}
 
       {/* ── Ghost comment input ── */}
-      <div className="flex items-center gap-3 px-3 py-2.5 mt-1.5 border-t border-zinc-900">
+      <div className="flex items-center gap-3 px-3 py-2.5 mt-1.5 border-t border-white/5">
         <div className="h-6 w-6 rounded-full bg-zinc-800 flex-shrink-0" />
         <span className="text-[13px] text-zinc-600 select-none">Add a comment…</span>
       </div>

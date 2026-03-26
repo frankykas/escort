@@ -9,7 +9,7 @@ export function FeedTabs() {
   const activeTab = searchParams.get("tab") === "favorites" ? "favorites" : "for-you";
 
   return (
-    <div className="flex items-center justify-center border-b border-zinc-800 bg-black">
+    <div className="flex items-center justify-center border-b border-white/5 bg-zinc-950/70 backdrop-blur-xl backdrop-saturate-150">
       <Link
         href="/"
         className={cn(
