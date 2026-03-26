@@ -2,13 +2,55 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, Phone, Send, X, ChevronRight } from "lucide-react";
+import {
+  MessageCircle, Phone, Send, X, ChevronRight,
+  ChevronLeft, Calendar, Clock, MapPin, User,
+  CheckCircle, CreditCard,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type Props = {
   username: string;
   rate: number | null;
   duration: number | null;
+  depositRequired?: boolean;
+  depositAmount?: number | null;
+  advanceNoticeHours?: number | null;
 };
+
+type Step = "options" | "form" | "sent";
+
+type FormState = {
+  firstName: string;
+  date: string;
+  time: string;
+  duration: string;
+  callType: "incall" | "outcall" | "";
+  area: string;
+  message: string;
+};
+
+const EMPTY_FORM: FormState = {
+  firstName: "", date: "", time: "", duration: "",
+  callType: "", area: "", message: "",
+};
+
+const TIME_OPTIONS = [
+  { value: "morning",      label: "Morning",       sub: "9am – 12pm" },
+  { value: "afternoon",    label: "Afternoon",      sub: "12pm – 5pm" },
+  { value: "evening",      label: "Evening",        sub: "5pm – 9pm" },
+  { value: "late-evening", label: "Late evening",   sub: "9pm – 12am" },
+  { value: "flexible",     label: "Flexible",       sub: "Any time" },
+];
+
+const DURATION_OPTIONS = [
+  { value: "30",   label: "30 min" },
+  { value: "60",   label: "1 hour" },
+  { value: "90",   label: "90 min" },
+  { value: "120",  label: "2 hours" },
+  { value: "240",  label: "4 hours" },
+  { value: "720",  label: "Overnight" },
+];
 
 function formatRate(pence: number | null) {
   if (!pence) return "POA";
@@ -24,39 +66,58 @@ function formatDuration(minutes: number | null) {
   return m > 0 ? `${h}h ${m}m` : `${h}hr`;
 }
 
-export function EnquireBar({ username, rate, duration }: Props) {
+export function EnquireBar({
+  username, rate, duration,
+  depositRequired, depositAmount, advanceNoticeHours,
+}: Props) {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [step, setStep] = useState<Step>("options");
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
+
+  function openSheet() { setStep("options"); setSheetOpen(true); }
+  function closeSheet() {
+    setSheetOpen(false);
+    setTimeout(() => { setStep("options"); setForm(EMPTY_FORM); }, 350);
+  }
+  function patch(key: keyof FormState, value: string) {
+    setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  async function handleSubmit() {
+    setSubmitting(true);
+    await new Promise((r) => setTimeout(r, 900)); // placeholder — wire to messaging later
+    setSubmitting(false);
+    setStep("sent");
+  }
+
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const minDate = tomorrow.toISOString().split("T")[0];
+
+  const formValid = form.firstName.trim().length > 0 && form.date.length > 0 && form.callType !== "";
 
   return (
     <>
-      {/* ── Bar ── */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-white/5 bg-zinc-950/95 px-4 backdrop-blur-xl"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)", paddingTop: "12px" }}
+      {/* ── Sticky bar ── */}
+      <div
+        className="fixed inset-x-0 bottom-[57px] z-30 border-t border-white/5 bg-zinc-950/95 px-4 backdrop-blur-xl"
+        style={{ paddingBottom: "12px", paddingTop: "12px" }}
       >
         <div className="mx-auto flex max-w-lg items-center gap-4">
-          {/* Rate display */}
           <div className="flex flex-col">
-            <span className="text-[22px] font-bold leading-none text-amber-400">
-              {formatRate(rate)}
-            </span>
-            {duration && (
-              <span className="mt-0.5 text-[10px] text-zinc-500">{formatDuration(duration)}</span>
-            )}
+            <span className="text-[22px] font-bold leading-none text-amber-400">{formatRate(rate)}</span>
+            {duration && <span className="mt-0.5 text-[10px] text-zinc-500">{formatDuration(duration)}</span>}
           </div>
-
-          {/* Spacer */}
           <div className="flex flex-1 items-center gap-2">
-            {/* WhatsApp */}
             <button
               aria-label="WhatsApp"
               className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 transition-all hover:bg-emerald-500/20 active:scale-95"
             >
               <Phone size={18} strokeWidth={2} />
             </button>
-
-            {/* Main CTA */}
             <button
-              onClick={() => setSheetOpen(true)}
+              onClick={openSheet}
               className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 shadow-[0_0_28px_rgba(251,191,36,0.4)] transition-all hover:bg-amber-300 active:scale-[0.98]"
             >
               <MessageCircle size={17} strokeWidth={2.5} />
@@ -73,48 +134,316 @@ export function EnquireBar({ username, rate, duration }: Props) {
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm"
-              onClick={() => setSheetOpen(false)}
+              onClick={closeSheet}
             />
             <motion.div
               initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
               className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-white/10 bg-zinc-950 px-5"
-              style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 28px)" }}
+              style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" }}
             >
+              {/* Handle */}
               <div className="flex justify-center pt-3 pb-1">
                 <div className="h-1 w-10 rounded-full bg-zinc-700" />
               </div>
-              <div className="flex items-center justify-between py-4 border-b border-white/5">
-                <div>
-                  <p className="text-[16px] font-semibold text-white">Get in touch</p>
-                  <p className="mt-0.5 text-[12px] text-zinc-500">Contact @{username}</p>
+
+              {/* Header */}
+              <div className="flex items-center gap-3 py-4 border-b border-white/5">
+                {step === "form" && (
+                  <button
+                    onClick={() => setStep("options")}
+                    className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                )}
+                <div className="flex-1">
+                  {step === "options" && (
+                    <>
+                      <p className="text-[16px] font-semibold text-white">Get in touch</p>
+                      <p className="mt-0.5 text-[12px] text-zinc-500">Contact @{username}</p>
+                    </>
+                  )}
+                  {step === "form" && (
+                    <>
+                      <p className="text-[16px] font-semibold text-white">Send an enquiry</p>
+                      <p className="mt-0.5 text-[12px] text-zinc-500">to @{username}</p>
+                    </>
+                  )}
+                  {step === "sent" && (
+                    <p className="text-[16px] font-semibold text-white">Enquiry sent!</p>
+                  )}
                 </div>
-                <button onClick={() => setSheetOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-800 text-zinc-400">
+                <button
+                  onClick={closeSheet}
+                  className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                >
                   <X size={14} />
                 </button>
               </div>
-              <div className="space-y-2.5 py-4">
-                {[
-                  { icon: Phone, label: "WhatsApp", sub: "Chat directly on WhatsApp", color: "text-emerald-400", iconBg: "bg-emerald-500/15", border: "border-emerald-500/15" },
-                  { icon: Send, label: "Telegram", sub: "Message on Telegram", color: "text-sky-400", iconBg: "bg-sky-500/15", border: "border-sky-500/15" },
-                  { icon: MessageCircle, label: "Send a message", sub: "Message within Cleopatra", color: "text-amber-400", iconBg: "bg-amber-400/15", border: "border-amber-400/15" },
-                ].map(({ icon: Icon, label, sub, color, iconBg, border }) => (
-                  <button key={label} className={`flex w-full items-center gap-4 rounded-2xl border ${border} bg-zinc-900/60 px-4 py-4 text-left transition-all active:scale-[0.99]`}>
-                    <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${iconBg} ${color}`}>
-                      <Icon size={19} strokeWidth={1.8} />
+
+              <AnimatePresence mode="wait">
+
+                {/* ── Step: Contact options ── */}
+                {step === "options" && (
+                  <motion.div
+                    key="options"
+                    initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.16 }}
+                    className="space-y-2.5 py-4"
+                  >
+                    {[
+                      {
+                        icon: Phone,
+                        label: "WhatsApp",
+                        sub: "Chat directly on WhatsApp",
+                        color: "text-emerald-400",
+                        iconBg: "bg-emerald-500/15",
+                        border: "border-emerald-500/15",
+                        action: () => {},
+                      },
+                      {
+                        icon: Send,
+                        label: "Telegram",
+                        sub: "Message on Telegram",
+                        color: "text-sky-400",
+                        iconBg: "bg-sky-500/15",
+                        border: "border-sky-500/15",
+                        action: () => {},
+                      },
+                      {
+                        icon: MessageCircle,
+                        label: "Send an enquiry",
+                        sub: "Fill in your details for a structured request",
+                        color: "text-amber-400",
+                        iconBg: "bg-amber-400/15",
+                        border: "border-amber-400/20",
+                        action: () => setStep("form"),
+                      },
+                    ].map(({ icon: Icon, label, sub, color, iconBg, border, action }) => (
+                      <button
+                        key={label}
+                        onClick={action}
+                        className={`flex w-full items-center gap-4 rounded-2xl border ${border} bg-zinc-900/60 px-4 py-4 text-left transition-all active:scale-[0.99] hover:opacity-90`}
+                      >
+                        <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${iconBg} ${color}`}>
+                          <Icon size={19} strokeWidth={1.8} />
+                        </div>
+                        <div className="flex-1">
+                          <p className={`text-[14px] font-semibold ${color}`}>{label}</p>
+                          <p className="text-[12px] text-zinc-500">{sub}</p>
+                        </div>
+                        <ChevronRight size={15} className="flex-shrink-0 text-zinc-600" />
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+
+                {/* ── Step: Enquiry form ── */}
+                {step === "form" && (
+                  <motion.div
+                    key="form"
+                    initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 16 }} transition={{ duration: 0.16 }}
+                    className="py-4"
+                  >
+                    <div className="max-h-[60vh] space-y-4 overflow-y-auto pb-2">
+
+                      {/* Deposit notice */}
+                      {depositRequired && (
+                        <div className="flex items-center gap-3 rounded-2xl border border-sky-500/15 bg-sky-500/5 px-4 py-3">
+                          <CreditCard size={13} className="flex-shrink-0 text-sky-400" />
+                          <p className="text-[12px] text-zinc-400">
+                            {depositAmount
+                              ? `A ${formatRate(depositAmount)} deposit is required to confirm.`
+                              : "A deposit is required to confirm this booking."}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* First name */}
+                      <FormField icon={User} label="Your first name *">
+                        <input
+                          type="text"
+                          placeholder="e.g. James"
+                          value={form.firstName}
+                          onChange={(e) => patch("firstName", e.target.value)}
+                          maxLength={40}
+                          className={inputCls}
+                        />
+                      </FormField>
+
+                      {/* Date + time */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <FormField icon={Calendar} label="Preferred date *">
+                          <input
+                            type="date"
+                            min={minDate}
+                            value={form.date}
+                            onChange={(e) => patch("date", e.target.value)}
+                            className={inputCls}
+                          />
+                          {advanceNoticeHours && (
+                            <p className="mt-1 text-[9px] text-zinc-600">
+                              {advanceNoticeHours < 24
+                                ? `${advanceNoticeHours}hr notice min`
+                                : `${Math.floor(advanceNoticeHours / 24)}d notice min`}
+                            </p>
+                          )}
+                        </FormField>
+
+                        <FormField icon={Clock} label="Preferred time">
+                          <select
+                            value={form.time}
+                            onChange={(e) => patch("time", e.target.value)}
+                            className={inputCls}
+                          >
+                            <option value="">Any time</option>
+                            {TIME_OPTIONS.map((t) => (
+                              <option key={t.value} value={t.value}>{t.label} ({t.sub})</option>
+                            ))}
+                          </select>
+                        </FormField>
+                      </div>
+
+                      {/* Duration */}
+                      <FormField icon={Clock} label="Duration requested">
+                        <div className="flex flex-wrap gap-2">
+                          {DURATION_OPTIONS.map((d) => (
+                            <button
+                              key={d.value}
+                              onClick={() => patch("duration", form.duration === d.value ? "" : d.value)}
+                              className={cn(
+                                "rounded-full border px-3 py-1.5 text-[12px] font-medium transition-all",
+                                form.duration === d.value
+                                  ? "border-amber-400/50 bg-amber-400/10 text-amber-400"
+                                  : "border-white/8 bg-zinc-900 text-zinc-400 hover:border-white/15 hover:text-zinc-200"
+                              )}
+                            >
+                              {d.label}
+                            </button>
+                          ))}
+                        </div>
+                      </FormField>
+
+                      {/* In-call / Out-call */}
+                      <FormField icon={MapPin} label="Preference *">
+                        <div className="grid grid-cols-2 gap-2">
+                          {(["incall", "outcall"] as const).map((type) => (
+                            <button
+                              key={type}
+                              onClick={() => patch("callType", type)}
+                              className={cn(
+                                "rounded-xl border py-3 text-[13px] font-medium capitalize transition-all",
+                                form.callType === type
+                                  ? "border-amber-400/50 bg-amber-400/10 text-amber-400"
+                                  : "border-white/8 bg-zinc-900 text-zinc-400 hover:border-white/15 hover:text-zinc-200"
+                              )}
+                            >
+                              {type === "incall" ? "In-call" : "Out-call"}
+                            </button>
+                          ))}
+                        </div>
+                      </FormField>
+
+                      {/* Out-call area — shown conditionally */}
+                      {form.callType === "outcall" && (
+                        <FormField icon={MapPin} label="Your area / neighbourhood">
+                          <input
+                            type="text"
+                            placeholder="e.g. Downtown, Midtown…"
+                            value={form.area}
+                            onChange={(e) => patch("area", e.target.value)}
+                            maxLength={80}
+                            className={inputCls}
+                          />
+                        </FormField>
+                      )}
+
+                      {/* Message */}
+                      <FormField icon={MessageCircle} label="Introduce yourself">
+                        <textarea
+                          placeholder="A brief introduction and any specific requests or questions…"
+                          value={form.message}
+                          onChange={(e) => patch("message", e.target.value)}
+                          maxLength={400}
+                          rows={3}
+                          className={`${inputCls} resize-none`}
+                        />
+                        <p className="mt-1 text-right text-[10px] text-zinc-600">{form.message.length}/400</p>
+                      </FormField>
+
                     </div>
-                    <div className="flex-1">
-                      <p className={`text-[14px] font-semibold ${color}`}>{label}</p>
-                      <p className="text-[12px] text-zinc-500">{sub}</p>
+
+                    <button
+                      onClick={handleSubmit}
+                      disabled={!formValid || submitting}
+                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:bg-amber-300 active:scale-[0.99] disabled:opacity-40"
+                    >
+                      {submitting
+                        ? <span className="animate-pulse">Sending…</span>
+                        : <><Send size={15} strokeWidth={2.5} /> Send enquiry</>
+                      }
+                    </button>
+                  </motion.div>
+                )}
+
+                {/* ── Step: Sent confirmation ── */}
+                {step === "sent" && (
+                  <motion.div
+                    key="sent"
+                    initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex flex-col items-center gap-4 py-10 text-center"
+                  >
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-400/10">
+                      <CheckCircle size={32} className="text-amber-400" />
                     </div>
-                    <ChevronRight size={15} className="flex-shrink-0 text-zinc-600" />
-                  </button>
-                ))}
-              </div>
+                    <div>
+                      <p className="text-[17px] font-semibold text-white">Enquiry sent!</p>
+                      <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500">
+                        @{username} will get back to you shortly.{"\n"}Keep an eye on your messages.
+                      </p>
+                    </div>
+                    <button
+                      onClick={closeSheet}
+                      className="mt-2 rounded-full border border-white/10 px-6 py-2.5 text-[13px] font-medium text-zinc-300 transition-all hover:border-white/20 hover:text-white"
+                    >
+                      Close
+                    </button>
+                  </motion.div>
+                )}
+
+              </AnimatePresence>
             </motion.div>
           </>
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const inputCls =
+  "w-full rounded-xl border border-white/8 bg-zinc-900 px-4 py-3 text-[14px] text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-amber-400/40 focus:ring-1 focus:ring-amber-400/20";
+
+function FormField({
+  icon: Icon,
+  label,
+  children,
+}: {
+  icon: React.ElementType;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
+        <Icon size={10} />
+        {label}
+      </label>
+      {children}
+    </div>
   );
 }
