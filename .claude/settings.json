@@ -4,7 +4,13 @@
       "Bash(npm --version)",
       "Bash(npx --version)",
       "Bash(npm -v)",
-      "Bash(npx create-next-app@latest . --typescript --tailwind --app --no-eslint --no-src-dir --import-alias \"@/*\" --yes)"
+      "Bash(npx create-next-app@latest . --typescript --tailwind --app --no-eslint --no-src-dir --import-alias \"@/*\" --yes)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep -E \"supabase|\\\\.ts$\")",
+      "Bash(grep -r 'use client' /c/dev/cleopatre --include=*.tsx --include=*.ts)",
+      "Bash(mkdir -p \"c:/dev/cleopatre/app/u/[username]\")",
+      "Bash(mkdir -p \"c:/dev/cleopatre/app/post/[id]\")"
     ]
   }
 }
