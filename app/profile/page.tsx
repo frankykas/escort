@@ -21,6 +21,8 @@ import {
   ListOrdered,
   User,
   Zap,
+  Pencil,
+  ImagePlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
@@ -183,9 +185,9 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
-          <button aria-label="Edit avatar" className="absolute bottom-0.5 right-0.5 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-amber-400 text-[12px] font-bold text-black shadow-md">
-            +
-          </button>
+          <Link href="/profile/edit" aria-label="Edit profile" className="absolute bottom-0.5 right-0.5 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-amber-400 text-black shadow-md">
+            <Pencil size={11} strokeWidth={2.5} />
+          </Link>
         </div>
 
         <div className="flex items-center gap-1.5">
@@ -225,9 +227,11 @@ export default function ProfilePage() {
         <>
           <SectionLabel>Provider</SectionLabel>
           <ListCard>
-            <Row icon={ListOrdered} label="My Listings"       href="/profile/listings"  iconClassName="text-amber-400" />
+            <Row icon={ListOrdered} label="My Listings"       href="/profile/listings"      iconClassName="text-amber-400" />
             <Row icon={User}        label="My Profile Page"   href={`/u/${profile.username}`} iconClassName="text-violet-400" />
-            <Row icon={Zap}         label="Availability"      href="/profile/availability" iconClassName="text-emerald-400" />
+            <Row icon={Zap}         label="Availability"      href="/profile/availability"  iconClassName="text-emerald-400" />
+            <Row icon={Crown}       label="Subscription Tier" href="/profile/subscription"  iconClassName="text-amber-400" />
+            <Row icon={ImagePlus}   label="Upload Post"       href="/profile/upload"        iconClassName="text-sky-400" />
           </ListCard>
         </>
       )}
@@ -242,6 +246,7 @@ export default function ProfilePage() {
 
       <SectionLabel>Account</SectionLabel>
       <ListCard>
+        <Row icon={Pencil}     label="Edit Profile"      href="/profile/edit"          iconClassName="text-amber-400" />
         <Row icon={Eye}        label="Privacy & Safety"  href="/profile/privacy"       value={profile.is_private ? "Private" : "Public"} />
         <Row icon={Shield}     label="ID Verification"   href="/profile/verify"        value={isVerified ? "Verified" : "Not verified"} iconClassName={isVerified ? "text-amber-400" : "text-zinc-500"} />
         <Row icon={Bell}       label="Notifications"     href="/profile/notifications" />

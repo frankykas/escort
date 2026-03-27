@@ -3,12 +3,12 @@
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Home, Compass, Search, Heart, User } from "lucide-react";
+import { Home, Compass, MessageCircle, Heart, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
 
-const HIDDEN_ON = ["/auth/signin", "/auth/signup"];
+const HIDDEN_ON = ["/auth/signin", "/auth/signup", "/messages/"];
 
 // Inner component uses useSearchParams — must be inside Suspense
 function BottomNavInner() {
@@ -27,7 +27,7 @@ function BottomNavInner() {
       .then(({ data }) => setUsername(data?.username ?? null));
   }, [user]);
 
-  if (HIDDEN_ON.includes(pathname)) return null;
+  if (HIDDEN_ON.some((p) => pathname.startsWith(p)) || HIDDEN_ON.includes(pathname)) return null;
 
   const profileHref = "/profile";
   const tab = searchParams.get("tab");
@@ -54,11 +54,10 @@ function BottomNavInner() {
       active: pathname.startsWith("/explore"),
     },
     {
-      label: "Search",
-      icon: Search,
-      href: "/search",
-      active: pathname.startsWith("/search"),
-      unbuilt: true,
+      label: "Messages",
+      icon: MessageCircle,
+      href: "/messages",
+      active: pathname.startsWith("/messages"),
     },
     {
       label: "Favorites",

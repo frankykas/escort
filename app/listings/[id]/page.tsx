@@ -2,10 +2,11 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  CheckCircle, MapPin, Clock, ChevronLeft, Check,
+  CheckCircle, MapPin, Clock, Check,
   Phone, Users, Star, AlertCircle, CreditCard, Shield,
 } from "lucide-react";
 import { createServerClient } from "@/lib/supabase/server";
+import { BackButton } from "@/components/ui/BackButton";
 import { EnquireBar } from "../EnquireBar";
 import { ListingActions } from "./ListingActions";
 
@@ -151,12 +152,7 @@ export default async function ListingPage({
 
         {/* Top bar — back + save + share */}
         <div className="absolute left-4 right-4 top-12 flex items-center justify-between">
-          <Link
-            href={`/u/${provider.username}`}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md hover:bg-black/70"
-          >
-            <ChevronLeft size={20} />
-          </Link>
+          <BackButton className="h-9 w-9 bg-black/50 text-white backdrop-blur-md hover:bg-black/70 hover:text-white" />
           <ListingActions listingId={listing.id} title={listing.title} />
         </div>
 

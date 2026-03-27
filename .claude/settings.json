@@ -14,7 +14,8 @@
       "Bash(ls c:/dev/cleopatre/app/u/[username]/)"
     ],
     "additionalDirectories": [
-      "c:\\dev\\cleopatre\\app\\listings"
+      "c:\\dev\\cleopatre\\app\\listings",
+      "C:\\dev\\cleopatre\\app\\messages"
     ]
   }
 }
