@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 export default function SignInPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -47,13 +49,13 @@ export default function SignInPage() {
         </p>
 
         <div className="rounded-2xl border border-white/10 bg-zinc-900/80 p-8 backdrop-blur-xl">
-          <h1 className="mb-1 text-base font-semibold text-zinc-100">Welcome back</h1>
-          <p className="mb-6 text-xs text-zinc-500">Sign in to your account</p>
+          <h1 className="mb-1 text-base font-semibold text-zinc-100">{t("auth_signin_title")}</h1>
+          <p className="mb-6 text-xs text-zinc-500">{t("auth_signin_subtitle")}</p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <div className="rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3">
               <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                Email
+                {t("auth_email")}
               </label>
               <input
                 type="email"
@@ -68,7 +70,7 @@ export default function SignInPage() {
 
             <div className="rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3">
               <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                Password
+                {t("auth_password")}
               </label>
               <input
                 type="password"
@@ -91,21 +93,21 @@ export default function SignInPage() {
               {isLoading ? (
                 <>
                   <Loader2 size={14} className="animate-spin" />
-                  Signing in…
+                  {t("submitting")}
                 </>
               ) : (
-                "Sign In"
+                t("sign_in")
               )}
             </button>
           </form>
 
           <p className="mt-5 text-center text-xs text-zinc-600">
-            Don&apos;t have an account?{" "}
+            {t("auth_no_account")}{" "}
             <Link
               href="/auth/signup"
               className="text-zinc-400 transition-colors hover:text-zinc-200"
             >
-              Sign Up
+              {t("sign_up")}
             </Link>
           </p>
         </div>

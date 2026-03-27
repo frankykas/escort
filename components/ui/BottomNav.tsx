@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { TranslationKey } from "@/lib/i18n/en";
 
 const HIDDEN_ON = ["/auth/signin", "/auth/signup", "/messages/"];
 
@@ -21,79 +23,23 @@ type TabDef = {
   active: boolean;
 };
 
-function useClientTabs(pathname: string): TabDef[] {
+function useClientTabs(pathname: string, t: (k: TranslationKey) => string): TabDef[] {
   return [
-    {
-      label: "Home",
-      icon: Home,
-      href: "/",
-      active: pathname === "/",
-    },
-    {
-      label: "Explore",
-      icon: Compass,
-      href: "/explore",
-      active: pathname.startsWith("/explore"),
-    },
-    {
-      label: "Listings",
-      icon: LayoutGrid,
-      href: "/listings",
-      active: pathname.startsWith("/listings"),
-    },
-    {
-      label: "Messages",
-      icon: MessageCircle,
-      href: "/messages",
-      active: pathname.startsWith("/messages"),
-    },
-    {
-      label: "Profile",
-      icon: User,
-      href: "/profile",
-      active: pathname.startsWith("/profile"),
-    },
+    { label: t("nav_home"),     icon: Home,        href: "/",        active: pathname === "/" },
+    { label: t("nav_explore"),  icon: Compass,     href: "/explore", active: pathname.startsWith("/explore") },
+    { label: t("nav_listings"), icon: LayoutGrid,  href: "/listings",active: pathname.startsWith("/listings") },
+    { label: t("nav_messages"), icon: MessageCircle, href: "/messages", active: pathname.startsWith("/messages") },
+    { label: t("nav_profile"),  icon: User,        href: "/profile", active: pathname.startsWith("/profile") },
   ];
 }
 
-function useProviderTabs(pathname: string): TabDef[] {
+function useProviderTabs(pathname: string, t: (k: TranslationKey) => string): TabDef[] {
   return [
-    {
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      href: "/",
-      active: pathname === "/",
-    },
-    {
-      label: "Bookings",
-      icon: CalendarCheck,
-      href: "/profile/bookings",
-      active: pathname === "/profile/bookings",
-    },
-    {
-      label: "Messages",
-      icon: MessageCircle,
-      href: "/messages",
-      active: pathname.startsWith("/messages"),
-    },
-    {
-      label: "Listings",
-      icon: ListOrdered,
-      href: "/profile/listings",
-      active:
-        pathname === "/profile/listings" ||
-        pathname === "/profile/upload",
-    },
-    {
-      label: "Profile",
-      icon: User,
-      href: "/profile",
-      active:
-        pathname.startsWith("/profile") &&
-        pathname !== "/profile/bookings" &&
-        pathname !== "/profile/listings" &&
-        pathname !== "/profile/upload",
-    },
+    { label: t("nav_dashboard"), icon: LayoutDashboard, href: "/",                 active: pathname === "/" },
+    { label: t("nav_bookings"),  icon: CalendarCheck,   href: "/profile/bookings", active: pathname === "/profile/bookings" },
+    { label: t("nav_messages"),  icon: MessageCircle,   href: "/messages",         active: pathname.startsWith("/messages") },
+    { label: t("nav_listings"),  icon: ListOrdered,     href: "/profile/listings", active: pathname === "/profile/listings" || pathname === "/profile/upload" },
+    { label: t("nav_profile"),   icon: User,            href: "/profile",          active: pathname.startsWith("/profile") && pathname !== "/profile/bookings" && pathname !== "/profile/listings" && pathname !== "/profile/upload" },
   ];
 }
 
@@ -102,9 +48,10 @@ function useProviderTabs(pathname: string): TabDef[] {
 function BottomNavInner() {
   const pathname = usePathname();
   const { profile, isProvider, loading } = useProfile();
+  const { t } = useTranslation();
 
-  const clientTabs = useClientTabs(pathname);
-  const providerTabs = useProviderTabs(pathname);
+  const clientTabs = useClientTabs(pathname, t);
+  const providerTabs = useProviderTabs(pathname, t);
 
   // Hide on auth and full-screen message threads
   if (HIDDEN_ON.some((p) => pathname.startsWith(p))) return null;

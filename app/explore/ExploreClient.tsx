@@ -8,6 +8,7 @@ import { Search, MapPin, SlidersHorizontal, CheckCircle, ArrowUpDown, Zap, Star 
 import { supabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { FilterDrawer, DEFAULT_FILTERS, type Filters } from "./FilterDrawer";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -79,6 +80,7 @@ function countActiveFilters(f: Filters): number {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function ExploreClient() {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [cityQuery, setCityQuery]   = useState(""); // set by Near Me
   const [filters, setFilters]       = useState<Filters>(DEFAULT_FILTERS);
@@ -213,7 +215,7 @@ export function ExploreClient() {
       {/* ── Header ── */}
       <header className="sticky top-0 z-20 border-b border-white/5 bg-zinc-950/70 px-4 py-4 backdrop-blur-xl backdrop-saturate-150">
         <div className="flex items-center justify-center">
-          <span className="text-2xl font-semibold tracking-tight text-amber-400">Explore</span>
+          <span className="text-2xl font-semibold tracking-tight text-amber-400">{t("explore_title")}</span>
         </div>
       </header>
 
@@ -223,7 +225,7 @@ export function ExploreClient() {
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
           <input
             type="text"
-            placeholder="Search by name or city…"
+            placeholder={t("explore_search_ph")}
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); if (e.target.value) setCityQuery(""); }}
             className="w-full rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 py-3 pl-9 pr-4 text-[14px] text-zinc-100 placeholder-zinc-600 outline-none transition-all focus:border-amber-400/30 focus:ring-1 focus:ring-amber-400/20"
@@ -250,7 +252,7 @@ export function ExploreClient() {
             className="flex items-center gap-1.5 rounded-full border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 px-3.5 py-2 text-[12px] font-medium text-zinc-400 transition-all hover:border-amber-400/30 hover:text-amber-400 disabled:opacity-40"
           >
             <MapPin size={13} />
-            {geoLoading ? "Locating…" : "Near me"}
+            {geoLoading ? "…" : t("explore_near_you")}
           </button>
 
           {/* Sort — cycles through options on tap */}
@@ -272,7 +274,7 @@ export function ExploreClient() {
             )}
           >
             <SlidersHorizontal size={13} />
-            Filters
+            {t("listings_filters")}
             {activeCount > 0 && (
               <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-[9px] font-bold text-zinc-950">
                 {activeCount}
@@ -324,7 +326,7 @@ export function ExploreClient() {
       {!loading && results.length > 0 && (
         <p className="px-4 pb-2 pt-1 text-[12px] text-zinc-600">
           <span className="font-medium text-zinc-400">{results.length}</span>
-          {" "}provider{results.length !== 1 ? "s" : ""} {locationLabel}
+          {" "}{t("explore_result_label")} {locationLabel}
         </p>
       )}
 
@@ -333,8 +335,8 @@ export function ExploreClient() {
       ) : results.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 px-4 pt-20">
           <Search size={32} className="text-zinc-700" />
-          <p className="text-[15px] font-medium text-zinc-400">No providers found</p>
-          <p className="text-center text-[13px] text-zinc-600">Try a different city or adjust your filters</p>
+          <p className="text-[15px] font-medium text-zinc-400">{t("explore_no_results")}</p>
+          <p className="text-center text-[13px] text-zinc-600">{t("explore_try_different")}</p>
         </div>
       ) : (
         <>

@@ -6,11 +6,13 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 type State = "idle" | "loading" | "success";
 
 export default function SignUpPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -40,10 +42,8 @@ export default function SignUpPage() {
     }
 
     if (data.session) {
-      // Email confirmation disabled — signed in immediately
       router.push("/");
     } else {
-      // Email confirmation required
       setState("success");
     }
   }
@@ -56,40 +56,36 @@ export default function SignUpPage() {
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="w-full max-w-sm"
       >
-        {/* Logo */}
         <p className="mb-8 text-center text-2xl font-bold tracking-tight text-amber-400">
           Cleopatra
         </p>
 
         {state === "success" ? (
-          /* ── Success state ── */
           <div className="rounded-2xl border border-white/10 bg-zinc-900/80 p-8 text-center backdrop-blur-xl">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-400/10">
               <CheckCircle size={24} className="text-amber-400" />
             </div>
-            <h2 className="text-base font-semibold text-zinc-100">Account created!</h2>
+            <h2 className="text-base font-semibold text-zinc-100">{t("auth_account_created")}</h2>
             <p className="mt-2 text-sm text-zinc-400">
-              We sent a confirmation link to{" "}
+              {t("auth_confirm_sent")}{" "}
               <span className="text-zinc-200">{email}</span>.
-              Click it to activate your account.
             </p>
             <Link
               href="/"
               className="mt-6 flex w-full items-center justify-center rounded-xl bg-white py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
             >
-              Go to Home
+              {t("nav_home")}
             </Link>
           </div>
         ) : (
-          /* ── Sign-up form ── */
           <div className="rounded-2xl border border-white/10 bg-zinc-900/80 p-8 backdrop-blur-xl">
-            <h1 className="mb-1 text-base font-semibold text-zinc-100">Join Cleopatra</h1>
-            <p className="mb-6 text-xs text-zinc-500">Create your provider account</p>
+            <h1 className="mb-1 text-base font-semibold text-zinc-100">{t("auth_signup_title")}</h1>
+            <p className="mb-6 text-xs text-zinc-500">{t("auth_signup_subtitle")}</p>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
               <div className="rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3">
                 <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                  Email
+                  {t("auth_email")}
                 </label>
                 <input
                   type="email"
@@ -104,7 +100,7 @@ export default function SignUpPage() {
 
               <div className="rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3">
                 <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                  Password
+                  {t("auth_password")}
                 </label>
                 <input
                   type="password"
@@ -119,7 +115,7 @@ export default function SignUpPage() {
 
               <div className="rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3">
                 <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                  Confirm Password
+                  {t("auth_confirm_password")}
                 </label>
                 <input
                   type="password"
@@ -142,21 +138,21 @@ export default function SignUpPage() {
                 {state === "loading" ? (
                   <>
                     <Loader2 size={14} className="animate-spin" />
-                    Creating account…
+                    {t("submitting")}
                   </>
                 ) : (
-                  "Create Account"
+                  t("sign_up")
                 )}
               </button>
             </form>
 
             <p className="mt-5 text-center text-xs text-zinc-600">
-              Already have an account?{" "}
+              {t("auth_have_account")}{" "}
               <Link
                 href="/auth/signin"
                 className="text-zinc-400 transition-colors hover:text-zinc-200"
               >
-                Sign In
+                {t("sign_in")}
               </Link>
             </p>
           </div>

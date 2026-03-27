@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { X, CheckCircle, Zap, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -91,14 +92,15 @@ function PriceRange({
   max: number;
   onChange: (min: number, max: number) => void;
 }) {
+  const { t } = useTranslation();
   const MAX = DEFAULT_FILTERS.maxRate;
 
   const presets = [
-    { label: "Any", min: 0, max: MAX },
-    { label: "Under $200", min: 0, max: 200 },
-    { label: "$200–500", min: 200, max: 500 },
-    { label: "$500–1000", min: 500, max: 1000 },
-    { label: "$1000+", min: 1000, max: MAX },
+    { label: t("listings_price_any"),      min: 0,    max: MAX },
+    { label: t("listings_price_under200"), min: 0,    max: 200 },
+    { label: t("listings_price_200_500"),  min: 200,  max: 500 },
+    { label: t("listings_price_500_1000"), min: 500,  max: 1000 },
+    { label: t("listings_price_1000plus"), min: 1000, max: MAX },
   ];
 
   const activePreset = presets.find((p) => p.min === min && p.max === max);
@@ -137,6 +139,7 @@ function PriceRange({
 // ─── Drawer ───────────────────────────────────────────────────────────────────
 
 export function ListingsFilterDrawer({ filters, onApply, onClose }: Props) {
+  const { t } = useTranslation();
   const [local, setLocal] = useState<ListingFilters>({ ...filters });
 
   function patch(key: keyof ListingFilters, value: boolean | number) {
@@ -173,7 +176,7 @@ export function ListingsFilterDrawer({ filters, onApply, onClose }: Props) {
 
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/5 px-5 py-4">
-          <p className="text-[17px] font-bold text-white">Filters</p>
+          <p className="text-[17px] font-bold text-white">{t("listings_filters")}</p>
           <button
             onClick={onClose}
             className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors"
@@ -195,15 +198,15 @@ export function ListingsFilterDrawer({ filters, onApply, onClose }: Props) {
                 active={local.verifiedOnly}
                 onClick={() => toggle("verifiedOnly")}
                 icon={CheckCircle}
-                label="Verified only"
-                sub="Show providers with a gold verification badge"
+                label={t("listings_filter_verified")}
+                sub={t("listings_filter_verified_desc")}
               />
               <TogglePill
                 active={local.availableNow}
                 onClick={() => toggle("availableNow")}
                 icon={Zap}
-                label="Available now"
-                sub="Only show providers currently marked as live"
+                label={t("listings_filter_avail")}
+                sub={t("listings_filter_avail_desc")}
               />
             </div>
           </section>
@@ -211,7 +214,7 @@ export function ListingsFilterDrawer({ filters, onApply, onClose }: Props) {
           {/* In-call / Out-call */}
           <section>
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
-              Service type
+              {t("listings_filter_service")}
             </p>
             <div className="grid grid-cols-2 gap-2">
               {(["incall", "outcall"] as const).map((type) => {
@@ -227,7 +230,7 @@ export function ListingsFilterDrawer({ filters, onApply, onClose }: Props) {
                         : "border-white/8 bg-zinc-900 text-zinc-300 hover:border-white/15"
                     )}
                   >
-                    {type === "incall" ? "In-call" : "Out-call"}
+                    {type === "incall" ? t("listings_incall") : t("listings_outcall")}
                   </button>
                 );
               })}
@@ -240,7 +243,7 @@ export function ListingsFilterDrawer({ filters, onApply, onClose }: Props) {
           {/* Price range */}
           <section>
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
-              Price range
+              {t("listings_filter_price")}
             </p>
             <PriceRange
               min={local.minRate}
@@ -257,13 +260,13 @@ export function ListingsFilterDrawer({ filters, onApply, onClose }: Props) {
             disabled={isDefault}
             className="flex-1 rounded-2xl border border-white/10 py-3 text-[14px] font-semibold text-zinc-400 transition-all hover:border-white/20 hover:text-zinc-200 disabled:opacity-30"
           >
-            Reset
+            {t("listings_filter_reset")}
           </button>
           <button
             onClick={() => onApply(local)}
             className="flex-2 flex-grow-[2] rounded-2xl bg-amber-400 py-3 text-[14px] font-bold text-zinc-950 transition-all hover:bg-amber-300 active:scale-[0.98]"
           >
-            Show results
+            {t("listings_filter_show")}
           </button>
         </div>
       </motion.div>

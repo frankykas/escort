@@ -28,6 +28,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 type ProfileData = {
   id: string;
@@ -111,6 +112,7 @@ function Skeleton() {
 export default function ProfilePage() {
   const router = useRouter();
   const { user, loading: sessionLoading } = useSession();
+  const { t } = useTranslation();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [stats, setStats] = useState<Stats>({ following: 0, liked: 0, subscriptions: 0 });
   const [loading, setLoading] = useState(true);
@@ -196,7 +198,7 @@ export default function ProfilePage() {
           {isVerified && <CheckCircle size={15} className="text-amber-400 fill-amber-400/20 drop-shadow" />}
           {profile.is_private && <Lock size={12} className="text-zinc-600" />}
         </div>
-        <p className="mt-1 text-[13px] text-zinc-500">Member since {formatMemberSince(profile.created_at)}</p>
+        <p className="mt-1 text-[13px] text-zinc-500">{t("profile_member_since")} {formatMemberSince(profile.created_at)}</p>
       </div>
 
       <div className="mx-4">
@@ -205,9 +207,9 @@ export default function ProfilePage() {
         border border-white/5
         px-4 py-4 shadow-lg">
           {[
-            { value: stats.following, label: "Following" },
-            { value: stats.liked, label: "Liked" },
-            { value: stats.subscriptions, label: "Subscriptions" },
+            { value: stats.following, label: t("profile_following") },
+            { value: stats.liked, label: t("profile_liked") },
+            { value: stats.subscriptions, label: t("profile_subscriptions") },
           ].map(({ value, label }, i, arr) => (
             <div key={label} className="flex flex-1 items-center">
               <div className="flex flex-1 flex-col items-center gap-0.5">
@@ -226,35 +228,35 @@ export default function ProfilePage() {
 
       {profile.is_provider && (
         <>
-          <SectionLabel>Provider</SectionLabel>
+          <SectionLabel>{t("profile_section_provider")}</SectionLabel>
           <ListCard>
-            <Row icon={ListOrdered}   label="My Listings"       href="/profile/listings"      iconClassName="text-amber-400" />
-            <Row icon={CalendarCheck} label="Bookings"          href="/profile/bookings"      iconClassName="text-sky-400" />
-            <Row icon={User}          label="My Profile Page"   href={`/u/${profile.username}`} iconClassName="text-violet-400" />
-            <Row icon={Zap}           label="Availability"      href="/profile/availability"  iconClassName="text-emerald-400" />
-            <Row icon={Crown}         label="Subscription Tier" href="/profile/subscription"  iconClassName="text-amber-400" />
-            <Row icon={ImagePlus}     label="Upload Post"       href="/profile/upload"        iconClassName="text-sky-400" />
+            <Row icon={ListOrdered}   label={t("profile_my_listings")}      href="/profile/listings"        iconClassName="text-amber-400" />
+            <Row icon={CalendarCheck} label={t("nav_bookings")}             href="/profile/bookings"        iconClassName="text-sky-400" />
+            <Row icon={User}          label={t("profile_my_page")}          href={`/u/${profile.username}`} iconClassName="text-violet-400" />
+            <Row icon={Zap}           label={t("profile_availability")}     href="/profile/availability"    iconClassName="text-emerald-400" />
+            <Row icon={Crown}         label={t("profile_subscription_tier")}href="/profile/subscription"    iconClassName="text-amber-400" />
+            <Row icon={ImagePlus}     label={t("profile_upload_post")}      href="/profile/upload"          iconClassName="text-sky-400" />
           </ListCard>
         </>
       )}
 
-      <SectionLabel>Activity</SectionLabel>
+      <SectionLabel>{t("profile_section_activity")}</SectionLabel>
       <ListCard>
-        <Row icon={CalendarCheck} label="My Bookings"   href="/bookings"             iconClassName="text-amber-400" />
-        <Row icon={Heart}         label="Favorites"     href="/?tab=favorites"       iconClassName="text-rose-400" />
-        <Row icon={Bookmark}      label="Liked Posts"   href="/profile/liked"         iconClassName="text-sky-400" />
-        <Row icon={Crown}         label="Subscriptions" href="/profile/subscriptions" iconClassName="text-amber-400" />
-        <Row icon={MessageCircle} label="Messages"      href="/messages"              iconClassName="text-emerald-400" />
+        <Row icon={CalendarCheck} label={t("bookings_title")}       href="/bookings"             iconClassName="text-amber-400" />
+        <Row icon={Heart}         label={t("profile_favorites")}    href="/?tab=favorites"       iconClassName="text-rose-400" />
+        <Row icon={Bookmark}      label={t("profile_liked_posts")}  href="/profile/liked"        iconClassName="text-sky-400" />
+        <Row icon={Crown}         label={t("profile_subscriptions")}href="/profile/subscriptions"iconClassName="text-amber-400" />
+        <Row icon={MessageCircle} label={t("profile_messages")}     href="/messages"             iconClassName="text-emerald-400" />
       </ListCard>
 
-      <SectionLabel>Account</SectionLabel>
+      <SectionLabel>{t("profile_section_account")}</SectionLabel>
       <ListCard>
-        <Row icon={Pencil}     label="Edit Profile"      href="/profile/edit"          iconClassName="text-amber-400" />
-        <Row icon={Eye}        label="Privacy & Safety"  href="/profile/privacy"       value={profile.is_private ? "Private" : "Public"} />
-        <Row icon={Shield}     label="ID Verification"   href="/profile/verify"        value={isVerified ? "Verified" : "Not verified"} iconClassName={isVerified ? "text-amber-400" : "text-zinc-500"} />
-        <Row icon={Bell}       label="Notifications"     href="/profile/notifications" />
-        <Row icon={CreditCard} label="Billing"           href="/profile/billing" />
-        <Row icon={Settings}   label="Account Settings"  href="/profile/settings" />
+        <Row icon={Pencil}     label={t("profile_edit")}             href="/profile/edit"          iconClassName="text-amber-400" />
+        <Row icon={Eye}        label={t("profile_privacy")}          href="/profile/privacy"       value={profile.is_private ? t("profile_private") : t("profile_public")} />
+        <Row icon={Shield}     label={t("profile_id_verification")}  href="/profile/verify"        value={isVerified ? t("profile_verified") : t("profile_not_verified")} iconClassName={isVerified ? "text-amber-400" : "text-zinc-500"} />
+        <Row icon={Bell}       label={t("profile_notifications")}    href="/profile/notifications" />
+        <Row icon={CreditCard} label={t("profile_billing")}          href="/profile/billing" />
+        <Row icon={Settings}   label={t("profile_account_settings")} href="/profile/settings" />
       </ListCard>
 
       <div className="mx-4 mt-8 overflow-hidden rounded-2xl
@@ -267,7 +269,7 @@ export default function ProfilePage() {
           hover:bg-red-500/10 active:scale-[0.98]"
         >
           <LogOut size={18} className="flex-shrink-0 text-red-500" />
-          <span className="text-[15px] font-medium text-red-500">Sign Out</span>
+          <span className="text-[15px] font-medium text-red-500">{t("sign_out")}</span>
         </button>
       </div>
     </div>

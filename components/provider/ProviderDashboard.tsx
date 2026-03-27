@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,11 +45,11 @@ type DashboardStats = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function greeting(): string {
+function greetingKey(): "dash_good_morning" | "dash_good_afternoon" | "dash_good_evening" {
   const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  return "Good evening";
+  if (h < 12) return "dash_good_morning";
+  if (h < 17) return "dash_good_afternoon";
+  return "dash_good_evening";
 }
 
 function timeAgo(iso: string): string {
@@ -74,6 +75,7 @@ export function ProviderDashboard() {
   const router = useRouter();
   const { user } = useSession();
   const { profile } = useProfile();
+  const { t } = useTranslation();
 
   const [pendingBookings, setPendingBookings] = useState<PendingBooking[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -198,7 +200,7 @@ export function ProviderDashboard() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500">
-              {greeting()}
+              {t(greetingKey())}
             </p>
             <div className="mt-0.5 flex items-center gap-1.5">
               <h1 className="text-[20px] font-bold text-white">
@@ -231,7 +233,7 @@ export function ProviderDashboard() {
                 )}
               />
             )}
-            {stats.isAvailableNow ? "Available" : "Go live"}
+            {stats.isAvailableNow ? t("dash_available") : t("dash_go_live")}
           </button>
         </div>
       </header>
@@ -250,14 +252,14 @@ export function ProviderDashboard() {
                   {stats.pendingCount}
                 </span>
                 <p className="text-[13px] font-semibold text-white">
-                  Pending {stats.pendingCount === 1 ? "request" : "requests"}
+                  {stats.pendingCount === 1 ? t("dash_pending_one") : t("dash_pending_many")}
                 </p>
               </div>
               <Link
                 href="/profile/bookings"
                 className="text-[12px] text-zinc-500 hover:text-zinc-300 transition-colors"
               >
-                View all
+                {t("dash_view_all")}
               </Link>
             </div>
 
@@ -278,38 +280,38 @@ export function ProviderDashboard() {
         {/* ── Stats row ── */}
         <section>
           <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-zinc-600">
-            Overview
+            {t("dash_overview")}
           </p>
           <div className="grid grid-cols-2 gap-2.5">
             <StatCard
               icon={Calendar}
-              label="Confirmed"
+              label={t("dash_confirmed")}
               value={String(stats.acceptedCount)}
-              sub="upcoming bookings"
+              sub={t("dash_upcoming")}
               color="text-sky-400"
               href="/profile/bookings"
             />
             <StatCard
               icon={CheckCircle}
-              label="Completed"
+              label={t("dash_completed")}
               value={String(stats.completedCount)}
-              sub="all time"
+              sub={t("dash_all_time")}
               color="text-emerald-400"
               href="/profile/bookings"
             />
             <StatCard
               icon={Star}
-              label="Rating"
+              label={t("dash_rating")}
               value={stats.averageRating ? Number(stats.averageRating).toFixed(1) : "—"}
-              sub={stats.reviewCount > 0 ? `${stats.reviewCount} review${stats.reviewCount !== 1 ? "s" : ""}` : "no reviews yet"}
+              sub={stats.reviewCount > 0 ? `${stats.reviewCount} ${stats.reviewCount !== 1 ? t("dash_reviews_many") : t("dash_reviews_one")}` : t("dash_no_reviews")}
               color="text-amber-400"
               href={`/u/${profile.username}`}
             />
             <StatCard
               icon={ListOrdered}
-              label="Listings"
+              label={t("dash_listings")}
               value={String(stats.listingsCount)}
-              sub={stats.listingsCount === 0 ? "add your first" : "active"}
+              sub={stats.listingsCount === 0 ? t("dash_add_first") : t("dash_active")}
               color="text-violet-400"
               href="/profile/listings"
             />
@@ -319,37 +321,37 @@ export function ProviderDashboard() {
         {/* ── Quick actions ── */}
         <section>
           <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-zinc-600">
-            Quick actions
+            {t("dash_quick_actions")}
           </p>
           <div className="grid grid-cols-2 gap-2.5">
             <QuickAction
               icon={Zap}
-              label="Set availability"
-              sub="Update your schedule"
+              label={t("dash_set_avail")}
+              sub={t("dash_set_avail_sub")}
               href="/profile/availability"
               iconColor="text-emerald-400"
               iconBg="bg-emerald-500/10"
             />
             <QuickAction
               icon={ImagePlus}
-              label="Upload a post"
-              sub="Add photos to your feed"
+              label={t("dash_upload")}
+              sub={t("dash_upload_sub")}
               href="/profile/upload"
               iconColor="text-sky-400"
               iconBg="bg-sky-500/10"
             />
             <QuickAction
               icon={ListOrdered}
-              label="Manage listings"
-              sub="Add or edit offerings"
+              label={t("dash_manage")}
+              sub={t("dash_manage_sub")}
               href="/profile/listings"
               iconColor="text-amber-400"
               iconBg="bg-amber-400/10"
             />
             <QuickAction
               icon={Eye}
-              label="View your profile"
-              sub="See what clients see"
+              label={t("dash_view_profile")}
+              sub={t("dash_view_profile_sub")}
               href={`/u/${profile.username}`}
               iconColor="text-violet-400"
               iconBg="bg-violet-500/10"
@@ -366,8 +368,8 @@ export function ProviderDashboard() {
             <MessageCircle size={18} className="text-amber-400" />
           </div>
           <div className="flex-1">
-            <p className="text-[14px] font-semibold text-white">Messages</p>
-            <p className="text-[12px] text-zinc-500">View your inbox</p>
+            <p className="text-[14px] font-semibold text-white">{t("dash_messages")}</p>
+            <p className="text-[12px] text-zinc-500">{t("dash_inbox")}</p>
           </div>
           <ChevronRight size={16} className="text-zinc-600" />
         </Link>
@@ -376,16 +378,14 @@ export function ProviderDashboard() {
         {!hasPending && stats.pendingCount === 0 && (
           <div className="rounded-2xl border border-white/5 bg-zinc-900/50 px-4 py-5 text-center">
             <TrendingUp size={22} className="mx-auto mb-2 text-zinc-700" />
-            <p className="text-[14px] font-semibold text-white">No pending requests</p>
-            <p className="mt-1 text-[12px] text-zinc-500">
-              New booking requests will appear here in real time.
-            </p>
+            <p className="text-[14px] font-semibold text-white">{t("dash_no_pending")}</p>
+            <p className="mt-1 text-[12px] text-zinc-500">{t("dash_no_pending_sub")}</p>
             {stats.listingsCount === 0 && (
               <Link
                 href="/profile/listings"
                 className="mt-3 inline-block rounded-full bg-amber-400 px-5 py-2 text-[13px] font-semibold text-zinc-950 transition hover:bg-amber-300"
               >
-                Add your first listing
+                {t("dash_add_listing")}
               </Link>
             )}
           </div>
@@ -406,6 +406,7 @@ function PendingBookingCard({
   onAccept: () => void;
   onDecline: () => void;
 }) {
+  const { t } = useTranslation();
   const client = booking.client;
 
   return (
@@ -434,7 +435,7 @@ function PendingBookingCard({
         </div>
         <div className="flex items-center gap-1 rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-1">
           <Clock size={10} className="text-amber-400" />
-          <span className="text-[10px] font-semibold text-amber-400">Pending</span>
+          <span className="text-[10px] font-semibold text-amber-400">{t("dash_pending_badge")}</span>
         </div>
       </div>
 
@@ -475,13 +476,13 @@ function PendingBookingCard({
             onClick={onDecline}
             className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/10 py-2.5 text-[12px] font-semibold text-zinc-400 transition hover:bg-zinc-800"
           >
-            <X size={13} /> Decline
+            <X size={13} /> {t("dash_decline")}
           </button>
           <button
             onClick={onAccept}
             className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white py-2.5 text-[12px] font-semibold text-zinc-950 transition hover:bg-zinc-200"
           >
-            <Check size={13} /> Accept
+            <Check size={13} /> {t("dash_accept")}
           </button>
         </div>
       )}

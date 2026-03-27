@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import { ListingsFilterDrawer, DEFAULT_FILTERS, type ListingFilters } from "./ListingsFilterDrawer";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -52,10 +53,11 @@ const CATEGORIES = [
   { id: "Domination",    label: "Domination" },
 ];
 
-const SORT_OPTIONS: { id: SortBy; label: string }[] = [
-  { id: "newest",     label: "Newest first" },
-  { id: "price_asc",  label: "Price: low → high" },
-  { id: "price_desc", label: "Price: high → low" },
+// Labels resolved at render time via t() — see useSortOptions() below
+const SORT_KEYS: { id: SortBy; key: string }[] = [
+  { id: "newest",     key: "listings_sort_newest" },
+  { id: "price_asc",  key: "listings_sort_price_asc" },
+  { id: "price_desc", key: "listings_sort_price_desc" },
 ];
 
 const TODAY_CUTOFF = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
@@ -104,6 +106,7 @@ function countFilters(f: ListingFilters): number {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function ListingsClient() {
+  const { t } = useTranslation();
   const [category, setCategory]     = useState("all");
   const [search, setSearch]         = useState("");
   const [sortBy, setSortBy]         = useState<SortBy>("newest");
@@ -114,6 +117,8 @@ export function ListingsClient() {
   const [listings, setListings]     = useState<ListingCard[]>([]);
   const [loading, setLoading]       = useState(true);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const SORT_OPTIONS = SORT_KEYS.map((s) => ({ id: s.id, label: t(s.key as Parameters<typeof t>[0]) }));
 
   const fetchListings = useCallback(async (
     cat: string,
@@ -220,7 +225,7 @@ export function ListingsClient() {
       <header className="sticky top-0 z-20 border-b border-white/5 bg-zinc-950/95 backdrop-blur-xl backdrop-saturate-150">
         <div className="px-4 pt-4 pb-3">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-[20px] font-bold text-white tracking-tight">Listings</h1>
+            <h1 className="text-[20px] font-bold text-white tracking-tight">{t("listings_title")}</h1>
             {/* List / Grid toggle */}
             <div className="flex items-center gap-0.5 rounded-xl border border-white/8 bg-zinc-900 p-0.5">
               <button
@@ -229,7 +234,7 @@ export function ListingsClient() {
                   "flex h-7 w-7 items-center justify-center rounded-lg transition-all",
                   viewMode === "list" ? "bg-amber-400 text-zinc-950" : "text-zinc-500 hover:text-zinc-300"
                 )}
-                aria-label="List view"
+                aria-label={t("listings_view_list")}
               >
                 <List size={14} />
               </button>
@@ -239,7 +244,7 @@ export function ListingsClient() {
                   "flex h-7 w-7 items-center justify-center rounded-lg transition-all",
                   viewMode === "grid" ? "bg-amber-400 text-zinc-950" : "text-zinc-500 hover:text-zinc-300"
                 )}
-                aria-label="Grid view"
+                aria-label={t("listings_view_grid")}
               >
                 <LayoutGrid size={14} />
               </button>
@@ -251,7 +256,7 @@ export function ListingsClient() {
             <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
             <input
               type="text"
-              placeholder="Search by name, city, or service…"
+              placeholder={t("listings_search_ph")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-2xl border border-white/8 bg-zinc-900 py-2.5 pl-10 pr-10 text-[14px] text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-amber-400/30 focus:ring-1 focus:ring-amber-400/20"
@@ -300,13 +305,13 @@ export function ListingsClient() {
           onClick={() => setSortOpen(true)}
           className="flex flex-1 items-center gap-1.5 text-[12px] text-zinc-400 hover:text-zinc-200 transition-colors"
         >
-          <span className="font-medium text-zinc-300">{currentSort.label}</span>
+          <span className="font-medium text-zinc-300">{SORT_OPTIONS.find((s) => s.id === sortBy)?.label}</span>
           <ChevronRight size={12} className="rotate-90 text-zinc-600" />
         </button>
 
         {!loading && (
           <span className="text-[11px] text-zinc-700">
-            {listings.length} listing{listings.length !== 1 ? "s" : ""}
+            {listings.length} {listings.length === 1 ? t("listings_results_one") : t("listings_results_many")}
           </span>
         )}
 
@@ -321,7 +326,7 @@ export function ListingsClient() {
           )}
         >
           <SlidersHorizontal size={12} />
-          Filters
+          {t("listings_filters")}
           {filterCount > 0 && (
             <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[9px] font-bold text-zinc-950">
               {filterCount}
@@ -345,7 +350,7 @@ export function ListingsClient() {
               className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-white/10 bg-zinc-950 px-4 pb-10 pt-5"
             >
               <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-zinc-700" />
-              <p className="mb-4 text-[13px] font-semibold uppercase tracking-widest text-zinc-500">Sort by</p>
+              <p className="mb-4 text-[13px] font-semibold uppercase tracking-widest text-zinc-500">{t("listings_sort")}</p>
               <div className="space-y-1">
                 {SORT_OPTIONS.map((opt) => (
                   <button
@@ -384,7 +389,7 @@ export function ListingsClient() {
               <div className="flex items-center gap-2 px-4 pb-2.5">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
-                  Available Now · {liveNow.length}
+                  {t("listings_available_now")} · {liveNow.length}
                 </p>
               </div>
               <div
@@ -403,7 +408,7 @@ export function ListingsClient() {
               <div className="flex items-center gap-2 px-4 pb-2.5">
                 <Zap size={12} className="text-amber-400" />
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
-                  New Today · {newToday.length}
+                  {t("listings_new_today")} · {newToday.length}
                 </p>
               </div>
               <div
@@ -419,8 +424,8 @@ export function ListingsClient() {
           {/* Main content */}
           <section className="px-4">
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-zinc-700">
-              {category === "all" ? "All listings" : category}
-              {search && <span className="ml-1 normal-case text-zinc-600">for "{search}"</span>}
+              {category === "all" ? t("listings_all_listings") : category}
+              {search && <span className="ml-1 normal-case text-zinc-600">"{search}"</span>}
             </p>
 
             {viewMode === "list" ? (
@@ -720,15 +725,14 @@ function ListingGridCard({ listing }: { listing: ListingCard }) {
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
 function EmptyState() {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center gap-3 px-6 pt-20 text-center">
       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-900">
         <Search size={26} className="text-zinc-700" />
       </div>
-      <p className="text-[15px] font-semibold text-zinc-300">No listings found</p>
-      <p className="text-[13px] leading-relaxed text-zinc-600">
-        Try a different category, search term, or adjust your filters.
-      </p>
+      <p className="text-[15px] font-semibold text-zinc-300">{t("listings_empty")}</p>
+      <p className="text-[13px] leading-relaxed text-zinc-600">{t("listings_empty_body")}</p>
     </div>
   );
 }
