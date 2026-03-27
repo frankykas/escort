@@ -4,11 +4,17 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, MapPin, SlidersHorizontal, CheckCircle, Star, X } from "lucide-react";
+import {
+  Search, MapPin, SlidersHorizontal, CheckCircle,
+  Star, X, Heart, MessageCircle, Share2,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { FilterDrawer, DEFAULT_FILTERS, type Filters } from "./FilterDrawer";
 import { useTranslation } from "@/lib/i18n/useTranslation";
+import { useSession } from "@/hooks/useSession";
+import { useLike } from "@/hooks/useLike";
+import { useFollow } from "@/hooks/useFollow";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -17,6 +23,10 @@ type ProviderCard = {
   username: string;
   avatar_url: string | null;
   cover_url: string | null;
+  post_id: string | null;
+  caption: string | null;
+  likes_count: number;
+  comments_count: number;
   verification_status: "none" | "pending" | "verified";
   city: string | null;
   country_code: string | null;
@@ -51,6 +61,12 @@ function formatRate(pence: number | null): string {
   return `CA$${Math.round(pence / 100)}/hr`;
 }
 
+function formatCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return n.toLocaleString();
+}
+
 function isAvailableNow(availableUntil: string | null): boolean {
   if (!availableUntil) return false;
   return new Date(availableUntil) > new Date();
@@ -72,7 +88,6 @@ function countActiveFilters(f: Filters): number {
 
 function StoriesBar({ providers }: { providers: ProviderCard[] }) {
   if (providers.length === 0) return null;
-
   return (
     <div className="border-b border-white/5 bg-black">
       <div
@@ -87,24 +102,16 @@ function StoriesBar({ providers }: { providers: ProviderCard[] }) {
               href={`/u/${p.username}`}
               className="flex flex-col items-center gap-1.5 flex-shrink-0 focus:outline-none"
             >
-              <div
-                className={cn(
-                  "rounded-full p-[2.5px]",
-                  available
-                    ? "bg-gradient-to-tr from-emerald-500 via-emerald-400 to-green-300"
-                    : "bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300"
-                )}
-              >
+              <div className={cn(
+                "rounded-full p-[2.5px]",
+                available
+                  ? "bg-gradient-to-tr from-emerald-500 via-emerald-400 to-green-300"
+                  : "bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300"
+              )}>
                 <div className="rounded-full p-[2px] bg-black">
                   {p.avatar_url ? (
                     <div className="relative h-[58px] w-[58px] overflow-hidden rounded-full">
-                      <Image
-                        src={p.avatar_url}
-                        alt={p.username}
-                        fill
-                        className="object-cover"
-                        sizes="58px"
-                      />
+                      <Image src={p.avatar_url} alt={p.username} fill className="object-cover" sizes="58px" />
                     </div>
                   ) : (
                     <div className="flex h-[58px] w-[58px] items-center justify-center rounded-full bg-zinc-800 text-base font-bold text-zinc-300">
@@ -113,9 +120,7 @@ function StoriesBar({ providers }: { providers: ProviderCard[] }) {
                   )}
                 </div>
               </div>
-              <span className="max-w-[60px] truncate text-[10px] text-zinc-400">
-                {p.username}
-              </span>
+              <span className="max-w-[60px] truncate text-[10px] text-zinc-400">{p.username}</span>
             </Link>
           );
         })}
@@ -144,6 +149,7 @@ function StoriesBarSkeleton() {
 
 export function ExploreClient() {
   const { t } = useTranslation();
+  const { user } = useSession();
   const [searchQuery, setSearchQuery]     = useState("");
   const [cityQuery, setCityQuery]         = useState("");
   const [filters, setFilters]             = useState<Filters>(DEFAULT_FILTERS);
@@ -153,6 +159,8 @@ export function ExploreClient() {
   const [loading, setLoading]             = useState(true);
   const [geoLoading, setGeoLoading]       = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [likedPostIds, setLikedPostIds]   = useState<Set<string>>(new Set());
+  const [followedIds, setFollowedIds]     = useState<Set<string>>(new Set());
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchResults = useCallback(async (search: string, city: string, f: Filters) => {
@@ -181,27 +189,65 @@ export function ExploreClient() {
     if (f.maxAge < DEFAULT_FILTERS.maxAge)   query = query.lte("age", f.maxAge);
 
     const { data } = await query;
-    const providers = (data ?? []) as (ProviderCard & { cover_url?: string | null })[];
+    const providers = (data ?? []) as ProviderCard[];
 
+    // Fetch latest post (cover + caption + stats) per provider
     const ids = providers.map((p) => p.id);
-    const coverMap = new Map<string, string>();
+    const postMap = new Map<string, { post_id: string; cover_url: string | null; caption: string | null; likes_count: number; comments_count: number }>();
+
     if (ids.length > 0) {
-      const { data: coverData } = await supabase
+      const { data: postData } = await supabase
         .from("status_updates")
-        .select("provider_id, media_url")
+        .select("id, provider_id, media_url, caption, likes_count, comments_count")
         .in("provider_id", ids)
         .not("media_url", "is", null)
         .order("created_at", { ascending: false });
 
-      for (const row of coverData ?? []) {
-        const r = row as { provider_id: string; media_url: string };
-        if (!coverMap.has(r.provider_id)) coverMap.set(r.provider_id, r.media_url);
+      for (const row of (postData ?? []) as { id: string; provider_id: string; media_url: string | null; caption: string | null; likes_count: number; comments_count: number }[]) {
+        if (!postMap.has(row.provider_id)) {
+          postMap.set(row.provider_id, {
+            post_id: row.id,
+            cover_url: row.media_url,
+            caption: row.caption,
+            likes_count: row.likes_count ?? 0,
+            comments_count: row.comments_count ?? 0,
+          });
+        }
       }
     }
 
-    setResults(providers.map((p) => ({ ...p, cover_url: coverMap.get(p.id) ?? null })));
+    const enriched: ProviderCard[] = providers.map((p) => {
+      const post = postMap.get(p.id);
+      return {
+        ...p,
+        post_id: post?.post_id ?? null,
+        cover_url: post?.cover_url ?? null,
+        caption: post?.caption ?? null,
+        likes_count: post?.likes_count ?? 0,
+        comments_count: post?.comments_count ?? 0,
+      };
+    });
+
+    setResults(enriched);
     setLoading(false);
   }, []);
+
+  // Batch-fetch engagement state once results arrive
+  useEffect(() => {
+    if (!user || results.length === 0) return;
+    const postIds = results.map((p) => p.post_id).filter(Boolean) as string[];
+    const providerIds = results.map((p) => p.id);
+
+    Promise.all([
+      postIds.length > 0
+        ? supabase.from("likes").select("status_update_id").eq("user_id", user.id).in("status_update_id", postIds)
+        : Promise.resolve({ data: [] }),
+      supabase.from("follows").select("following_id").eq("follower_id", user.id).in("following_id", providerIds),
+    ]).then(([likesRes, followsRes]) => {
+      setLikedPostIds(new Set((likesRes.data ?? []).map((r: { status_update_id: string }) => r.status_update_id)));
+      setFollowedIds(new Set((followsRes.data ?? []).map((r: { following_id: string }) => r.following_id)));
+    });
+  }, [user, results]);
 
   useEffect(() => { fetchResults("", "", DEFAULT_FILTERS); }, [fetchResults]);
 
@@ -222,12 +268,7 @@ export function ExploreClient() {
             { headers: { "Accept-Language": "en" } }
           );
           const data = await res.json();
-          const city =
-            data.address?.city ||
-            data.address?.town ||
-            data.address?.village ||
-            data.address?.county ||
-            "";
+          const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || "";
           if (city) { setCityQuery(city); setSearchQuery(""); }
         } catch {}
         setGeoLoading(false);
@@ -268,7 +309,6 @@ export function ExploreClient() {
       {/* ── Control strip: Near Me | Search | Filters ── */}
       <div className="flex items-center gap-2 border-b border-white/5 bg-black px-4 py-3">
 
-        {/* Near Me */}
         <button
           onClick={handleNearMe}
           disabled={geoLoading}
@@ -292,15 +332,11 @@ export function ExploreClient() {
           )}
         </button>
 
-        {/* Search input */}
         <div className="relative flex-1">
-          <Search
-            size={14}
-            className={cn(
-              "absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors",
-              searchFocused || searchQuery ? "text-amber-400" : "text-zinc-500"
-            )}
-          />
+          <Search size={14} className={cn(
+            "absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors",
+            searchFocused || searchQuery ? "text-amber-400" : "text-zinc-500"
+          )} />
           <input
             type="text"
             placeholder={t("explore_search_ph")}
@@ -310,22 +346,16 @@ export function ExploreClient() {
             onBlur={() => setSearchFocused(false)}
             className={cn(
               "w-full rounded-full border bg-zinc-900 py-2 pl-8 pr-7 text-[13px] text-zinc-100 placeholder-zinc-600 outline-none transition-all",
-              searchFocused || searchQuery
-                ? "border-amber-400/30 ring-1 ring-amber-400/10"
-                : "border-white/10"
+              searchFocused || searchQuery ? "border-amber-400/30 ring-1 ring-amber-400/10" : "border-white/10"
             )}
           />
           {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
-            >
+            <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
               <X size={13} />
             </button>
           )}
         </div>
 
-        {/* Filters */}
         <button
           onClick={() => setDrawerOpen(true)}
           className={cn(
@@ -360,14 +390,11 @@ export function ExploreClient() {
                 "flex-shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-all",
                 active
                   ? "border-amber-400/50 bg-amber-400/10 text-amber-400"
-                  : "border-white/8 bg-zinc-900 text-zinc-400 hover:border-white/15 hover:text-zinc-300"
+                  : "border-white/10 bg-zinc-900 text-zinc-400 hover:border-white/15 hover:text-zinc-300"
               )}
             >
               {chip.id === "available" && (
-                <span className={cn(
-                  "mr-1.5 inline-block h-1.5 w-1.5 rounded-full align-middle",
-                  active ? "bg-emerald-400" : "bg-zinc-600"
-                )} />
+                <span className={cn("mr-1.5 inline-block h-1.5 w-1.5 rounded-full align-middle", active ? "bg-emerald-400" : "bg-zinc-600")} />
               )}
               {chip.label}
             </button>
@@ -403,7 +430,12 @@ export function ExploreClient() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: i * 0.03 }}
             >
-              <ProviderFeedCard provider={provider} />
+              <ProviderFeedCard
+                provider={provider}
+                userId={user?.id ?? null}
+                isLiked={likedPostIds.has(provider.post_id ?? "")}
+                isFollowing={followedIds.has(provider.id)}
+              />
             </motion.div>
           ))}
         </div>
@@ -424,16 +456,51 @@ export function ExploreClient() {
 
 // ─── Provider feed card ───────────────────────────────────────────────────────
 
-function ProviderFeedCard({ provider }: { provider: ProviderCard }) {
+function ProviderFeedCard({
+  provider,
+  userId,
+  isLiked,
+  isFollowing,
+}: {
+  provider: ProviderCard;
+  userId: string | null;
+  isLiked: boolean;
+  isFollowing: boolean;
+}) {
   const coverSrc = provider.cover_url ?? provider.avatar_url;
   const isVerified = provider.verification_status === "verified";
   const available = isAvailableNow(provider.available_until);
+  const isOwnProfile = userId === provider.id;
+
+  const { isLiked: liked, likesCount, toggle: toggleLike } = useLike({
+    postId: provider.post_id ?? "",
+    initialIsLiked: isLiked,
+    initialCount: provider.likes_count,
+    userId,
+  });
+
+  const { isFollowing: following, toggle: toggleFollow } = useFollow({
+    profileId: provider.id,
+    initialIsFollowing: isFollowing,
+    userId,
+  });
+
+  function handleShare() {
+    const url = `${window.location.origin}/u/${provider.username}`;
+    if (navigator.share) {
+      navigator.share({ title: provider.username, url });
+    } else {
+      navigator.clipboard.writeText(url);
+    }
+  }
 
   return (
     <article className="border-b border-zinc-900/80">
 
-      {/* Post header */}
+      {/* ── Post header ── */}
       <div className="flex items-center gap-3 px-4 py-3">
+
+        {/* Avatar with ring */}
         <Link href={`/u/${provider.username}`} className="flex-shrink-0">
           <div className={cn(
             "rounded-full p-[2px]",
@@ -444,13 +511,7 @@ function ProviderFeedCard({ provider }: { provider: ProviderCard }) {
             <div className="rounded-full p-[1.5px] bg-black">
               {provider.avatar_url ? (
                 <div className="relative h-9 w-9 overflow-hidden rounded-full">
-                  <Image
-                    src={provider.avatar_url}
-                    alt={provider.username}
-                    fill
-                    className="object-cover"
-                    sizes="36px"
-                  />
+                  <Image src={provider.avatar_url} alt={provider.username} fill className="object-cover" sizes="36px" />
                 </div>
               ) : (
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-sm font-bold text-zinc-300">
@@ -461,17 +522,13 @@ function ProviderFeedCard({ provider }: { provider: ProviderCard }) {
           </div>
         </Link>
 
+        {/* Username + location */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <Link
-              href={`/u/${provider.username}`}
-              className="text-[14px] font-semibold text-white hover:text-zinc-300 transition-colors truncate"
-            >
+            <Link href={`/u/${provider.username}`} className="text-[14px] font-semibold text-white hover:text-zinc-300 transition-colors truncate">
               {provider.username}
             </Link>
-            {isVerified && (
-              <CheckCircle size={13} className="flex-shrink-0 text-amber-400 fill-amber-400/15" />
-            )}
+            {isVerified && <CheckCircle size={13} className="flex-shrink-0 text-amber-400 fill-amber-400/15" />}
             {available && (
               <span className="flex flex-shrink-0 items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_4px_#34d399]" />
@@ -480,66 +537,132 @@ function ProviderFeedCard({ provider }: { provider: ProviderCard }) {
             )}
           </div>
           {provider.city && (
-            <p className="mt-0.5 truncate text-[11px] text-zinc-500">{provider.city}</p>
+            <p className="mt-0.5 truncate text-[11px] text-zinc-500">{provider.city}{provider.country_code ? `, ${provider.country_code.toUpperCase()}` : ""}</p>
           )}
         </div>
 
-        {provider.hourly_rate ? (
+        {/* Follow button */}
+        {!isOwnProfile && (
+          <button
+            onClick={toggleFollow}
+            className={cn(
+              "flex-shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition-all",
+              following
+                ? "border-white/15 bg-transparent text-zinc-400 hover:border-red-500/30 hover:text-red-400"
+                : "border-amber-400/40 bg-amber-400/10 text-amber-400 hover:bg-amber-400/20"
+            )}
+          >
+            {following ? "Following" : "Follow"}
+          </button>
+        )}
+
+        {/* Rate pill when no follow button (own profile) */}
+        {isOwnProfile && provider.hourly_rate ? (
           <div className="flex-shrink-0 rounded-full border border-amber-400/25 bg-amber-400/8 px-3 py-1">
             <span className="text-[12px] font-bold text-amber-400">{formatRate(provider.hourly_rate)}</span>
           </div>
         ) : null}
       </div>
 
-      {/* Full-width square image */}
+      {/* ── Cover image ── */}
       <Link href={`/u/${provider.username}`} className="block relative aspect-square w-full bg-zinc-900">
         {coverSrc ? (
-          <Image
-            src={coverSrc}
-            alt={provider.username}
-            fill
-            className="object-cover"
-            sizes="100vw"
-          />
+          <Image src={coverSrc} alt={provider.username} fill className="object-cover" sizes="100vw" />
         ) : (
           <div className="flex h-full items-center justify-center bg-gradient-to-b from-zinc-900 to-zinc-950">
-            <span className="text-7xl font-black text-zinc-800">
-              {provider.username[0].toUpperCase()}
-            </span>
+            <span className="text-7xl font-black text-zinc-800">{provider.username[0].toUpperCase()}</span>
           </div>
         )}
       </Link>
 
-      {/* Info row */}
-      <div className="flex flex-wrap items-center gap-2 px-4 pt-3 pb-4">
-        {provider.age && (
-          <span className="text-[12px] text-zinc-500">{provider.age} yrs</span>
-        )}
-        {provider.incall && (
-          <span className="rounded-full border border-white/8 bg-zinc-900 px-2.5 py-0.5 text-[11px] text-zinc-400">
-            In-call
-          </span>
-        )}
-        {provider.outcall && (
-          <span className="rounded-full border border-white/8 bg-zinc-900 px-2.5 py-0.5 text-[11px] text-zinc-400">
-            Out-call
-          </span>
-        )}
-        {provider.service_categories.slice(0, 2).map((cat) => (
-          <span key={cat} className="rounded-full border border-white/8 bg-zinc-900 px-2.5 py-0.5 text-[11px] text-zinc-500">
-            {cat}
-          </span>
-        ))}
-        {provider.average_rating !== null && provider.review_count > 0 && (
-          <div className="ml-auto flex items-center gap-1">
-            <Star size={11} className="fill-amber-400 text-amber-400" />
-            <span className="text-[12px] font-semibold text-white">
-              {Number(provider.average_rating).toFixed(1)}
-            </span>
-            <span className="text-[11px] text-zinc-600">({provider.review_count})</span>
+      {/* ── Action bar ── */}
+      <div className="flex items-center gap-1 px-3 pt-3 pb-1">
+        {/* Like */}
+        <button
+          onClick={toggleLike}
+          disabled={!userId || !provider.post_id}
+          className="flex items-center gap-1.5 rounded-full p-2 transition-all hover:bg-white/5 disabled:opacity-40"
+        >
+          <Heart
+            size={22}
+            className={cn(
+              "transition-all duration-150",
+              liked ? "fill-red-500 text-red-500 scale-110" : "text-zinc-300"
+            )}
+          />
+        </button>
+
+        {/* Comment */}
+        <Link
+          href={`/u/${provider.username}`}
+          className="flex items-center gap-1.5 rounded-full p-2 transition-all hover:bg-white/5"
+        >
+          <MessageCircle size={22} className="text-zinc-300" />
+        </Link>
+
+        {/* Share */}
+        <button
+          onClick={handleShare}
+          className="flex items-center gap-1.5 rounded-full p-2 transition-all hover:bg-white/5"
+        >
+          <Share2 size={22} className="text-zinc-300" />
+        </button>
+
+        {/* Rate pill pushed to the right */}
+        {!isOwnProfile && provider.hourly_rate ? (
+          <div className="ml-auto rounded-full border border-amber-400/25 bg-amber-400/8 px-3 py-1">
+            <span className="text-[12px] font-bold text-amber-400">{formatRate(provider.hourly_rate)}</span>
           </div>
+        ) : null}
+      </div>
+
+      {/* ── Stats ── */}
+      <div className="flex items-center gap-3 px-4 pb-2 pt-0.5">
+        {likesCount > 0 && (
+          <p className="text-[13px] font-semibold text-white">
+            {formatCount(likesCount)} {likesCount === 1 ? "like" : "likes"}
+          </p>
+        )}
+        {provider.comments_count > 0 && (
+          <p className="text-[13px] text-zinc-500">
+            {formatCount(provider.comments_count)} {provider.comments_count === 1 ? "comment" : "comments"}
+          </p>
         )}
       </div>
+
+      {/* ── Caption ── */}
+      {provider.caption && (
+        <p className="px-4 pb-4 text-[13px] leading-relaxed text-zinc-200">
+          <Link href={`/u/${provider.username}`} className="font-semibold text-white hover:text-zinc-300">
+            {provider.username}
+          </Link>
+          {"  "}
+          {provider.caption}
+        </p>
+      )}
+
+      {/* ── Service tags + rating ── */}
+      {(provider.incall || provider.outcall || provider.service_categories.length > 0 || provider.average_rating !== null) && (
+        <div className="flex flex-wrap items-center gap-2 px-4 pb-4">
+          {provider.age && <span className="text-[12px] text-zinc-500">{provider.age} yrs</span>}
+          {provider.incall && (
+            <span className="rounded-full border border-white/8 bg-zinc-900 px-2.5 py-0.5 text-[11px] text-zinc-400">In-call</span>
+          )}
+          {provider.outcall && (
+            <span className="rounded-full border border-white/8 bg-zinc-900 px-2.5 py-0.5 text-[11px] text-zinc-400">Out-call</span>
+          )}
+          {provider.service_categories.slice(0, 2).map((cat) => (
+            <span key={cat} className="rounded-full border border-white/8 bg-zinc-900 px-2.5 py-0.5 text-[11px] text-zinc-500">{cat}</span>
+          ))}
+          {provider.average_rating !== null && provider.review_count > 0 && (
+            <div className="ml-auto flex items-center gap-1">
+              <Star size={11} className="fill-amber-400 text-amber-400" />
+              <span className="text-[12px] font-semibold text-white">{Number(provider.average_rating).toFixed(1)}</span>
+              <span className="text-[11px] text-zinc-600">({provider.review_count})</span>
+            </div>
+          )}
+        </div>
+      )}
     </article>
   );
 }
@@ -557,11 +680,19 @@ function FeedSkeleton() {
               <div className="h-3 w-28 rounded-full bg-zinc-800" />
               <div className="h-2 w-20 rounded-full bg-zinc-800/60" />
             </div>
+            <div className="h-7 w-16 rounded-full bg-zinc-800" />
           </div>
           <div className="aspect-square w-full bg-zinc-800" />
-          <div className="flex gap-2 px-4 py-3">
-            <div className="h-5 w-12 rounded-full bg-zinc-800" />
-            <div className="h-5 w-16 rounded-full bg-zinc-800" />
+          <div className="flex gap-3 px-4 py-3">
+            <div className="h-6 w-6 rounded-full bg-zinc-800" />
+            <div className="h-6 w-6 rounded-full bg-zinc-800" />
+            <div className="h-6 w-6 rounded-full bg-zinc-800" />
+          </div>
+          <div className="px-4 pb-2">
+            <div className="h-3 w-20 rounded-full bg-zinc-800" />
+          </div>
+          <div className="px-4 pb-4">
+            <div className="h-3 w-3/4 rounded-full bg-zinc-800" />
           </div>
         </div>
       ))}
