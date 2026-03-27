@@ -15,6 +15,7 @@ import { useTranslation } from "@/lib/i18n/useTranslation";
 import { useSession } from "@/hooks/useSession";
 import { useLike } from "@/hooks/useLike";
 import { useFollow } from "@/hooks/useFollow";
+import { useShare } from "@/hooks/useShare";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,6 +28,8 @@ type ProviderCard = {
   caption: string | null;
   likes_count: number;
   comments_count: number;
+  shares_count: number;
+  created_at: string | null;
   verification_status: "none" | "pending" | "verified";
   city: string | null;
   country_code: string | null;
@@ -65,6 +68,19 @@ function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return n.toLocaleString();
+}
+
+function timeAgo(date: string | null): string {
+  if (!date) return "";
+  const now = new Date();
+  const past = new Date(date);
+  const seconds = Math.floor((now.getTime() - past.getTime()) / 1000);
+  
+  if (seconds < 60) return "just now";
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+  return past.toLocaleDateString();
 }
 
 function isAvailableNow(availableUntil: string | null): boolean {
@@ -168,7 +184,7 @@ export function ExploreClient() {
 
     let query = supabase
       .from("profiles")
-      .select("id, username, avatar_url, verification_status, city, country_code, age, hourly_rate, available_until, incall, outcall, service_categories, review_count, average_rating")
+      .select("id, username, avatar_url, verification_status, city, country_code, age, hourly_rate, available_until, incall, outcall, service_categories, review_count, average_rating, created_at")
       .eq("is_provider", true)
       .order("created_at", { ascending: false })
       .limit(40);
@@ -193,17 +209,17 @@ export function ExploreClient() {
 
     // Fetch latest post (cover + caption + stats) per provider
     const ids = providers.map((p) => p.id);
-    const postMap = new Map<string, { post_id: string; cover_url: string | null; caption: string | null; likes_count: number; comments_count: number }>();
+    const postMap = new Map<string, { post_id: string; cover_url: string | null; caption: string | null; likes_count: number; comments_count: number; shares_count: number; created_at: string | null }>();
 
     if (ids.length > 0) {
       const { data: postData } = await supabase
         .from("status_updates")
-        .select("id, provider_id, media_url, caption, likes_count, comments_count")
+        .select("id, provider_id, media_url, caption, likes_count, comments_count, shares_count, created_at")
         .in("provider_id", ids)
         .not("media_url", "is", null)
         .order("created_at", { ascending: false });
 
-      for (const row of (postData ?? []) as { id: string; provider_id: string; media_url: string | null; caption: string | null; likes_count: number; comments_count: number }[]) {
+      for (const row of (postData ?? []) as { id: string; provider_id: string; media_url: string | null; caption: string | null; likes_count: number; comments_count: number; shares_count: number; created_at: string | null }[]) {
         if (!postMap.has(row.provider_id)) {
           postMap.set(row.provider_id, {
             post_id: row.id,
@@ -211,6 +227,8 @@ export function ExploreClient() {
             caption: row.caption,
             likes_count: row.likes_count ?? 0,
             comments_count: row.comments_count ?? 0,
+            shares_count: row.shares_count ?? 0,
+            created_at: row.created_at,
           });
         }
       }
@@ -225,6 +243,8 @@ export function ExploreClient() {
         caption: post?.caption ?? null,
         likes_count: post?.likes_count ?? 0,
         comments_count: post?.comments_count ?? 0,
+        shares_count: post?.shares_count ?? 0,
+        created_at: post?.created_at ?? p.created_at,
       };
     });
 
@@ -485,12 +505,28 @@ function ProviderFeedCard({
     userId,
   });
 
-  function handleShare() {
+  const { share, sharesCount, isSharing } = useShare({
+    postId: provider.post_id ?? "",
+    initialCount: provider.shares_count,
+    userId,
+  });
+
+  async function handleShare() {
     const url = `${window.location.origin}/u/${provider.username}`;
+    
+    // First record the share in database
+    await share();
+    
+    // Then use native share or clipboard
     if (navigator.share) {
-      navigator.share({ title: provider.username, url });
+      try {
+        await navigator.share({ title: provider.username, url });
+      } catch (error) {
+        // User cancelled or share failed, fallback to clipboard
+        await navigator.clipboard.writeText(url);
+      }
     } else {
-      navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(url);
     }
   }
 
@@ -603,9 +639,16 @@ function ProviderFeedCard({
         {/* Share */}
         <button
           onClick={handleShare}
-          className="flex items-center gap-1.5 rounded-full p-2 transition-all hover:bg-white/5"
+          disabled={isSharing || !userId || !provider.post_id}
+          className="flex items-center gap-1.5 rounded-full p-2 transition-all hover:bg-white/5 disabled:opacity-40"
         >
-          <Share2 size={22} className="text-zinc-300" />
+          <Share2 
+            size={22} 
+            className={cn(
+              "transition-all duration-150",
+              isSharing ? "text-amber-400 scale-110" : "text-zinc-300"
+            )} 
+          />
         </button>
 
         {/* Rate pill pushed to the right */}
@@ -626,6 +669,16 @@ function ProviderFeedCard({
         {provider.comments_count > 0 && (
           <p className="text-[13px] text-zinc-500">
             {formatCount(provider.comments_count)} {provider.comments_count === 1 ? "comment" : "comments"}
+          </p>
+        )}
+        {provider.shares_count > 0 && (
+          <p className="text-[13px] text-zinc-500">
+            {formatCount(sharesCount)} {sharesCount === 1 ? "share" : "shares"}
+          </p>
+        )}
+        {provider.created_at && (
+          <p className="ml-auto text-[10px] text-zinc-500 uppercase tracking-wide">
+            {timeAgo(provider.created_at)}
           </p>
         )}
       </div>
