@@ -58,7 +58,7 @@ export default function SubscriptionsPage() {
       .eq("subscriber_id", user.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
-        setSubs((data as Sub[]) ?? []);
+        setSubs((data as unknown as Sub[]) ?? []);
         setLoading(false);
       });
   }, [user, checked]);

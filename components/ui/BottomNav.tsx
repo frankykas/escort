@@ -1,51 +1,33 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import { Home, Compass, MessageCircle, Heart, User } from "lucide-react";
+import { usePathname } from "next/navigation";
+import {
+  Home, Compass, LayoutGrid, MessageCircle, User,
+  LayoutDashboard, CalendarCheck, ListOrdered, ImagePlus,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useSession } from "@/hooks/useSession";
-import { supabase } from "@/lib/supabase/client";
+import { useProfile } from "@/contexts/ProfileContext";
 
 const HIDDEN_ON = ["/auth/signin", "/auth/signup", "/messages/"];
 
-// Inner component uses useSearchParams — must be inside Suspense
-function BottomNavInner() {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const { user } = useSession();
-  const [username, setUsername] = useState<string | null>(null);
+// ─── Tab definitions ──────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    if (!user) { setUsername(null); return; }
-    supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", user.id)
-      .single()
-      .then(({ data }) => setUsername(data?.username ?? null));
-  }, [user]);
+type TabDef = {
+  label: string;
+  icon: React.ElementType;
+  href: string;
+  active: boolean;
+};
 
-  if (HIDDEN_ON.some((p) => pathname.startsWith(p)) || HIDDEN_ON.includes(pathname)) return null;
-
-  const profileHref = "/profile";
-  const tab = searchParams.get("tab");
-
-  type TabDef = {
-    label: string;
-    icon: React.ElementType;
-    href: string;
-    active: boolean;
-    unbuilt?: boolean;
-  };
-
-  const tabs: TabDef[] = [
+function useClientTabs(pathname: string): TabDef[] {
+  return [
     {
       label: "Home",
       icon: Home,
       href: "/",
-      active: pathname === "/" && tab !== "favorites",
+      active: pathname === "/",
     },
     {
       label: "Explore",
@@ -54,58 +36,113 @@ function BottomNavInner() {
       active: pathname.startsWith("/explore"),
     },
     {
+      label: "Listings",
+      icon: LayoutGrid,
+      href: "/listings",
+      active: pathname.startsWith("/listings"),
+    },
+    {
       label: "Messages",
       icon: MessageCircle,
       href: "/messages",
       active: pathname.startsWith("/messages"),
     },
     {
-      label: "Favorites",
-      icon: Heart,
-      href: "/?tab=favorites",
-      active: pathname === "/" && tab === "favorites",
+      label: "Profile",
+      icon: User,
+      href: "/profile",
+      active: pathname.startsWith("/profile"),
+    },
+  ];
+}
+
+function useProviderTabs(pathname: string): TabDef[] {
+  return [
+    {
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      href: "/",
+      active: pathname === "/",
+    },
+    {
+      label: "Bookings",
+      icon: CalendarCheck,
+      href: "/profile/bookings",
+      active: pathname === "/profile/bookings",
+    },
+    {
+      label: "Messages",
+      icon: MessageCircle,
+      href: "/messages",
+      active: pathname.startsWith("/messages"),
+    },
+    {
+      label: "Listings",
+      icon: ListOrdered,
+      href: "/profile/listings",
+      active:
+        pathname === "/profile/listings" ||
+        pathname === "/profile/upload",
     },
     {
       label: "Profile",
       icon: User,
-      href: profileHref,
-      active: pathname.startsWith("/profile") || (!!username && pathname === `/u/${username}`),
+      href: "/profile",
+      active:
+        pathname.startsWith("/profile") &&
+        pathname !== "/profile/bookings" &&
+        pathname !== "/profile/listings" &&
+        pathname !== "/profile/upload",
     },
   ];
+}
+
+// ─── Inner nav (needs useSearchParams → must be inside Suspense) ──────────────
+
+function BottomNavInner() {
+  const pathname = usePathname();
+  const { profile, isProvider, loading } = useProfile();
+
+  const clientTabs = useClientTabs(pathname);
+  const providerTabs = useProviderTabs(pathname);
+
+  // Hide on auth and full-screen message threads
+  if (HIDDEN_ON.some((p) => pathname.startsWith(p))) return null;
+
+  const tabs = isProvider ? providerTabs : clientTabs;
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-zinc-800/80 bg-black/95 backdrop-blur-md">
       <div className="mx-auto flex max-w-lg items-center justify-around px-1 pb-[env(safe-area-inset-bottom,0px)]">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
+        {tabs.map((t) => {
+          const Icon = t.icon;
           return (
             <Link
-              key={tab.label}
-              href={tab.href}
-              aria-label={tab.label}
-              tabIndex={tab.unbuilt ? -1 : undefined}
+              key={t.label}
+              href={t.href}
+              aria-label={t.label}
               className={cn(
                 "flex flex-col items-center gap-[3px] py-3 px-4 transition-all duration-150",
-                tab.active ? "text-white" : "text-zinc-600",
-                tab.unbuilt && "pointer-events-none opacity-25"
+                t.active ? "text-white" : "text-zinc-600",
+                // Dim while role is still loading to avoid wrong-tab flash
+                loading && "opacity-0 pointer-events-none"
               )}
             >
               <Icon
                 size={24}
-                strokeWidth={tab.active ? 2.5 : 1.8}
+                strokeWidth={t.active ? 2.5 : 1.8}
                 className={cn(
                   "transition-all duration-150",
-                  tab.active && "drop-shadow-[0_0_8px_rgba(251,191,36,0.45)]",
-                  tab.label === "Favorites" && tab.active && "fill-red-500 text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]"
+                  t.active && "drop-shadow-[0_0_8px_rgba(251,191,36,0.45)]"
                 )}
               />
               <span
                 className={cn(
                   "text-[9px] font-medium tracking-wide uppercase transition-colors",
-                  tab.active ? "text-amber-400" : "text-zinc-600"
+                  t.active ? "text-amber-400" : "text-zinc-600"
                 )}
               >
-                {tab.label}
+                {t.label}
               </span>
             </Link>
           );
@@ -114,6 +151,8 @@ function BottomNavInner() {
     </nav>
   );
 }
+
+// ─── Export ───────────────────────────────────────────────────────────────────
 
 export function BottomNav() {
   return (

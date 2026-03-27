@@ -23,6 +23,7 @@ import {
   Zap,
   Pencil,
   ImagePlus,
+  CalendarCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
@@ -227,17 +228,19 @@ export default function ProfilePage() {
         <>
           <SectionLabel>Provider</SectionLabel>
           <ListCard>
-            <Row icon={ListOrdered} label="My Listings"       href="/profile/listings"      iconClassName="text-amber-400" />
-            <Row icon={User}        label="My Profile Page"   href={`/u/${profile.username}`} iconClassName="text-violet-400" />
-            <Row icon={Zap}         label="Availability"      href="/profile/availability"  iconClassName="text-emerald-400" />
-            <Row icon={Crown}       label="Subscription Tier" href="/profile/subscription"  iconClassName="text-amber-400" />
-            <Row icon={ImagePlus}   label="Upload Post"       href="/profile/upload"        iconClassName="text-sky-400" />
+            <Row icon={ListOrdered}   label="My Listings"       href="/profile/listings"      iconClassName="text-amber-400" />
+            <Row icon={CalendarCheck} label="Bookings"          href="/profile/bookings"      iconClassName="text-sky-400" />
+            <Row icon={User}          label="My Profile Page"   href={`/u/${profile.username}`} iconClassName="text-violet-400" />
+            <Row icon={Zap}           label="Availability"      href="/profile/availability"  iconClassName="text-emerald-400" />
+            <Row icon={Crown}         label="Subscription Tier" href="/profile/subscription"  iconClassName="text-amber-400" />
+            <Row icon={ImagePlus}     label="Upload Post"       href="/profile/upload"        iconClassName="text-sky-400" />
           </ListCard>
         </>
       )}
 
       <SectionLabel>Activity</SectionLabel>
       <ListCard>
+        <Row icon={CalendarCheck} label="My Bookings"   href="/bookings"             iconClassName="text-amber-400" />
         <Row icon={Heart}         label="Favorites"     href="/?tab=favorites"       iconClassName="text-rose-400" />
         <Row icon={Bookmark}      label="Liked Posts"   href="/profile/liked"         iconClassName="text-sky-400" />
         <Row icon={Crown}         label="Subscriptions" href="/profile/subscriptions" iconClassName="text-amber-400" />

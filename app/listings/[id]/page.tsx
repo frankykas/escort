@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  CheckCircle, MapPin, Clock, Check,
+  CheckCircle, MapPin, Clock, Check, ChevronLeft,
   Phone, Users, Star, AlertCircle, CreditCard, Shield,
 } from "lucide-react";
 import { createServerClient } from "@/lib/supabase/server";
@@ -373,6 +373,8 @@ export default async function ListingPage({
 
       <EnquireBar
         username={provider.username}
+        providerId={listing.provider_id}
+        listingId={listing.id}
         rate={listing.rate}
         duration={listing.duration_minutes}
         depositRequired={listing.deposit_required}

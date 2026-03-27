@@ -41,7 +41,7 @@ export default function LikedPage() {
       .select("id, title, rate, duration_minutes, service_type, cover_url, city, profiles!provider_id(username, avatar_url)")
       .in("id", ids)
       .then(({ data }) => {
-        setListings((data as Listing[]) ?? []);
+        setListings((data as unknown as Listing[]) ?? []);
         setLoading(false);
       });
   }, []);

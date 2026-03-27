@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, MapPin, SlidersHorizontal, CheckCircle, ArrowUpDown, Zap } from "lucide-react";
+import { Search, MapPin, SlidersHorizontal, CheckCircle, ArrowUpDown, Zap, Star } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { FilterDrawer, DEFAULT_FILTERS, type Filters } from "./FilterDrawer";
@@ -25,6 +25,8 @@ type ProviderCard = {
   incall: boolean;
   outcall: boolean;
   service_categories: string[];
+  review_count: number;
+  average_rating: number | null;
 };
 
 type SortBy = "newest" | "popular" | "rate_asc" | "rate_desc";
@@ -77,7 +79,8 @@ function countActiveFilters(f: Filters): number {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function ExploreClient() {
-  const [cityQuery, setCityQuery]   = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [cityQuery, setCityQuery]   = useState(""); // set by Near Me
   const [filters, setFilters]       = useState<Filters>(DEFAULT_FILTERS);
   const [sortBy, setSortBy]         = useState<SortBy>("newest");
   const [quickFilter, setQuickFilter] = useState("all");
@@ -87,16 +90,22 @@ export function ExploreClient() {
   const [geoLoading, setGeoLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchResults = useCallback(async (city: string, f: Filters, sort: SortBy) => {
+  const fetchResults = useCallback(async (search: string, city: string, f: Filters, sort: SortBy) => {
     setLoading(true);
 
     let query = supabase
       .from("profiles")
-      .select("id, username, avatar_url, verification_status, city, country_code, age, hourly_rate, available_until, incall, outcall, service_categories")
+      .select("id, username, avatar_url, verification_status, city, country_code, age, hourly_rate, available_until, incall, outcall, service_categories, review_count, average_rating")
       .eq("is_provider", true)
       .limit(40);
 
-    if (city.trim())       query = query.ilike("city", `%${city.trim()}%`);
+    // Near Me sets city separately (exact city filter)
+    if (city.trim() && !search.trim()) query = query.ilike("city", `%${city.trim()}%`);
+    // Text search: match username OR city
+    if (search.trim()) {
+      const q = search.trim().replace(/^@/, "");
+      query = query.or(`username.ilike.%${q}%,city.ilike.%${q}%`);
+    }
     if (f.verifiedOnly)    query = query.eq("verification_status", "verified");
     if (f.availableNow)    query = query.gt("available_until", new Date().toISOString());
     if (f.incall && !f.outcall)  query = query.eq("incall", true);
@@ -139,14 +148,14 @@ export function ExploreClient() {
   }, []);
 
   // Initial load
-  useEffect(() => { fetchResults("", DEFAULT_FILTERS, "newest"); }, [fetchResults]);
+  useEffect(() => { fetchResults("", "", DEFAULT_FILTERS, "newest"); }, [fetchResults]);
 
   // Debounced re-fetch
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchResults(cityQuery, filters, sortBy), 350);
+    debounceRef.current = setTimeout(() => fetchResults(searchQuery, cityQuery, filters, sortBy), 350);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [cityQuery, filters, sortBy, fetchResults]);
+  }, [searchQuery, cityQuery, filters, sortBy, fetchResults]);
 
   // Near me
   async function handleNearMe() {
@@ -161,7 +170,7 @@ export function ExploreClient() {
           );
           const data = await res.json();
           const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || "";
-          if (city) setCityQuery(city);
+          if (city) { setCityQuery(city); setSearchQuery(""); }
         } catch {}
         setGeoLoading(false);
       },
@@ -194,7 +203,9 @@ export function ExploreClient() {
 
   const activeCount = countActiveFilters(filters);
   const availableNow = results.filter((p) => isAvailableNow(p.available_until));
-  const locationLabel = cityQuery.trim() ? `in ${cityQuery.trim()}` : "· All cities";
+  const locationLabel = searchQuery.trim()
+    ? `matching "${searchQuery.trim()}"`
+    : cityQuery.trim() ? `in ${cityQuery.trim()}` : "· All cities";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-950 to-black pb-24 animate-[fadeIn_0.4s_ease-out]">
@@ -212,15 +223,24 @@ export function ExploreClient() {
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
           <input
             type="text"
-            placeholder="Search by city…"
-            value={cityQuery}
-            onChange={(e) => setCityQuery(e.target.value)}
+            placeholder="Search by name or city…"
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); if (e.target.value) setCityQuery(""); }}
             className="w-full rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 py-3 pl-9 pr-4 text-[14px] text-zinc-100 placeholder-zinc-600 outline-none transition-all focus:border-amber-400/30 focus:ring-1 focus:ring-amber-400/20"
           />
-          {cityQuery && (
-            <button onClick={() => setCityQuery("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">×</button>
+          {(searchQuery || cityQuery) && (
+            <button onClick={() => { setSearchQuery(""); setCityQuery(""); }} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">×</button>
           )}
         </div>
+        {/* Near Me city chip */}
+        {cityQuery && !searchQuery && (
+          <div className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5 rounded-full border border-white/10 bg-zinc-800 px-3 py-1 text-[12px] text-zinc-300">
+              <MapPin size={11} className="text-amber-400" />{cityQuery}
+              <button onClick={() => setCityQuery("")} className="text-zinc-500 hover:text-zinc-200 ml-1">×</button>
+            </span>
+          </div>
+        )}
 
         {/* Near me + Sort + Filters row */}
         <div className="flex items-center gap-2">
@@ -413,6 +433,12 @@ function AvailableCard({ provider }: { provider: ProviderCard }) {
               <span className="text-white text-[12px] font-bold truncate">{provider.username}</span>
               {isVerified && <CheckCircle size={10} className="flex-shrink-0 text-amber-400" />}
             </div>
+            {provider.average_rating !== null && provider.review_count > 0 && (
+              <div className="flex items-center gap-0.5 mt-0.5">
+                <Star size={9} className="fill-amber-400 text-amber-400" />
+                <span className="text-[10px] font-semibold text-white">{Number(provider.average_rating).toFixed(1)}</span>
+              </div>
+            )}
             {provider.hourly_rate ? (
               <span className="text-emerald-400 text-[10px] font-semibold">{formatRate(provider.hourly_rate)}</span>
             ) : provider.city ? (
@@ -491,6 +517,15 @@ function ProviderCard({ provider }: { provider: ProviderCard }) {
             <div className="flex items-center gap-1 mb-2.5">
               <MapPin size={9} className="text-zinc-500 flex-shrink-0" />
               <span className="text-zinc-500 text-[10px] truncate">{provider.city}</span>
+            </div>
+          )}
+
+          {/* Star rating */}
+          {provider.average_rating !== null && provider.review_count > 0 && (
+            <div className="flex items-center gap-1 mb-2">
+              <Star size={10} className="fill-amber-400 text-amber-400" />
+              <span className="text-[11px] font-semibold text-white">{Number(provider.average_rating).toFixed(1)}</span>
+              <span className="text-[10px] text-zinc-600">({provider.review_count})</span>
             </div>
           )}
 

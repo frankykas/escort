@@ -68,7 +68,7 @@ export default function MessagesPage() {
     const seen = new Map<string, Conversation>();
     for (const m of msgs) {
       const isMine = m.sender_id === user.id;
-      const partner = isMine ? (m.recipient as { id: string; username: string; avatar_url: string | null; verification_status: string }) : (m.sender as { id: string; username: string; avatar_url: string | null; verification_status: string });
+      const partner = isMine ? (m.recipient as unknown as { id: string; username: string; avatar_url: string | null; verification_status: string }) : (m.sender as unknown as { id: string; username: string; avatar_url: string | null; verification_status: string });
       if (!partner || seen.has(partner.id)) continue;
       seen.set(partner.id, {
         partner_id:       partner.id,

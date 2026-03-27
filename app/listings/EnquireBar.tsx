@@ -5,12 +5,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageCircle, Phone, Send, X, ChevronRight,
   ChevronLeft, Calendar, Clock, MapPin, User,
-  CheckCircle, CreditCard,
+  CheckCircle, CreditCard, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSession } from "@/hooks/useSession";
+import { supabase } from "@/lib/supabase/client";
 
 type Props = {
   username: string;
+  providerId: string;
+  listingId?: string | null;
   rate: number | null;
   duration: number | null;
   depositRequired?: boolean;
@@ -67,13 +71,16 @@ function formatDuration(minutes: number | null) {
 }
 
 export function EnquireBar({
-  username, rate, duration,
+  username, providerId, listingId,
+  rate, duration,
   depositRequired, depositAmount, advanceNoticeHours,
 }: Props) {
+  const { user } = useSession();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [step, setStep] = useState<Step>("options");
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   function openSheet() { setStep("options"); setSheetOpen(true); }
   function closeSheet() {
@@ -85,9 +92,22 @@ export function EnquireBar({
   }
 
   async function handleSubmit() {
+    if (!user) { setSubmitError("Please sign in to send an enquiry."); return; }
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 900)); // placeholder — wire to messaging later
+    setSubmitError(null);
+    const { error } = await supabase.from("bookings").insert({
+      client_id:        user.id,
+      provider_id:      providerId,
+      listing_id:       listingId ?? null,
+      requested_date:   form.date,
+      requested_time:   form.time || null,
+      duration_minutes: form.duration ? parseInt(form.duration, 10) : null,
+      service_type:     form.callType || null,
+      area:             form.callType === "outcall" ? (form.area || null) : null,
+      notes:            form.message.trim() || null,
+    });
     setSubmitting(false);
+    if (error) { setSubmitError("Failed to send enquiry. Please try again."); return; }
     setStep("sent");
   }
 
@@ -375,13 +395,16 @@ export function EnquireBar({
 
                     </div>
 
+                    {submitError && (
+                      <p className="mt-2 text-[12px] text-red-400">{submitError}</p>
+                    )}
                     <button
                       onClick={handleSubmit}
                       disabled={!formValid || submitting}
                       className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:bg-amber-300 active:scale-[0.99] disabled:opacity-40"
                     >
                       {submitting
-                        ? <span className="animate-pulse">Sending…</span>
+                        ? <><Loader2 size={15} className="animate-spin" /> Sending…</>
                         : <><Send size={15} strokeWidth={2.5} /> Send enquiry</>
                       }
                     </button>

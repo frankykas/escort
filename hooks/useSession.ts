@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabase/client";
 type SessionState = {
   user: User | null;
   loading: boolean;
+  /** Alias for !loading — true once the initial session check is complete. */
+  checked: boolean;
 };
 
 export function useSession(): SessionState {
@@ -30,5 +32,5 @@ export function useSession(): SessionState {
     return () => subscription.unsubscribe();
   }, []);
 
-  return { user, loading };
+  return { user, loading, checked: !loading };
 }

@@ -28,22 +28,39 @@ function FeedSkeleton() {
   );
 }
 
-function EmptyFavorites() {
+function EmptyFavorites({ hasFollows }: { hasFollows: boolean }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center">
       <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-zinc-900">
         <Heart size={28} className="text-zinc-600" />
       </div>
-      <h3 className="text-base font-semibold text-white">No favorites yet</h3>
-      <p className="mt-2 text-sm text-zinc-500 leading-relaxed">
-        Follow profiles you love and their posts will appear here.
-      </p>
-      <Link
-        href="/"
-        className="mt-6 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
-      >
-        Discover profiles
-      </Link>
+      {hasFollows ? (
+        <>
+          <h3 className="text-base font-semibold text-white">No recent posts</h3>
+          <p className="mt-2 text-sm text-zinc-500 leading-relaxed">
+            The profiles you follow haven't posted in the last 24 hours. Check back soon.
+          </p>
+          <Link
+            href="/"
+            className="mt-6 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
+          >
+            Browse all posts
+          </Link>
+        </>
+      ) : (
+        <>
+          <h3 className="text-base font-semibold text-white">No favorites yet</h3>
+          <p className="mt-2 text-sm text-zinc-500 leading-relaxed">
+            Follow profiles you love and their posts will appear here.
+          </p>
+          <Link
+            href="/"
+            className="mt-6 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
+          >
+            Discover profiles
+          </Link>
+        </>
+      )}
     </div>
   );
 }
@@ -77,6 +94,7 @@ function SignInPrompt() {
 export function FavoriteFeed() {
   const { user, loading: sessionLoading } = useSession();
   const [posts, setPosts] = useState<FeedPostData[]>([]);
+  const [hasFollows, setHasFollows] = useState(false);
   const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
@@ -86,13 +104,13 @@ export function FavoriteFeed() {
     async function load() {
       setFetching(true);
 
-      // Get all followed profile IDs
       const { data: follows } = await supabase
         .from("follows")
         .select("following_id")
         .eq("follower_id", user!.id);
 
       const followedIds = (follows ?? []).map((f) => f.following_id as string);
+      setHasFollows(followedIds.length > 0);
 
       if (followedIds.length === 0) {
         setFetching(false);
@@ -120,7 +138,7 @@ export function FavoriteFeed() {
 
   if (sessionLoading || fetching) return <FeedSkeleton />;
   if (!user) return <SignInPrompt />;
-  if (posts.length === 0) return <EmptyFavorites />;
+  if (posts.length === 0) return <EmptyFavorites hasFollows={hasFollows} />;
 
   return <FeedList posts={posts} />;
 }
