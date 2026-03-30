@@ -44,6 +44,9 @@ All feature flags live in `lib/features.ts` and are driven by `NEXT_PUBLIC_` env
 | Flag | Env Var | Default | Effect |
 |------|---------|---------|--------|
 | `USE_SOCIAL_FEED` | `NEXT_PUBLIC_USE_SOCIAL_FEED` | `false` | Swaps the home page from ClassicHome to SocialHome |
+| `USE_POSTING_PACKAGES` | `NEXT_PUBLIC_USE_POSTING_PACKAGES` | `false` | Requires post credits to create feed posts (stories remain free) |
+| `USE_GEO_FEED` | `NEXT_PUBLIC_USE_GEO_FEED` | `false` | Enables radius-based proximity filtering on explore page |
+| `USE_POST_COOLDOWN` | `NEXT_PUBLIC_USE_POST_COOLDOWN` | `false` | Enforces minimum time gap between feed posts (default 6h) |
 
 **Rules:**
 - Add new flags to `lib/features.ts` — never read `process.env` directly in components

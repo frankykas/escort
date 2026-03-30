@@ -684,39 +684,15 @@ function ProviderFeedCard({
       </div>
 
       {/* ── Caption ── */}
-      {provider.caption && (
-        <p className="px-4 pb-4 text-[13px] leading-relaxed text-zinc-200">
-          <Link href={`/u/${provider.username}`} className="font-semibold text-white hover:text-zinc-300">
-            {provider.username}
-          </Link>
-          {"  "}
-          {provider.caption}
-        </p>
-      )}
+      <p className="px-4 pb-4 text-[13px] leading-relaxed text-zinc-200">
+        <Link href={`/u/${provider.username}`} className="font-semibold text-white hover:text-zinc-300">
+          {provider.username}
+        </Link>
+        {"  "}
+        {provider.caption || "Check out my latest post! 💫"}
+      </p>
 
-      {/* ── Service tags + rating ── */}
-      {(provider.incall || provider.outcall || provider.service_categories.length > 0 || provider.average_rating !== null) && (
-        <div className="flex flex-wrap items-center gap-2 px-4 pb-4">
-          {provider.age && <span className="text-[12px] text-zinc-500">{provider.age} yrs</span>}
-          {provider.incall && (
-            <span className="rounded-full border border-white/8 bg-zinc-900 px-2.5 py-0.5 text-[11px] text-zinc-400">In-call</span>
-          )}
-          {provider.outcall && (
-            <span className="rounded-full border border-white/8 bg-zinc-900 px-2.5 py-0.5 text-[11px] text-zinc-400">Out-call</span>
-          )}
-          {provider.service_categories.slice(0, 2).map((cat) => (
-            <span key={cat} className="rounded-full border border-white/8 bg-zinc-900 px-2.5 py-0.5 text-[11px] text-zinc-500">{cat}</span>
-          ))}
-          {provider.average_rating !== null && provider.review_count > 0 && (
-            <div className="ml-auto flex items-center gap-1">
-              <Star size={11} className="fill-amber-400 text-amber-400" />
-              <span className="text-[12px] font-semibold text-white">{Number(provider.average_rating).toFixed(1)}</span>
-              <span className="text-[11px] text-zinc-600">({provider.review_count})</span>
-            </div>
-          )}
-        </div>
-      )}
-    </article>
+          </article>
   );
 }
 

@@ -240,6 +240,14 @@ export const fr: Record<TranslationKey, string> = {
   notif_security:         "Alertes de sécurité",
   notif_security_desc:    "Connexion depuis un nouvel appareil, changement de mot de passe",
 
+  // ── In-app notifications ──────────────────────────────────────────────────
+  notif_page_title:         "Notifications",
+  notif_mark_all_read:      "Tout marquer comme lu",
+  notif_empty:              "Aucune notification",
+  notif_empty_body:         "Les mises à jour de réservations, messages et activités apparaîtront ici.",
+  notif_load_more:          "Charger plus",
+  notif_new_count:          "nouvelles",
+
   // ── Verify ────────────────────────────────────────────────────────────────
   verify_title:       "Vérification d'identité",
   verify_get:         "Obtenir la vérification",

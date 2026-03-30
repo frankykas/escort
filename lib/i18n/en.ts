@@ -238,6 +238,14 @@ export const en = {
   notif_security:         "Security alerts",
   notif_security_desc:    "Sign-in from a new device, password changes",
 
+  // ── In-app notifications ──────────────────────────────────────────────────
+  notif_page_title:         "Notifications",
+  notif_mark_all_read:      "Mark all read",
+  notif_empty:              "No notifications yet",
+  notif_empty_body:         "Booking updates, messages, and activity will appear here.",
+  notif_load_more:          "Load more",
+  notif_new_count:          "new",
+
   // ── Verify ────────────────────────────────────────────────────────────────
   verify_title:       "ID Verification",
   verify_get:         "Get Verified",

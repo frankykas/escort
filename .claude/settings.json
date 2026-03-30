@@ -23,7 +23,9 @@
       "Bash(git push:*)",
       "Bash(git config:*)",
       "Bash(npm run:*)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(find /c/dev/cleopatre/app -type d -name *explore* -o -name *feed* -o -name *stories*)",
+      "Bash(grep -n \"boost\\\\|bump\\\\|city\\\\|location\\\\|geography\" /c/dev/cleopatre/supabase/migrations/*.sql)"
     ],
     "additionalDirectories": [
       "c:\\dev\\cleopatre\\app\\listings",
