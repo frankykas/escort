@@ -1,41 +1,64 @@
 "use client";
 
-import { useState, useRef, type ChangeEvent } from "react";
+import { useState, useRef, useEffect, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ImagePlus, X, Lock, Unlock, ChevronLeft, Loader2,
+  Film, Camera, Coins, ShoppingBag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { USE_POSTING_PACKAGES } from "@/lib/features";
 
-const EXPIRES_OPTIONS = [
-  { label: "24 hours", hours: 24 },
-  { label: "7 days",   hours: 24 * 7 },
-  { label: "30 days",  hours: 24 * 30 },
-  { label: "Forever",  hours: null },
-];
+// ---------------------------------------------------------------------------
+// Types & constants
+// ---------------------------------------------------------------------------
+
+type PostType = "post" | "story";
 
 export default function UploadPostPage() {
   const router = useRouter();
   const { user, checked } = useSession();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview]       = useState<string | null>(null);
-  const [file, setFile]             = useState<File | null>(null);
-  const [caption, setCaption]       = useState("");
-  const [isPremium, setIsPremium]   = useState(false);
+  const [postType, setPostType]       = useState<PostType>("post");
+  const [preview, setPreview]         = useState<string | null>(null);
+  const [file, setFile]               = useState<File | null>(null);
+  const [caption, setCaption]         = useState("");
+  const [isPremium, setIsPremium]     = useState(false);
   const [unlockPrice, setUnlockPrice] = useState("");
-  const [expiresIdx, setExpiresIdx] = useState(0);
-  const [uploading, setUploading]   = useState(false);
-  const [error, setError]           = useState<string | null>(null);
+  const [uploading, setUploading]     = useState(false);
+  const [error, setError]             = useState<string | null>(null);
+
+  // Credit balance (only fetched when posting packages are enabled)
+  const [creditBalance, setCreditBalance] = useState<number | null>(null);
+  const [loadingCredits, setLoadingCredits] = useState(false);
+
+  useEffect(() => {
+    if (!user || !USE_POSTING_PACKAGES) return;
+    setLoadingCredits(true);
+    supabase
+      .from("profiles")
+      .select("post_credits_balance")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        setCreditBalance(data?.post_credits_balance ?? 0);
+        setLoadingCredits(false);
+      });
+  }, [user]);
 
   if (checked && !user) {
     router.replace("/auth/signin");
     return null;
   }
+
+  // ---------------------------------------------------------------------------
+  // Handlers
+  // ---------------------------------------------------------------------------
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -53,10 +76,18 @@ export default function UploadPostPage() {
 
   async function handlePublish() {
     if (!user) return;
-    if (!file && !caption.trim()) {
+
+    // Stories require media
+    if (postType === "story" && !file) {
+      setError("Stories require a photo or video.");
+      return;
+    }
+    // Posts require at least a caption or photo
+    if (postType === "post" && !file && !caption.trim()) {
       setError("Add a photo or write a caption to publish.");
       return;
     }
+
     setUploading(true);
     setError(null);
 
@@ -80,36 +111,93 @@ export default function UploadPostPage() {
       mediaUrl = data.publicUrl;
     }
 
-    // 2. Compute expires_at
-    const opt = EXPIRES_OPTIONS[expiresIdx];
-    const expiresAt = opt.hours
-      ? new Date(Date.now() + opt.hours * 60 * 60 * 1000).toISOString()
-      : new Date("2099-01-01").toISOString();
+    // 2. Call the appropriate API
+    if (postType === "story") {
+      const res = await fetch("/api/stories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          providerId: user.id,
+          mediaUrl,
+          mediaType: "image",
+          caption: caption.trim() || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.error ?? "Failed to publish story.");
+        setUploading(false);
+        return;
+      }
+    } else {
+      // Feed post — goes through /api/posts which handles credit deduction + cooldown
+      const pricePence = isPremium && unlockPrice
+        ? Math.round(parseFloat(unlockPrice) * 100)
+        : null;
 
-    // 3. Insert status_update row
-    const pricePence = isPremium && unlockPrice
-      ? Math.round(parseFloat(unlockPrice) * 100)
-      : null;
+      // If we have a media URL, use the posts API. Otherwise insert directly
+      // (posts API requires mediaUrl, but text-only posts are valid)
+      if (mediaUrl) {
+        const res = await fetch("/api/posts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            providerId: user.id,
+            caption: caption.trim() || "",
+            mediaUrl,
+            mediaType: "image",
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          setError(json.error ?? "Failed to publish post.");
+          setUploading(false);
+          return;
+        }
 
-    const { error: insertErr } = await supabase.from("status_updates").insert({
-      provider_id:  user.id,
-      caption:      caption.trim() || null,
-      media_url:    mediaUrl,
-      expires_at:   expiresAt,
-      is_premium:   isPremium,
-      unlock_price: isPremium ? pricePence : null,
-    });
-
-    if (insertErr) {
-      setError("Failed to publish post. Please try again.");
-      setUploading(false);
-      return;
+        // If premium, update the row (the API doesn't handle premium fields yet)
+        if (isPremium && json.postId) {
+          await supabase.from("status_updates").update({
+            is_premium: true,
+            unlock_price: pricePence,
+          }).eq("id", json.postId);
+        }
+      } else {
+        // Text-only post — use the API as well with a placeholder
+        const res = await fetch("/api/posts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            providerId: user.id,
+            caption: caption.trim(),
+            mediaUrl: "", // text-only
+            mediaType: "text",
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          setError(json.error ?? "Failed to publish post.");
+          setUploading(false);
+          return;
+        }
+        if (isPremium && json.postId) {
+          await supabase.from("status_updates").update({
+            is_premium: true,
+            unlock_price: pricePence,
+          }).eq("id", json.postId);
+        }
+      }
     }
 
-    router.push("/profile");
+    router.push(postType === "story" ? "/explore" : "/profile");
   }
 
-  const canPublish = !uploading && (!!file || caption.trim().length > 0);
+  const isStory = postType === "story";
+  const canPublish = !uploading && (
+    isStory ? !!file : (!!file || caption.trim().length > 0)
+  );
+  const needsCredits = USE_POSTING_PACKAGES && postType === "post";
+  const hasCredits = creditBalance !== null && creditBalance > 0;
 
   return (
     <div className="min-h-screen bg-zinc-950 pb-20">
@@ -121,13 +209,15 @@ export default function UploadPostPage() {
         >
           <ChevronLeft size={20} />
         </button>
-        <span className="text-[15px] font-semibold text-white">New Post</span>
+        <span className="text-[15px] font-semibold text-white">
+          {isStory ? "New Story" : "New Post"}
+        </span>
         <button
           onClick={handlePublish}
-          disabled={!canPublish}
+          disabled={!canPublish || (needsCredits && !hasCredits)}
           className={cn(
             "rounded-full px-4 py-1.5 text-[13px] font-semibold transition",
-            canPublish
+            canPublish && (!needsCredits || hasCredits)
               ? "bg-amber-400 text-zinc-950 hover:bg-amber-300"
               : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
           )}
@@ -137,7 +227,74 @@ export default function UploadPostPage() {
       </header>
 
       <div className="mx-auto max-w-lg space-y-0">
-        {/* Photo picker */}
+        {/* ── Post type toggle ─────────────────────────────────────────── */}
+        <div className="flex border-b border-white/5">
+          <button
+            onClick={() => setPostType("post")}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-2 py-3.5 text-[13px] font-semibold uppercase tracking-wider transition",
+              postType === "post"
+                ? "text-amber-400 border-b-2 border-amber-400"
+                : "text-zinc-500 hover:text-zinc-300"
+            )}
+          >
+            <Camera size={16} />
+            Post
+          </button>
+          <button
+            onClick={() => setPostType("story")}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-2 py-3.5 text-[13px] font-semibold uppercase tracking-wider transition",
+              postType === "story"
+                ? "text-amber-400 border-b-2 border-amber-400"
+                : "text-zinc-500 hover:text-zinc-300"
+            )}
+          >
+            <Film size={16} />
+            Story
+          </button>
+        </div>
+
+        {/* ── Credit balance banner (posts only, when packages enabled) ── */}
+        {needsCredits && (
+          <div className={cn(
+            "flex items-center justify-between px-4 py-3 border-b border-white/5",
+            hasCredits ? "bg-amber-400/5" : "bg-red-500/5"
+          )}>
+            <div className="flex items-center gap-2.5">
+              <Coins size={16} className={hasCredits ? "text-amber-400" : "text-red-400"} />
+              <span className="text-[13px] text-zinc-300">
+                {loadingCredits
+                  ? "Loading credits…"
+                  : hasCredits
+                    ? `${creditBalance} post credit${creditBalance === 1 ? "" : "s"} remaining`
+                    : "No post credits remaining"
+                }
+              </span>
+            </div>
+            {!hasCredits && !loadingCredits && (
+              <button
+                onClick={() => router.push("/profile/packages")}
+                className="flex items-center gap-1.5 rounded-full bg-amber-400 px-3 py-1 text-[11px] font-semibold text-zinc-950 hover:bg-amber-300 transition"
+              >
+                <ShoppingBag size={12} />
+                Buy Credits
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ── Story info banner ──────────────────────────────────────── */}
+        {isStory && (
+          <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/5 bg-blue-500/5">
+            <Film size={16} className="text-blue-400" />
+            <span className="text-[13px] text-zinc-400">
+              Stories are free and disappear after 24 hours
+            </span>
+          </div>
+        )}
+
+        {/* ── Photo picker ───────────────────────────────────────────── */}
         <div
           onClick={() => !preview && fileInputRef.current?.click()}
           className={cn(
@@ -162,7 +319,9 @@ export default function UploadPostPage() {
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-800">
                 <ImagePlus size={28} className="text-zinc-400" />
               </div>
-              <p className="text-[13px] text-zinc-400">Tap to add a photo</p>
+              <p className="text-[13px] text-zinc-400">
+                Tap to add a photo{isStory ? "" : " (optional)"}
+              </p>
               <p className="text-[11px] text-zinc-600">JPG, PNG, WebP · max 10 MB</p>
             </>
           )}
@@ -175,98 +334,79 @@ export default function UploadPostPage() {
           />
         </div>
 
-        {/* Caption */}
+        {/* ── Caption ────────────────────────────────────────────────── */}
         <div className="border-b border-white/5 px-4 py-4">
           <textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
-            placeholder="Write a caption…"
+            placeholder={isStory ? "Add a caption (optional)…" : "Write a caption…"}
             maxLength={500}
-            rows={3}
+            rows={isStory ? 2 : 3}
             className="w-full resize-none bg-transparent text-[15px] text-white placeholder-zinc-600 outline-none"
           />
           <p className="mt-1 text-right text-[11px] text-zinc-600">{caption.length}/500</p>
         </div>
 
-        {/* Expires */}
-        <div className="border-b border-white/5 px-4 py-4">
-          <p className="mb-3 text-[12px] font-medium uppercase tracking-widest text-zinc-500">Expires after</p>
-          <div className="flex gap-2 flex-wrap">
-            {EXPIRES_OPTIONS.map((opt, i) => (
-              <button
-                key={opt.label}
-                onClick={() => setExpiresIdx(i)}
-                className={cn(
-                  "rounded-full border px-4 py-1.5 text-[13px] font-medium transition",
-                  expiresIdx === i
-                    ? "border-amber-400 bg-amber-400/10 text-amber-400"
-                    : "border-white/10 text-zinc-400 hover:border-white/20 hover:text-zinc-200"
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Premium toggle */}
-        <div className="border-b border-white/5 px-4 py-4">
-          <button
-            onClick={() => setIsPremium((p) => !p)}
-            className="flex w-full items-center justify-between"
-          >
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-xl transition",
-                isPremium ? "bg-amber-400/15 text-amber-400" : "bg-zinc-800 text-zinc-500"
-              )}>
-                {isPremium ? <Lock size={18} /> : <Unlock size={18} />}
-              </div>
-              <div className="text-left">
-                <p className="text-[14px] font-medium text-white">Premium content</p>
-                <p className="text-[12px] text-zinc-500">Subscribers only, or set a pay-per-view price</p>
-              </div>
-            </div>
-            <div className={cn(
-              "relative h-6 w-11 rounded-full transition-colors",
-              isPremium ? "bg-amber-400" : "bg-zinc-700"
-            )}>
-              <div className={cn(
-                "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-md transition-all",
-                isPremium ? "left-[22px]" : "left-0.5"
-              )} />
-            </div>
-          </button>
-
-          <AnimatePresence>
-            {isPremium && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
-              >
-                <div className="mt-4 flex items-center gap-3 rounded-xl border border-white/10 bg-zinc-900 px-4 py-3">
-                  <span className="text-[14px] font-semibold text-amber-400">CA$</span>
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    placeholder="Pay-per-view price (optional)"
-                    value={unlockPrice}
-                    onChange={(e) => setUnlockPrice(e.target.value)}
-                    className="flex-1 bg-transparent text-[14px] text-white placeholder-zinc-600 outline-none"
-                  />
+        {/* ── Premium toggle (posts only) ────────────────────────────── */}
+        {!isStory && (
+          <div className="border-b border-white/5 px-4 py-4">
+            <button
+              onClick={() => setIsPremium((p) => !p)}
+              className="flex w-full items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-xl transition",
+                  isPremium ? "bg-amber-400/15 text-amber-400" : "bg-zinc-800 text-zinc-500"
+                )}>
+                  {isPremium ? <Lock size={18} /> : <Unlock size={18} />}
                 </div>
-                <p className="mt-2 px-1 text-[11px] text-zinc-600">
-                  Leave blank to make it subscribers-only with no unlock price.
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                <div className="text-left">
+                  <p className="text-[14px] font-medium text-white">Premium content</p>
+                  <p className="text-[12px] text-zinc-500">Subscribers only, or set a pay-per-view price</p>
+                </div>
+              </div>
+              <div className={cn(
+                "relative h-6 w-11 rounded-full transition-colors",
+                isPremium ? "bg-amber-400" : "bg-zinc-700"
+              )}>
+                <div className={cn(
+                  "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-md transition-all",
+                  isPremium ? "left-[22px]" : "left-0.5"
+                )} />
+              </div>
+            </button>
 
-        {/* Error */}
+            <AnimatePresence>
+              {isPremium && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-4 flex items-center gap-3 rounded-xl border border-white/10 bg-zinc-900 px-4 py-3">
+                    <span className="text-[14px] font-semibold text-amber-400">CA$</span>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      placeholder="Pay-per-view price (optional)"
+                      value={unlockPrice}
+                      onChange={(e) => setUnlockPrice(e.target.value)}
+                      className="flex-1 bg-transparent text-[14px] text-white placeholder-zinc-600 outline-none"
+                    />
+                  </div>
+                  <p className="mt-2 px-1 text-[11px] text-zinc-600">
+                    Leave blank to make it subscribers-only with no unlock price.
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {/* ── Error ──────────────────────────────────────────────────── */}
         <AnimatePresence>
           {error && (
             <motion.div
@@ -280,20 +420,27 @@ export default function UploadPostPage() {
           )}
         </AnimatePresence>
 
-        {/* Bottom publish */}
+        {/* ── Bottom publish ─────────────────────────────────────────── */}
         <div className="px-4 pt-6">
           <button
             onClick={handlePublish}
-            disabled={!canPublish}
+            disabled={!canPublish || (needsCredits && !hasCredits)}
             className={cn(
               "flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-[15px] font-semibold transition",
-              canPublish
+              canPublish && (!needsCredits || hasCredits)
                 ? "bg-amber-400 text-zinc-950 hover:bg-amber-300 active:scale-[0.98]"
                 : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
             )}
           >
             {uploading && <Loader2 size={18} className="animate-spin" />}
-            {uploading ? "Publishing…" : "Publish Post"}
+            {uploading
+              ? "Publishing…"
+              : isStory
+                ? "Share Story"
+                : needsCredits
+                  ? `Publish Post (1 credit)`
+                  : "Publish Post"
+            }
           </button>
         </div>
       </div>

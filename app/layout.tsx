@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { BottomNav } from "@/components/ui/BottomNav";
-import { TopBar } from "@/components/ui/TopBar";
 import { LocaleSwitcher } from "@/components/ui/LocaleSwitcher";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 
@@ -34,7 +33,6 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-50 pb-[60px]">
         <ProfileProvider>
-          <TopBar />
           {children}
           <BottomNav />
           <LocaleSwitcher />

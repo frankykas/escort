@@ -6,7 +6,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, MapPin, SlidersHorizontal, CheckCircle,
-  Star, X, Heart, MessageCircle, Share2,
+  X, Heart, MessageCircle, Share2, Send,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -19,28 +19,50 @@ import { useShare } from "@/hooks/useShare";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ProviderCard = {
+type FeedComment = {
   id: string;
+  user_id: string;
   username: string;
   avatar_url: string | null;
-  cover_url: string | null;
-  post_id: string | null;
+  body: string;
+  created_at: string;
+};
+
+type FeedPost = {
+  post_id: string;
+  provider_id: string;
+  provider_username: string;
+  provider_avatar: string | null;
+  provider_verified: string;
   caption: string | null;
+  media_url: string | null;
+  media_type: string;
+  post_type: string;
   likes_count: number;
   comments_count: number;
   shares_count: number;
-  created_at: string | null;
-  verification_status: "none" | "pending" | "verified";
-  city: string | null;
-  country_code: string | null;
-  age: number | null;
-  hourly_rate: number | null;
-  available_until: string | null;
-  incall: boolean;
-  outcall: boolean;
-  service_categories: string[];
-  review_count: number;
-  average_rating: number | null;
+  views_count: number;
+  created_at: string;
+  latest_comments: FeedComment[];
+};
+
+type StoryGroup = {
+  provider_id: string;
+  username: string;
+  avatar_url: string | null;
+  verification_status: string;
+  latest_story_at: string;
+  story_count: number;
+  has_unseen: boolean;
+  stories: {
+    id: string;
+    media_url: string | null;
+    media_type: string;
+    caption: string | null;
+    created_at: string;
+    expires_at: string;
+    views_count: number;
+  }[];
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -59,11 +81,6 @@ const CATEGORY_CHIPS = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatRate(pence: number | null): string {
-  if (!pence) return "";
-  return `CA$${Math.round(pence / 100)}/hr`;
-}
-
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
@@ -72,20 +89,12 @@ function formatCount(n: number): string {
 
 function timeAgo(date: string | null): string {
   if (!date) return "";
-  const now = new Date();
-  const past = new Date(date);
-  const seconds = Math.floor((now.getTime() - past.getTime()) / 1000);
-  
+  const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
   if (seconds < 60) return "just now";
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
   if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-  return past.toLocaleDateString();
-}
-
-function isAvailableNow(availableUntil: string | null): boolean {
-  if (!availableUntil) return false;
-  return new Date(availableUntil) > new Date();
+  return new Date(date).toLocaleDateString();
 }
 
 function countActiveFilters(f: Filters): number {
@@ -100,46 +109,49 @@ function countActiveFilters(f: Filters): number {
   return n;
 }
 
-// ─── Stories bar ──────────────────────────────────────────────────────────────
+// ─── Stories bar (real stories with unseen ring) ─────────────────────────────
 
-function StoriesBar({ providers }: { providers: ProviderCard[] }) {
-  if (providers.length === 0) return null;
+function StoriesBar({
+  stories,
+  onStoryTap,
+}: {
+  stories: StoryGroup[];
+  onStoryTap: (group: StoryGroup, index: number) => void;
+}) {
+  if (stories.length === 0) return null;
   return (
     <div className="border-b border-white/5 bg-black">
       <div
         className="flex gap-5 overflow-x-auto px-4 py-3"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        {providers.slice(0, 15).map((p) => {
-          const available = isAvailableNow(p.available_until);
-          return (
-            <Link
-              key={p.id}
-              href={`/u/${p.username}`}
-              className="flex flex-col items-center gap-1.5 flex-shrink-0 focus:outline-none"
-            >
-              <div className={cn(
-                "rounded-full p-[2.5px]",
-                available
-                  ? "bg-gradient-to-tr from-emerald-500 via-emerald-400 to-green-300"
-                  : "bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300"
-              )}>
-                <div className="rounded-full p-[2px] bg-black">
-                  {p.avatar_url ? (
-                    <div className="relative h-[58px] w-[58px] overflow-hidden rounded-full">
-                      <Image src={p.avatar_url} alt={p.username} fill className="object-cover" sizes="58px" />
-                    </div>
-                  ) : (
-                    <div className="flex h-[58px] w-[58px] items-center justify-center rounded-full bg-zinc-800 text-base font-bold text-zinc-300">
-                      {p.username[0].toUpperCase()}
-                    </div>
-                  )}
-                </div>
+        {stories.map((group, i) => (
+          <button
+            key={group.provider_id}
+            onClick={() => onStoryTap(group, i)}
+            className="flex flex-col items-center gap-1.5 flex-shrink-0 focus:outline-none"
+          >
+            <div className={cn(
+              "rounded-full p-[2.5px]",
+              group.has_unseen
+                ? "bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300"
+                : "bg-zinc-700"
+            )}>
+              <div className="rounded-full p-[2px] bg-black">
+                {group.avatar_url ? (
+                  <div className="relative h-[58px] w-[58px] overflow-hidden rounded-full">
+                    <Image src={group.avatar_url} alt={group.username} fill className="object-cover" sizes="58px" />
+                  </div>
+                ) : (
+                  <div className="flex h-[58px] w-[58px] items-center justify-center rounded-full bg-zinc-800 text-base font-bold text-zinc-300">
+                    {group.username[0].toUpperCase()}
+                  </div>
+                )}
               </div>
-              <span className="max-w-[60px] truncate text-[10px] text-zinc-400">{p.username}</span>
-            </Link>
-          );
-        })}
+            </div>
+            <span className="max-w-[60px] truncate text-[10px] text-zinc-400">{group.username}</span>
+          </button>
+        ))}
         <div className="w-1 flex-shrink-0" />
       </div>
     </div>
@@ -161,6 +173,145 @@ function StoriesBarSkeleton() {
   );
 }
 
+// ─── Story viewer (full-screen tap-through) ──────────────────────────────────
+
+function StoryViewer({
+  groups,
+  initialGroupIndex,
+  userId,
+  onClose,
+}: {
+  groups: StoryGroup[];
+  initialGroupIndex: number;
+  userId: string | null;
+  onClose: () => void;
+}) {
+  const [groupIdx, setGroupIdx] = useState(initialGroupIndex);
+  const [storyIdx, setStoryIdx] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const group = groups[groupIdx];
+  const story = group?.stories[storyIdx];
+
+  // Auto-advance timer
+  useEffect(() => {
+    if (!story) return;
+    setProgress(0);
+    const duration = 5000; // 5s per story
+    const interval = 50;
+    let elapsed = 0;
+
+    // Mark as viewed
+    if (userId) {
+      supabase.from("story_views").upsert(
+        { user_id: userId, story_id: story.id },
+        { onConflict: "user_id,story_id" }
+      );
+    }
+
+    timerRef.current = setInterval(() => {
+      elapsed += interval;
+      setProgress(Math.min(elapsed / duration, 1));
+      if (elapsed >= duration) {
+        advance();
+      }
+    }, interval);
+
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupIdx, storyIdx]);
+
+  function advance() {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (storyIdx < group.stories.length - 1) {
+      setStoryIdx(storyIdx + 1);
+    } else if (groupIdx < groups.length - 1) {
+      setGroupIdx(groupIdx + 1);
+      setStoryIdx(0);
+    } else {
+      onClose();
+    }
+  }
+
+  function goBack() {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (storyIdx > 0) {
+      setStoryIdx(storyIdx - 1);
+    } else if (groupIdx > 0) {
+      setGroupIdx(groupIdx - 1);
+      setStoryIdx(groups[groupIdx - 1].stories.length - 1);
+    }
+  }
+
+  if (!group || !story) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-black flex flex-col"
+    >
+      {/* Progress bars */}
+      <div className="flex gap-1 px-2 pt-3 pb-2">
+        {group.stories.map((_, i) => (
+          <div key={i} className="flex-1 h-[2px] rounded-full bg-zinc-700 overflow-hidden">
+            <div
+              className="h-full bg-white rounded-full transition-all duration-75"
+              style={{
+                width: i < storyIdx ? "100%" : i === storyIdx ? `${progress * 100}%` : "0%",
+              }}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-2">
+        {group.avatar_url ? (
+          <div className="relative h-8 w-8 overflow-hidden rounded-full">
+            <Image src={group.avatar_url} alt={group.username} fill className="object-cover" sizes="32px" />
+          </div>
+        ) : (
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 text-sm font-bold text-zinc-300">
+            {group.username[0].toUpperCase()}
+          </div>
+        )}
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-white">{group.username}</p>
+          <p className="text-[10px] text-zinc-400">{timeAgo(story.created_at)}</p>
+        </div>
+        <button onClick={onClose} className="p-2 text-white">
+          <X size={24} />
+        </button>
+      </div>
+
+      {/* Story content */}
+      <div className="relative flex-1 flex items-center justify-center">
+        {story.media_url ? (
+          <Image src={story.media_url} alt="" fill className="object-contain" sizes="100vw" />
+        ) : (
+          <div className="flex items-center justify-center p-8">
+            <p className="text-xl text-white text-center">{story.caption}</p>
+          </div>
+        )}
+
+        {/* Tap zones */}
+        <button onClick={goBack} className="absolute left-0 top-0 w-1/3 h-full" aria-label="Previous" />
+        <button onClick={advance} className="absolute right-0 top-0 w-2/3 h-full" aria-label="Next" />
+
+        {/* Caption overlay */}
+        {story.caption && story.media_url && (
+          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent px-4 pb-6 pt-12">
+            <p className="text-sm text-white">{story.caption}</p>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function ExploreClient() {
@@ -171,111 +322,79 @@ export function ExploreClient() {
   const [filters, setFilters]             = useState<Filters>(DEFAULT_FILTERS);
   const [activeChip, setActiveChip]       = useState("all");
   const [drawerOpen, setDrawerOpen]       = useState(false);
-  const [results, setResults]             = useState<ProviderCard[]>([]);
+  const [posts, setPosts]                 = useState<FeedPost[]>([]);
+  const [storyGroups, setStoryGroups]     = useState<StoryGroup[]>([]);
   const [loading, setLoading]             = useState(true);
   const [geoLoading, setGeoLoading]       = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [likedPostIds, setLikedPostIds]   = useState<Set<string>>(new Set());
   const [followedIds, setFollowedIds]     = useState<Set<string>>(new Set());
+  const [viewingStory, setViewingStory]   = useState<{ groups: StoryGroup[]; index: number } | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchResults = useCallback(async (search: string, city: string, f: Filters) => {
+  // Fetch feed posts via RPC
+  const fetchFeed = useCallback(async (city: string) => {
     setLoading(true);
 
-    let query = supabase
-      .from("profiles")
-      .select("id, username, avatar_url, verification_status, city, country_code, age, hourly_rate, available_until, incall, outcall, service_categories, review_count, average_rating, created_at")
-      .eq("is_provider", true)
-      .order("created_at", { ascending: false })
-      .limit(40);
-
-    if (city.trim() && !search.trim()) query = query.ilike("city", `%${city.trim()}%`);
-    if (search.trim()) {
-      const q = search.trim().replace(/^@/, "");
-      query = query.or(`username.ilike.%${q}%,city.ilike.%${q}%`);
-    }
-    if (f.verifiedOnly)              query = query.eq("verification_status", "verified");
-    if (f.availableNow)              query = query.gt("available_until", new Date().toISOString());
-    if (f.incall && !f.outcall)      query = query.eq("incall", true);
-    else if (f.outcall && !f.incall) query = query.eq("outcall", true);
-    if (f.categories.length > 0)     query = query.overlaps("service_categories", f.categories);
-    if (f.minRate > 0)               query = query.gte("hourly_rate", f.minRate * 100);
-    if (f.maxRate < DEFAULT_FILTERS.maxRate) query = query.lte("hourly_rate", f.maxRate * 100);
-    if (f.minAge > DEFAULT_FILTERS.minAge)   query = query.gte("age", f.minAge);
-    if (f.maxAge < DEFAULT_FILTERS.maxAge)   query = query.lte("age", f.maxAge);
-
-    const { data } = await query;
-    const providers = (data ?? []) as ProviderCard[];
-
-    // Fetch latest post (cover + caption + stats) per provider
-    const ids = providers.map((p) => p.id);
-    const postMap = new Map<string, { post_id: string; cover_url: string | null; caption: string | null; likes_count: number; comments_count: number; shares_count: number; created_at: string | null }>();
-
-    if (ids.length > 0) {
-      const { data: postData } = await supabase
-        .from("status_updates")
-        .select("id, provider_id, media_url, caption, likes_count, comments_count, shares_count, created_at")
-        .in("provider_id", ids)
-        .not("media_url", "is", null)
-        .order("created_at", { ascending: false });
-
-      for (const row of (postData ?? []) as { id: string; provider_id: string; media_url: string | null; caption: string | null; likes_count: number; comments_count: number; shares_count: number; created_at: string | null }[]) {
-        if (!postMap.has(row.provider_id)) {
-          postMap.set(row.provider_id, {
-            post_id: row.id,
-            cover_url: row.media_url,
-            caption: row.caption,
-            likes_count: row.likes_count ?? 0,
-            comments_count: row.comments_count ?? 0,
-            shares_count: row.shares_count ?? 0,
-            created_at: row.created_at,
-          });
-        }
-      }
-    }
-
-    const enriched: ProviderCard[] = providers.map((p) => {
-      const post = postMap.get(p.id);
-      return {
-        ...p,
-        post_id: post?.post_id ?? null,
-        cover_url: post?.cover_url ?? null,
-        caption: post?.caption ?? null,
-        likes_count: post?.likes_count ?? 0,
-        comments_count: post?.comments_count ?? 0,
-        shares_count: post?.shares_count ?? 0,
-        created_at: post?.created_at ?? p.created_at,
-      };
+    const { data, error } = await supabase.rpc("get_feed_posts", {
+      p_country_code: null,
+      p_city: city.trim() || null,
+      p_limit: 40,
+      p_offset: 0,
+      p_comments_per_post: 3,
     });
 
-    setResults(enriched);
+    if (error) {
+      console.error("Feed error:", error.message);
+      setPosts([]);
+    } else {
+      setPosts((data ?? []) as FeedPost[]);
+    }
+
     setLoading(false);
   }, []);
 
-  // Batch-fetch engagement state once results arrive
+  // Fetch stories via RPC
+  const fetchStories = useCallback(async () => {
+    const { data } = await supabase.rpc("get_active_stories", {
+      p_country_code: null,
+      p_viewer_id: user?.id ?? null,
+      p_limit: 30,
+    });
+    setStoryGroups((data ?? []) as StoryGroup[]);
+  }, [user?.id]);
+
+  // Batch-fetch engagement state once posts arrive
   useEffect(() => {
-    if (!user || results.length === 0) return;
-    const postIds = results.map((p) => p.post_id).filter(Boolean) as string[];
-    const providerIds = results.map((p) => p.id);
+    if (!user || posts.length === 0) return;
+    const postIds = posts.map((p) => p.post_id);
+    const providerIds = [...new Set(posts.map((p) => p.provider_id))];
 
     Promise.all([
-      postIds.length > 0
-        ? supabase.from("likes").select("status_update_id").eq("user_id", user.id).in("status_update_id", postIds)
-        : Promise.resolve({ data: [] }),
+      supabase.from("likes").select("status_update_id").eq("user_id", user.id).in("status_update_id", postIds),
       supabase.from("follows").select("following_id").eq("follower_id", user.id).in("following_id", providerIds),
     ]).then(([likesRes, followsRes]) => {
       setLikedPostIds(new Set((likesRes.data ?? []).map((r: { status_update_id: string }) => r.status_update_id)));
       setFollowedIds(new Set((followsRes.data ?? []).map((r: { following_id: string }) => r.following_id)));
     });
-  }, [user, results]);
+  }, [user, posts]);
 
-  useEffect(() => { fetchResults("", "", DEFAULT_FILTERS); }, [fetchResults]);
+  // Initial load
+  useEffect(() => {
+    fetchFeed("");
+    fetchStories();
+  }, [fetchFeed, fetchStories]);
 
+  // Debounced search/city changes
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchResults(searchQuery, cityQuery, filters), 350);
+    debounceRef.current = setTimeout(() => {
+      // For search queries, we fall back to the city-based filter for now
+      // (search by username requires a different approach — city filter covers the main use case)
+      fetchFeed(searchQuery.trim() || cityQuery);
+    }, 350);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [searchQuery, cityQuery, filters, fetchResults]);
+  }, [searchQuery, cityQuery, fetchFeed]);
 
   async function handleNearMe() {
     if (!navigator.geolocation) return;
@@ -290,7 +409,7 @@ export function ExploreClient() {
           const data = await res.json();
           const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || "";
           if (city) { setCityQuery(city); setSearchQuery(""); }
-        } catch {}
+        } catch { /* ignore */ }
         setGeoLoading(false);
       },
       () => setGeoLoading(false),
@@ -324,11 +443,17 @@ export function ExploreClient() {
       </header>
 
       {/* ── Stories bar ── */}
-      {loading ? <StoriesBarSkeleton /> : <StoriesBar providers={results} />}
+      {loading ? (
+        <StoriesBarSkeleton />
+      ) : (
+        <StoriesBar
+          stories={storyGroups}
+          onStoryTap={(group, index) => setViewingStory({ groups: storyGroups, index })}
+        />
+      )}
 
       {/* ── Control strip: Near Me | Search | Filters ── */}
       <div className="flex items-center gap-2 border-b border-white/5 bg-black px-4 py-3">
-
         <button
           onClick={handleNearMe}
           disabled={geoLoading}
@@ -426,7 +551,7 @@ export function ExploreClient() {
       {/* ── Feed ── */}
       {loading ? (
         <FeedSkeleton />
-      ) : results.length === 0 ? (
+      ) : posts.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 px-8 pt-24">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-900">
             <Search size={28} className="text-zinc-600" />
@@ -437,24 +562,23 @@ export function ExploreClient() {
       ) : (
         <div>
           <p className="px-4 py-2.5 text-[12px] text-zinc-600">
-            <span className="font-medium text-zinc-400">{results.length}</span>
-            {" "}{t("explore_result_label")}
-            {searchQuery && <span> matching &ldquo;{searchQuery}&rdquo;</span>}
-            {cityQuery && !searchQuery && <span> in {cityQuery}</span>}
+            <span className="font-medium text-zinc-400">{posts.length}</span>
+            {" "}posts
+            {cityQuery && <span> in {cityQuery}</span>}
           </p>
 
-          {results.map((provider, i) => (
+          {posts.map((post, i) => (
             <motion.div
-              key={provider.id}
+              key={post.post_id}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: i * 0.03 }}
             >
-              <ProviderFeedCard
-                provider={provider}
+              <PostFeedCard
+                post={post}
                 userId={user?.id ?? null}
-                isLiked={likedPostIds.has(provider.post_id ?? "")}
-                isFollowing={followedIds.has(provider.id)}
+                isLiked={likedPostIds.has(post.post_id)}
+                isFollowing={followedIds.has(post.provider_id)}
               />
             </motion.div>
           ))}
@@ -470,114 +594,141 @@ export function ExploreClient() {
           />
         )}
       </AnimatePresence>
+
+      {/* Story viewer overlay */}
+      <AnimatePresence>
+        {viewingStory && (
+          <StoryViewer
+            groups={viewingStory.groups}
+            initialGroupIndex={viewingStory.index}
+            userId={user?.id ?? null}
+            onClose={() => {
+              setViewingStory(null);
+              fetchStories(); // Refresh unseen state
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-// ─── Provider feed card ───────────────────────────────────────────────────────
+// ─── Post feed card (with embedded comments) ─────────────────────────────────
 
-function ProviderFeedCard({
-  provider,
+function PostFeedCard({
+  post,
   userId,
   isLiked,
   isFollowing,
 }: {
-  provider: ProviderCard;
+  post: FeedPost;
   userId: string | null;
   isLiked: boolean;
   isFollowing: boolean;
 }) {
-  const coverSrc = provider.cover_url ?? provider.avatar_url;
-  const isVerified = provider.verification_status === "verified";
-  const available = isAvailableNow(provider.available_until);
-  const isOwnProfile = userId === provider.id;
+  const isVerified = post.provider_verified === "verified";
+  const isOwnProfile = userId === post.provider_id;
+  const [commentText, setCommentText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [localComments, setLocalComments] = useState<FeedComment[]>(post.latest_comments ?? []);
 
   const { isLiked: liked, likesCount, toggle: toggleLike } = useLike({
-    postId: provider.post_id ?? "",
+    postId: post.post_id,
     initialIsLiked: isLiked,
-    initialCount: provider.likes_count,
+    initialCount: post.likes_count,
     userId,
   });
 
   const { isFollowing: following, toggle: toggleFollow } = useFollow({
-    profileId: provider.id,
+    profileId: post.provider_id,
     initialIsFollowing: isFollowing,
     userId,
   });
 
   const { share, sharesCount, isSharing } = useShare({
-    postId: provider.post_id ?? "",
-    initialCount: provider.shares_count,
+    postId: post.post_id,
+    initialCount: post.shares_count,
     userId,
   });
 
   async function handleShare() {
-    const url = `${window.location.origin}/u/${provider.username}`;
-    
-    // First record the share in database
+    const url = `${window.location.origin}/u/${post.provider_username}`;
     await share();
-    
-    // Then use native share or clipboard
     if (navigator.share) {
-      try {
-        await navigator.share({ title: provider.username, url });
-      } catch (error) {
-        // User cancelled or share failed, fallback to clipboard
-        await navigator.clipboard.writeText(url);
-      }
+      try { await navigator.share({ title: post.provider_username, url }); }
+      catch { await navigator.clipboard.writeText(url); }
     } else {
       await navigator.clipboard.writeText(url);
     }
   }
 
+  async function handleComment() {
+    if (!userId || !commentText.trim() || submitting) return;
+    setSubmitting(true);
+
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("username, avatar_url")
+      .eq("id", userId)
+      .single();
+
+    const { data, error } = await supabase
+      .from("comments")
+      .insert({
+        status_update_id: post.post_id,
+        user_id: userId,
+        body: commentText.trim(),
+      })
+      .select("id, created_at")
+      .single();
+
+    if (!error && data) {
+      setLocalComments((prev) => [
+        ...prev,
+        {
+          id: data.id,
+          user_id: userId,
+          username: profileData?.username ?? "you",
+          avatar_url: profileData?.avatar_url ?? null,
+          body: commentText.trim(),
+          created_at: data.created_at,
+        },
+      ]);
+      setCommentText("");
+    }
+    setSubmitting(false);
+  }
+
   return (
     <article className="border-b border-zinc-900/80">
-
       {/* ── Post header ── */}
       <div className="flex items-center gap-3 px-4 py-3">
-
-        {/* Avatar with ring */}
-        <Link href={`/u/${provider.username}`} className="flex-shrink-0">
-          <div className={cn(
-            "rounded-full p-[2px]",
-            available
-              ? "bg-gradient-to-tr from-emerald-500 via-emerald-400 to-green-300"
-              : "bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300"
-          )}>
+        <Link href={`/u/${post.provider_username}`} className="flex-shrink-0">
+          <div className="rounded-full p-[2px] bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300">
             <div className="rounded-full p-[1.5px] bg-black">
-              {provider.avatar_url ? (
+              {post.provider_avatar ? (
                 <div className="relative h-9 w-9 overflow-hidden rounded-full">
-                  <Image src={provider.avatar_url} alt={provider.username} fill className="object-cover" sizes="36px" />
+                  <Image src={post.provider_avatar} alt={post.provider_username} fill className="object-cover" sizes="36px" />
                 </div>
               ) : (
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-sm font-bold text-zinc-300">
-                  {provider.username[0].toUpperCase()}
+                  {post.provider_username[0].toUpperCase()}
                 </div>
               )}
             </div>
           </div>
         </Link>
 
-        {/* Username + location */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <Link href={`/u/${provider.username}`} className="text-[14px] font-semibold text-white hover:text-zinc-300 transition-colors truncate">
-              {provider.username}
+            <Link href={`/u/${post.provider_username}`} className="text-[14px] font-semibold text-white hover:text-zinc-300 transition-colors truncate">
+              {post.provider_username}
             </Link>
             {isVerified && <CheckCircle size={13} className="flex-shrink-0 text-amber-400 fill-amber-400/15" />}
-            {available && (
-              <span className="flex flex-shrink-0 items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_4px_#34d399]" />
-                <span className="text-[9px] font-bold tracking-wide text-emerald-400">LIVE</span>
-              </span>
-            )}
           </div>
-          {provider.city && (
-            <p className="mt-0.5 truncate text-[11px] text-zinc-500">{provider.city}{provider.country_code ? `, ${provider.country_code.toUpperCase()}` : ""}</p>
-          )}
+          <p className="mt-0.5 text-[10px] text-zinc-500 uppercase tracking-wide">{timeAgo(post.created_at)}</p>
         </div>
 
-        {/* Follow button */}
         {!isOwnProfile && (
           <button
             onClick={toggleFollow}
@@ -591,72 +742,37 @@ function ProviderFeedCard({
             {following ? "Following" : "Follow"}
           </button>
         )}
-
-        {/* Rate pill when no follow button (own profile) */}
-        {isOwnProfile && provider.hourly_rate ? (
-          <div className="flex-shrink-0 rounded-full border border-amber-400/25 bg-amber-400/8 px-3 py-1">
-            <span className="text-[12px] font-bold text-amber-400">{formatRate(provider.hourly_rate)}</span>
-          </div>
-        ) : null}
       </div>
 
       {/* ── Cover image ── */}
-      <Link href={`/u/${provider.username}`} className="block relative aspect-square w-full bg-zinc-900">
-        {coverSrc ? (
-          <Image src={coverSrc} alt={provider.username} fill className="object-cover" sizes="100vw" />
-        ) : (
-          <div className="flex h-full items-center justify-center bg-gradient-to-b from-zinc-900 to-zinc-950">
-            <span className="text-7xl font-black text-zinc-800">{provider.username[0].toUpperCase()}</span>
-          </div>
-        )}
-      </Link>
+      {post.media_url && (
+        <Link href={`/u/${post.provider_username}`} className="block relative aspect-square w-full bg-zinc-900">
+          <Image src={post.media_url} alt={post.provider_username} fill className="object-cover" sizes="100vw" />
+        </Link>
+      )}
 
       {/* ── Action bar ── */}
       <div className="flex items-center gap-1 px-3 pt-3 pb-1">
-        {/* Like */}
         <button
           onClick={toggleLike}
-          disabled={!userId || !provider.post_id}
+          disabled={!userId}
           className="flex items-center gap-1.5 rounded-full p-2 transition-all hover:bg-white/5 disabled:opacity-40"
         >
           <Heart
             size={22}
-            className={cn(
-              "transition-all duration-150",
-              liked ? "fill-red-500 text-red-500 scale-110" : "text-zinc-300"
-            )}
+            className={cn("transition-all duration-150", liked ? "fill-red-500 text-red-500 scale-110" : "text-zinc-300")}
           />
         </button>
-
-        {/* Comment */}
-        <Link
-          href={`/u/${provider.username}`}
-          className="flex items-center gap-1.5 rounded-full p-2 transition-all hover:bg-white/5"
-        >
+        <button className="flex items-center gap-1.5 rounded-full p-2 transition-all hover:bg-white/5">
           <MessageCircle size={22} className="text-zinc-300" />
-        </Link>
-
-        {/* Share */}
+        </button>
         <button
           onClick={handleShare}
-          disabled={isSharing || !userId || !provider.post_id}
+          disabled={isSharing || !userId}
           className="flex items-center gap-1.5 rounded-full p-2 transition-all hover:bg-white/5 disabled:opacity-40"
         >
-          <Share2 
-            size={22} 
-            className={cn(
-              "transition-all duration-150",
-              isSharing ? "text-amber-400 scale-110" : "text-zinc-300"
-            )} 
-          />
+          <Share2 size={22} className={cn("transition-all duration-150", isSharing ? "text-amber-400 scale-110" : "text-zinc-300")} />
         </button>
-
-        {/* Rate pill pushed to the right */}
-        {!isOwnProfile && provider.hourly_rate ? (
-          <div className="ml-auto rounded-full border border-amber-400/25 bg-amber-400/8 px-3 py-1">
-            <span className="text-[12px] font-bold text-amber-400">{formatRate(provider.hourly_rate)}</span>
-          </div>
-        ) : null}
       </div>
 
       {/* ── Stats ── */}
@@ -666,33 +782,66 @@ function ProviderFeedCard({
             {formatCount(likesCount)} {likesCount === 1 ? "like" : "likes"}
           </p>
         )}
-        {provider.comments_count > 0 && (
+        {post.comments_count > 0 && (
           <p className="text-[13px] text-zinc-500">
-            {formatCount(provider.comments_count)} {provider.comments_count === 1 ? "comment" : "comments"}
+            {formatCount(post.comments_count)} {post.comments_count === 1 ? "comment" : "comments"}
           </p>
         )}
-        {provider.shares_count > 0 && (
+        {sharesCount > 0 && (
           <p className="text-[13px] text-zinc-500">
             {formatCount(sharesCount)} {sharesCount === 1 ? "share" : "shares"}
-          </p>
-        )}
-        {provider.created_at && (
-          <p className="ml-auto text-[10px] text-zinc-500 uppercase tracking-wide">
-            {timeAgo(provider.created_at)}
           </p>
         )}
       </div>
 
       {/* ── Caption ── */}
-      <p className="px-4 pb-4 text-[13px] leading-relaxed text-zinc-200">
-        <Link href={`/u/${provider.username}`} className="font-semibold text-white hover:text-zinc-300">
-          {provider.username}
-        </Link>
-        {"  "}
-        {provider.caption || "Check out my latest post! 💫"}
-      </p>
+      {post.caption && (
+        <p className="px-4 pb-2 text-[13px] leading-relaxed text-zinc-200">
+          <Link href={`/u/${post.provider_username}`} className="font-semibold text-white hover:text-zinc-300">
+            {post.provider_username}
+          </Link>
+          {"  "}
+          {post.caption}
+        </p>
+      )}
 
-          </article>
+      {/* ── Comments ── */}
+      {localComments.length > 0 && (
+        <div className="px-4 pb-2 space-y-1.5">
+          {localComments.map((c) => (
+            <p key={c.id} className="text-[13px] text-zinc-300">
+              <Link href={`/u/${c.username}`} className="font-semibold text-white hover:text-zinc-300 mr-1.5">
+                {c.username}
+              </Link>
+              {c.body}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {/* ── Add comment ── */}
+      {userId && (
+        <div className="flex items-center gap-2 px-4 pb-4">
+          <input
+            type="text"
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleComment()}
+            placeholder="Add a comment…"
+            className="flex-1 bg-transparent text-[13px] text-zinc-400 placeholder-zinc-600 outline-none"
+          />
+          {commentText.trim() && (
+            <button
+              onClick={handleComment}
+              disabled={submitting}
+              className="text-amber-400 disabled:opacity-40"
+            >
+              <Send size={16} />
+            </button>
+          )}
+        </div>
+      )}
+    </article>
   );
 }
 
@@ -717,11 +866,9 @@ function FeedSkeleton() {
             <div className="h-6 w-6 rounded-full bg-zinc-800" />
             <div className="h-6 w-6 rounded-full bg-zinc-800" />
           </div>
-          <div className="px-4 pb-2">
-            <div className="h-3 w-20 rounded-full bg-zinc-800" />
-          </div>
-          <div className="px-4 pb-4">
+          <div className="px-4 pb-4 space-y-2">
             <div className="h-3 w-3/4 rounded-full bg-zinc-800" />
+            <div className="h-3 w-1/2 rounded-full bg-zinc-800" />
           </div>
         </div>
       ))}
