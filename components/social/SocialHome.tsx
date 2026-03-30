@@ -1,25 +1,35 @@
 import { Suspense } from "react";
 import { createServerClient } from "@/lib/supabase/server";
+import { getFeedPosts } from "@/lib/feed";
 import { FeedList } from "./FeedList";
 import { FeedTabs } from "./FeedTabs";
 import { FavoriteFeed } from "./FavoriteFeed";
 import { PublishButton } from "./PublishButton";
 
 export type FeedPostData = {
-  id: string;
+  post_id: string;
+  provider_id: string;
+  provider_username: string;
+  provider_avatar: string | null;
+  provider_verified: string;
   caption: string | null;
   media_url: string | null;
-  created_at: string;
-  expires_at: string;
+  media_type: string;
+  post_type: string;
   likes_count: number;
   comments_count: number;
+  shares_count: number;
   views_count: number;
-  profiles: {
+  created_at: string;
+  expires_at: string | null;
+  latest_comments: {
     id: string;
+    user_id: string;
     username: string;
     avatar_url: string | null;
-    verification_status: "none" | "pending" | "verified";
-  };
+    body: string;
+    created_at: string;
+  }[];
 };
 
 type Props = {
@@ -72,39 +82,13 @@ export async function SocialHome({ searchParams }: Props) {
   );
 }
 
-// Extracted to keep SocialHome clean — handles the server-side public feed fetch
+// Extracted to keep SocialHome clean — handles server-side public feed fetch
 async function ForYouFeed({
   supabase,
 }: {
   supabase: NonNullable<ReturnType<typeof createServerClient>>;
 }) {
-  const { data, error } = await supabase
-    .from("status_updates")
-    .select(
-      `id, caption, media_url, created_at, expires_at,
-       likes_count, comments_count, views_count,
-       profiles!status_updates_provider_id_fkey ( id, username, avatar_url, verification_status )`
-    )
-    .gt("expires_at", new Date().toISOString())
-    .order("created_at", { ascending: false })
-    .limit(20);
-
-  if (error) {
-    return (
-      <main className="flex flex-1 items-center justify-center px-4">
-        <div className="max-w-sm rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-center">
-          <p className="text-sm font-medium text-zinc-300">Failed to load feed</p>
-          <p className="mt-2 font-mono text-xs text-red-400">{error.message}</p>
-          <p className="mt-3 text-xs text-zinc-600">
-            If this mentions a missing column, run{" "}
-            <code className="text-amber-400">003_engagement.sql</code> in your Supabase SQL Editor.
-          </p>
-        </div>
-      </main>
-    );
-  }
-
-  const posts = (data ?? []) as unknown as FeedPostData[];
-
+  const posts = await getFeedPosts();
+  
   return <FeedList posts={posts} />;
 }

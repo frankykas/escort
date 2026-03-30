@@ -47,6 +47,7 @@ All feature flags live in `lib/features.ts` and are driven by `NEXT_PUBLIC_` env
 | `USE_POSTING_PACKAGES` | `NEXT_PUBLIC_USE_POSTING_PACKAGES` | `false` | Requires post credits to create feed posts (stories remain free) |
 | `USE_GEO_FEED` | `NEXT_PUBLIC_USE_GEO_FEED` | `false` | Enables radius-based proximity filtering on explore page |
 | `USE_POST_COOLDOWN` | `NEXT_PUBLIC_USE_POST_COOLDOWN` | `false` | Enforces minimum time gap between feed posts (default 6h) |
+| `USE_BOOKINGS` | `NEXT_PUBLIC_USE_BOOKINGS` | `false` | Shows booking/enquiry system (EnquireBar, booking pages, booking notifications). Disabled by default — platform is a classifieds marketplace, not a booking intermediary |
 
 **Rules:**
 - Add new flags to `lib/features.ts` — never read `process.env` directly in components

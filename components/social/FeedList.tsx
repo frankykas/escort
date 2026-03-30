@@ -24,8 +24,8 @@ export function FeedList({ posts }: Props) {
       return;
     }
 
-    const postIds = posts.map((p) => p.id);
-    const profileIds = [...new Set(posts.map((p) => p.profiles.id))];
+    const postIds = posts.map((p) => p.post_id);
+    const profileIds = [...new Set(posts.map((p) => p.provider_id))];
 
     Promise.all([
       supabase
@@ -64,15 +64,15 @@ export function FeedList({ posts }: Props) {
       <div className="flex flex-col pt-1">
         {posts.map((post, index) => (
           <motion.div
-            key={`${post.id}-${engagementLoaded}`}
+            key={`${post.post_id}-${engagementLoaded}`}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: index * 0.06, ease: "easeOut" }}
           >
             <FeedPost
               post={post}
-              isLiked={engagementLoaded ? likedPostIds.has(post.id) : false}
-              isFollowing={engagementLoaded ? followedProfileIds.has(post.profiles.id) : false}
+              isLiked={engagementLoaded ? likedPostIds.has(post.post_id) : false}
+              isFollowing={engagementLoaded ? followedProfileIds.has(post.provider_id) : false}
               userId={user?.id ?? null}
             />
           </motion.div>

@@ -10,6 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { USE_BOOKINGS } from "@/lib/features";
 
 type Props = {
   username: string;
@@ -76,6 +77,9 @@ export function EnquireBar({
   depositRequired, depositAmount, advanceNoticeHours,
 }: Props) {
   const { user } = useSession();
+
+  // Bookings feature is disabled — don't render the enquiry bar
+  if (!USE_BOOKINGS) return null;
   const [sheetOpen, setSheetOpen] = useState(false);
   const [step, setStep] = useState<Step>("options");
   const [form, setForm] = useState<FormState>(EMPTY_FORM);

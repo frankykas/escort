@@ -15,8 +15,8 @@ export function StoriesBar({ posts }: Props) {
   const seen = new Set<string>();
   const stories = posts
     .filter((p) => {
-      if (seen.has(p.profiles.id)) return false;
-      seen.add(p.profiles.id);
+      if (seen.has(p.provider_id)) return false;
+      seen.add(p.provider_id);
       return true;
     })
     .slice(0, 12);
@@ -31,7 +31,7 @@ export function StoriesBar({ posts }: Props) {
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {stories.map((post, index) => {
-            const { id, username, avatar_url } = post.profiles;
+            const { provider_id: id, provider_username: username, provider_avatar: avatar_url } = post;
             return (
               <button
                 key={id}

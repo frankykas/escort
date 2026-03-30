@@ -630,7 +630,8 @@ function PostFeedCard({
   const isOwnProfile = userId === post.provider_id;
   const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [localComments, setLocalComments] = useState<FeedComment[]>(post.latest_comments ?? []);
+  const [commentSent, setCommentSent] = useState(false);
+  const localComments = post.latest_comments ?? [];
 
   const { isLiked: liked, likesCount, toggle: toggleLike } = useLike({
     postId: post.post_id,
@@ -666,35 +667,18 @@ function PostFeedCard({
     if (!userId || !commentText.trim() || submitting) return;
     setSubmitting(true);
 
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("username, avatar_url")
-      .eq("id", userId)
-      .single();
-
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("comments")
       .insert({
         status_update_id: post.post_id,
         user_id: userId,
         body: commentText.trim(),
-      })
-      .select("id, created_at")
-      .single();
+      });
 
-    if (!error && data) {
-      setLocalComments((prev) => [
-        ...prev,
-        {
-          id: data.id,
-          user_id: userId,
-          username: profileData?.username ?? "you",
-          avatar_url: profileData?.avatar_url ?? null,
-          body: commentText.trim(),
-          created_at: data.created_at,
-        },
-      ]);
+    if (!error) {
       setCommentText("");
+      setCommentSent(true);
+      setTimeout(() => setCommentSent(false), 3000);
     }
     setSubmitting(false);
   }
@@ -821,23 +805,31 @@ function PostFeedCard({
 
       {/* ── Add comment ── */}
       {userId && (
-        <div className="flex items-center gap-2 px-4 pb-4">
-          <input
-            type="text"
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleComment()}
-            placeholder="Add a comment…"
-            className="flex-1 bg-transparent text-[13px] text-zinc-400 placeholder-zinc-600 outline-none"
-          />
-          {commentText.trim() && (
-            <button
-              onClick={handleComment}
-              disabled={submitting}
-              className="text-amber-400 disabled:opacity-40"
-            >
-              <Send size={16} />
-            </button>
+        <div className="px-4 pb-4">
+          {commentSent ? (
+            <p className="text-[12px] text-emerald-400/80">
+              Comment sent — visible once approved by the creator.
+            </p>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleComment()}
+                placeholder="Add a comment…"
+                className="flex-1 bg-transparent text-[13px] text-zinc-400 placeholder-zinc-600 outline-none"
+              />
+              {commentText.trim() && (
+                <button
+                  onClick={handleComment}
+                  disabled={submitting}
+                  className="text-amber-400 disabled:opacity-40"
+                >
+                  <Send size={16} />
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}

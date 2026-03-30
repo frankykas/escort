@@ -28,6 +28,7 @@ interface FeedPost {
   shares_count: number;
   views_count: number;
   created_at: string;
+  expires_at: string | null;
   latest_comments: FeedComment[];
 }
 

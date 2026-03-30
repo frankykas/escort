@@ -65,7 +65,10 @@ export function StoryViewer({ stories, initialIndex, onClose }: Props) {
     };
   }, []);
 
-  const { username, avatar_url, verification_status } = story.profiles;
+  const { provider_username, provider_avatar, provider_verified } = story;
+  const username = provider_username;
+  const avatar_url = provider_avatar;
+  const verification_status = provider_verified;
   const isVerified = verification_status === "verified";
 
   const slideVariants = {

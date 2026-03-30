@@ -18,3 +18,8 @@ export const USE_GEO_FEED =
 // Post cooldown: when enabled, enforces minimum time between feed posts.
 export const USE_POST_COOLDOWN =
   process.env.NEXT_PUBLIC_USE_POST_COOLDOWN === "true";
+
+// Bookings: when enabled, shows the booking/enquiry system.
+// Disabled by default — the platform is a classifieds marketplace, not a booking intermediary.
+export const USE_BOOKINGS =
+  process.env.NEXT_PUBLIC_USE_BOOKINGS === "true";

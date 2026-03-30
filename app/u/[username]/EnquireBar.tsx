@@ -10,6 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { USE_BOOKINGS } from "@/lib/features";
 
 type Props = {
   username: string;
@@ -81,6 +82,8 @@ export function EnquireBar({ username, providerId, isOwnProfile }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Bookings feature is disabled — don't render the enquiry bar
+  if (!USE_BOOKINGS) return null;
   if (isOwnProfile) return null;
 
   function closeSheet() {

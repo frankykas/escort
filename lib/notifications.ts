@@ -165,7 +165,7 @@ export function getNotificationRoute(notification: Notification): string {
       return "/profile/bookings";
 
     case "review_received":
-      return "/profile/bookings"; // reviews are on the bookings page
+      return `/u/${notification.actor_username ?? ""}`;
 
     case "new_follower":
     case "new_subscriber":

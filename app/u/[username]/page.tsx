@@ -7,6 +7,7 @@ import { ProfileActions } from "./ProfileActions";
 import { ProfileTabs } from "./ProfileTabs";
 import { HeroCarousel } from "./HeroCarousel";
 import { EnquireBar } from "./EnquireBar";
+import { USE_BOOKINGS } from "@/lib/features";
 import type { ProfileAttributes } from "./ProfileTabs";
 
 function formatCount(n: number): string {
@@ -194,7 +195,7 @@ export default async function ProfilePage({ params }: Props) {
         )}
 
         {/* Rating + completed bookings */}
-        {(avgRating !== null || completedBookings > 0) && (
+        {(avgRating !== null || (USE_BOOKINGS && completedBookings > 0)) && (
           <div className="mt-2 flex items-center gap-3">
             {avgRating !== null && (
               <div className="flex items-center gap-1.5">
@@ -203,7 +204,7 @@ export default async function ProfilePage({ params }: Props) {
                 <span className="text-[12px] text-zinc-500">({reviewCount})</span>
               </div>
             )}
-            {completedBookings > 0 && (
+            {USE_BOOKINGS && completedBookings > 0 && (
               <span className="flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-400">
                 {completedBookings} completed
               </span>

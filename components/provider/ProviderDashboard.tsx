@@ -15,6 +15,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
 import { useTranslation } from "@/lib/i18n/useTranslation";
+import { USE_BOOKINGS } from "@/lib/features";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -241,7 +242,7 @@ export function ProviderDashboard() {
       <div className="space-y-6 px-4 pt-5">
 
         {/* ── Pending requests — urgent strip ── */}
-        {hasPending && (
+        {USE_BOOKINGS && hasPending && (
           <motion.section
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -283,22 +284,26 @@ export function ProviderDashboard() {
             {t("dash_overview")}
           </p>
           <div className="grid grid-cols-2 gap-2.5">
-            <StatCard
-              icon={Calendar}
-              label={t("dash_confirmed")}
-              value={String(stats.acceptedCount)}
-              sub={t("dash_upcoming")}
-              color="text-sky-400"
-              href="/profile/bookings"
-            />
-            <StatCard
-              icon={CheckCircle}
-              label={t("dash_completed")}
-              value={String(stats.completedCount)}
-              sub={t("dash_all_time")}
-              color="text-emerald-400"
-              href="/profile/bookings"
-            />
+            {USE_BOOKINGS && (
+              <>
+                <StatCard
+                  icon={Calendar}
+                  label={t("dash_confirmed")}
+                  value={String(stats.acceptedCount)}
+                  sub={t("dash_upcoming")}
+                  color="text-sky-400"
+                  href="/profile/bookings"
+                />
+                <StatCard
+                  icon={CheckCircle}
+                  label={t("dash_completed")}
+                  value={String(stats.completedCount)}
+                  sub={t("dash_all_time")}
+                  color="text-emerald-400"
+                  href="/profile/bookings"
+                />
+              </>
+            )}
             <StatCard
               icon={Star}
               label={t("dash_rating")}
@@ -356,6 +361,14 @@ export function ProviderDashboard() {
               iconColor="text-violet-400"
               iconBg="bg-violet-500/10"
             />
+            <QuickAction
+              icon={MessageCircle}
+              label="Comments"
+              sub="Review & approve"
+              href="/profile/comments"
+              iconColor="text-emerald-400"
+              iconBg="bg-emerald-500/10"
+            />
           </div>
         </section>
 
@@ -375,7 +388,7 @@ export function ProviderDashboard() {
         </Link>
 
         {/* ── No pending — helpful nudge ── */}
-        {!hasPending && stats.pendingCount === 0 && (
+        {USE_BOOKINGS && !hasPending && stats.pendingCount === 0 && (
           <div className="rounded-2xl border border-white/5 bg-zinc-900/50 px-4 py-5 text-center">
             <TrendingUp size={22} className="mx-auto mb-2 text-zinc-700" />
             <p className="text-[14px] font-semibold text-white">{t("dash_no_pending")}</p>

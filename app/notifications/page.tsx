@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useNotifications } from "@/hooks/useNotifications";
 import { getNotificationRoute } from "@/lib/notifications";
+import { USE_BOOKINGS } from "@/lib/features";
 import type { Notification, NotificationType } from "@/lib/notifications";
 
 // ─── Icon + color per notification type ──────────────────────────────────────
@@ -110,8 +111,17 @@ function NotificationRow({
 export default function NotificationsPage() {
   const router = useRouter();
   const { profile, loading: profileLoading } = useProfile();
-  const { notifications, loading, hasMore, markAsRead, markAllAsRead, loadMore } =
+  const { notifications: rawNotifications, loading, hasMore, markAsRead, markAllAsRead, loadMore } =
     useNotifications();
+
+  // Filter out booking notifications when bookings are disabled
+  const BOOKING_TYPES: NotificationType[] = [
+    "booking_requested", "booking_accepted", "booking_declined",
+    "booking_completed", "booking_cancelled",
+  ];
+  const notifications = USE_BOOKINGS
+    ? rawNotifications
+    : rawNotifications.filter((n) => !BOOKING_TYPES.includes(n.type));
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
@@ -175,7 +185,7 @@ export default function NotificationsPage() {
             </div>
             <p className="text-zinc-400 font-medium">No notifications yet</p>
             <p className="text-zinc-600 text-sm mt-1">
-              Booking updates, messages, and activity will appear here.
+              Messages, follows, and activity will appear here.
             </p>
           </div>
         ) : (

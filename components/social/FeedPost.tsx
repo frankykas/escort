@@ -40,21 +40,33 @@ function formatTimestamp(isoString: string): string {
 }
 
 export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
-  const { caption, media_url, created_at, likes_count, comments_count, views_count, profiles } =
-    post;
-  const { username, avatar_url, verification_status } = profiles;
+  const { 
+    caption, 
+    media_url, 
+    created_at, 
+    likes_count, 
+    comments_count, 
+    shares_count, 
+    views_count, 
+    provider_username,
+    provider_avatar,
+    provider_verified
+  } = post;
+  const username = provider_username;
+  const avatar_url = provider_avatar;
+  const verification_status = provider_verified;
   const isVerified = verification_status === "verified";
-  const isOwnPost = userId === profiles.id;
+  const isOwnPost = userId === post.provider_id;
 
   const { isLiked: liked, likesCount, toggle: toggleLike } = useLike({
-    postId: post.id,
+    postId: post.post_id,
     initialIsLiked: isLiked,
     initialCount: likes_count,
     userId,
   });
 
   const { isFollowing: following, toggle: toggleFollow } = useFollow({
-    profileId: profiles.id,
+    profileId: post.provider_id,
     initialIsFollowing: isFollowing,
     userId,
   });
@@ -121,7 +133,7 @@ export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
 
       {/* ── Image — full-width square, links to post detail ── */}
       {media_url && (
-        <Link href={`/post/${post.id}`}>
+        <Link href={`/post/${post.post_id}`}>
           <div className="relative aspect-square w-full bg-zinc-900">
             <Image
               src={media_url}
@@ -183,7 +195,7 @@ export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
       {/* ── Comments count ── */}
       {comments_count > 0 && (
         <div className="px-3 pt-1.5">
-          <Link href={`/post/${post.id}`} className="text-[13px] text-zinc-500 hover:text-zinc-300 transition-colors">
+          <Link href={`/post/${post.post_id}`} className="text-[13px] text-zinc-500 hover:text-zinc-300 transition-colors">
             View all {comments_count} comments
           </Link>
         </div>

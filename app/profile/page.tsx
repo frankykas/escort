@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
 import { useTranslation } from "@/lib/i18n/useTranslation";
+import { USE_BOOKINGS } from "@/lib/features";
 
 type ProfileData = {
   id: string;
@@ -231,10 +232,13 @@ export default function ProfilePage() {
           <SectionLabel>{t("profile_section_provider")}</SectionLabel>
           <ListCard>
             <Row icon={ListOrdered}   label={t("profile_my_listings")}      href="/profile/listings"        iconClassName="text-amber-400" />
-            <Row icon={CalendarCheck} label={t("nav_bookings")}             href="/profile/bookings"        iconClassName="text-sky-400" />
+            {USE_BOOKINGS && (
+              <Row icon={CalendarCheck} label={t("nav_bookings")}           href="/profile/bookings"        iconClassName="text-sky-400" />
+            )}
             <Row icon={User}          label={t("profile_my_page")}          href={`/u/${profile.username}`} iconClassName="text-violet-400" />
             <Row icon={Zap}           label={t("profile_availability")}     href="/profile/availability"    iconClassName="text-emerald-400" />
             <Row icon={Crown}         label={t("profile_subscription_tier")}href="/profile/subscription"    iconClassName="text-amber-400" />
+            <Row icon={MessageCircle} label="Comment Moderation"            href="/profile/comments"        iconClassName="text-emerald-400" />
             <Row icon={ImagePlus}     label={t("profile_upload_post")}      href="/profile/upload"          iconClassName="text-sky-400" />
           </ListCard>
         </>
@@ -242,7 +246,9 @@ export default function ProfilePage() {
 
       <SectionLabel>{t("profile_section_activity")}</SectionLabel>
       <ListCard>
-        <Row icon={CalendarCheck} label={t("bookings_title")}       href="/bookings"             iconClassName="text-amber-400" />
+        {USE_BOOKINGS && (
+          <Row icon={CalendarCheck} label={t("bookings_title")}     href="/bookings"             iconClassName="text-amber-400" />
+        )}
         <Row icon={Heart}         label={t("profile_favorites")}    href="/?tab=favorites"       iconClassName="text-rose-400" />
         <Row icon={Bookmark}      label={t("profile_liked_posts")}  href="/profile/liked"        iconClassName="text-sky-400" />
         <Row icon={Crown}         label={t("profile_subscriptions")}href="/profile/subscriptions"iconClassName="text-amber-400" />

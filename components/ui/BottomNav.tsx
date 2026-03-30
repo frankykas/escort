@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { useUnreadCount } from "@/hooks/useNotifications";
+import { USE_BOOKINGS } from "@/lib/features";
 import type { TranslationKey } from "@/lib/i18n/en";
 
 const HIDDEN_ON = ["/auth/signin", "/auth/signup", "/messages/"];
@@ -45,13 +46,21 @@ function useProviderTabs(
   t: (k: TranslationKey) => string,
   unreadCount: number
 ): TabDef[] {
-  return [
+  const tabs: TabDef[] = [
     { label: t("nav_dashboard"),     icon: LayoutDashboard, href: "/",                 active: pathname === "/" },
-    { label: t("nav_bookings"),      icon: CalendarCheck,   href: "/profile/bookings", active: pathname === "/profile/bookings" },
+  ];
+
+  if (USE_BOOKINGS) {
+    tabs.push({ label: t("nav_bookings"), icon: CalendarCheck, href: "/profile/bookings", active: pathname === "/profile/bookings" });
+  }
+
+  tabs.push(
     { label: "Alerts",               icon: Bell,            href: "/notifications",    active: pathname.startsWith("/notifications"), badge: unreadCount },
     { label: t("nav_listings"),      icon: ListOrdered,     href: "/profile/listings", active: pathname === "/profile/listings" || pathname === "/profile/upload" },
     { label: t("nav_profile"),       icon: User,            href: "/profile",          active: pathname.startsWith("/profile") && pathname !== "/profile/bookings" && pathname !== "/profile/listings" && pathname !== "/profile/upload" },
-  ];
+  );
+
+  return tabs;
 }
 
 // ─── Inner nav (needs useSearchParams → must be inside Suspense) ──────────────
