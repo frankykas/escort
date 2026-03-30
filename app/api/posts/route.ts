@@ -3,11 +3,11 @@ import { createPost, recordPostView } from "@/lib/posts";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { providerId, caption, mediaUrl, mediaType, countryCode } = body;
+  const { providerId, caption, mediaUrl, mediaType, countryCode, postType = "post" } = body;
 
-  if (!providerId || !caption || !mediaUrl) {
+  if (!providerId || !caption) {
     return NextResponse.json(
-      { error: "providerId, caption, and mediaUrl are required" },
+      { error: "providerId and caption are required" },
       { status: 400 }
     );
   }
@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
     caption,
     mediaUrl,
     mediaType,
+    postType,
     countryCode,
   });
 

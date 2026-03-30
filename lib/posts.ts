@@ -10,6 +10,7 @@ interface CreatePostParams {
   caption: string;
   mediaUrl: string;
   mediaType?: "image" | "video" | "text";
+  postType?: "post" | "story";
   countryCode?: string;
 }
 
@@ -34,7 +35,7 @@ export async function createPost(params: CreatePostParams): Promise<CreatePostRe
   const supabase = createServerClient();
   if (!supabase) return { success: false, error: "Database unavailable" };
 
-  const { providerId, caption, mediaUrl, mediaType = "image", countryCode } = params;
+  const { providerId, caption, mediaUrl, mediaType = "image", postType = "post", countryCode } = params;
 
   // 1. Check if provider is suspended
   const { data: profile } = await supabase
@@ -81,9 +82,9 @@ export async function createPost(params: CreatePostParams): Promise<CreatePostRe
       caption,
       media_url: mediaUrl,
       media_type: mediaType,
-      post_type: "post",
+      post_type: postType,
       country_code: countryCode,
-      expires_at: null, // Feed posts don't expire
+      expires_at: postType === "story" ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() : null, // Stories expire in 24h
     })
     .select("id")
     .single();

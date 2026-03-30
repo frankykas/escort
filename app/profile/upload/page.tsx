@@ -135,7 +135,7 @@ export default function UploadPostPage() {
         ? Math.round(parseFloat(unlockPrice) * 100)
         : null;
 
-      // If we have a media URL, use the posts API. Otherwise insert directly
+      // If we have a media URL, use posts API. Otherwise insert directly
       // (posts API requires mediaUrl, but text-only posts are valid)
       if (mediaUrl) {
         const res = await fetch("/api/posts", {
@@ -146,6 +146,7 @@ export default function UploadPostPage() {
             caption: caption.trim() || "",
             mediaUrl,
             mediaType: "image",
+            postType: "post",
           }),
         });
         const json = await res.json();
@@ -163,7 +164,7 @@ export default function UploadPostPage() {
           }).eq("id", json.postId);
         }
       } else {
-        // Text-only post — use the API as well with a placeholder
+        // Text-only post — use API as well with a placeholder
         const res = await fetch("/api/posts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -172,6 +173,7 @@ export default function UploadPostPage() {
             caption: caption.trim(),
             mediaUrl: "", // text-only
             mediaType: "text",
+            postType: "post",
           }),
         });
         const json = await res.json();
