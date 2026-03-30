@@ -204,10 +204,12 @@ CREATE INDEX story_views_story_idx ON story_views (story_id, viewed_at DESC);
 CREATE INDEX status_updates_post_type_idx
   ON status_updates (post_type, provider_id, created_at DESC);
 
--- For stories: quickly find unexpired stories ordered by recency
-CREATE INDEX status_updates_active_stories_idx
+-- For stories: quickly find stories ordered by recency
+-- (expiry filtering happens at query time, not in the index predicate,
+--  because now() is not IMMUTABLE)
+CREATE INDEX status_updates_stories_idx
   ON status_updates (created_at DESC)
-  WHERE post_type = 'story' AND expires_at > now();
+  WHERE post_type = 'story';
 
 
 -- ╔═══════════════════════════════════════════════════════════════════════════╗
@@ -254,11 +256,11 @@ AS $$
     p.avatar_url,
     p.city,
     ROUND(
-      ST_Distance(
+      (ST_Distance(
         l.last_known_coords,
         ST_SetSRID(ST_MakePoint(p_lng, p_lat), 4326)::geography
-      ) / 1000.0
-    , 1)                AS distance_km,
+      ) / 1000.0)::numeric
+    , 1)::float8        AS distance_km,
     (
       SELECT MAX(su.created_at)
       FROM status_updates su

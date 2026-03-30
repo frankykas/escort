@@ -16,8 +16,8 @@ function TopBarInner() {
   if (loading || !profile) return null;
 
   return (
-    <div className="fixed top-0 right-0 z-50 p-3 pointer-events-none">
-      <div className="pointer-events-auto">
+    <div className="fixed top-0 right-0 z-50 p-2 pointer-events-none">
+      <div className="pointer-events-auto bg-black/60 backdrop-blur-md rounded-full p-1.5 ring-1 ring-zinc-800/50">
         <NotificationBell />
       </div>
     </div>
