@@ -6,8 +6,8 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Plus, Pencil, Trash2, Clock, X, Check,
-  ListOrdered, ExternalLink, TrendingUp, Coins, ShoppingBag,
-  Timer,
+  ListOrdered, ExternalLink, Coins, ShoppingBag,
+  Timer, RefreshCw, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
@@ -229,6 +229,21 @@ export default function ListingsPage() {
     setListings((prev) => prev.map((l) => l.id === listing.id ? { ...l, is_active: !l.is_active } : l));
   }
 
+  async function handleRelist(listingId: string) {
+    if (!user || creditBalance < 1) return;
+    const res = await fetch("/api/listings/relist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ providerId: user.id, listingId }),
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      setFormError(json.error ?? "Failed to relist");
+      return;
+    }
+    await fetchListings(user.id);
+  }
+
   if (sessionLoading || loading) return <PageSkeleton />;
 
   const activeCount = listings.filter((l) => l.is_active && !isExpired(l.expires_at)).length;
@@ -345,6 +360,8 @@ export default function ListingsPage() {
               onEdit={() => openEdit(listing)}
               onToggle={() => handleToggleActive(listing)}
               onDelete={() => setDeleteConfirm(listing.id)}
+              onRelist={() => handleRelist(listing.id)}
+              hasCredits={hasCredits}
               deleteConfirmOpen={deleteConfirm === listing.id}
               onDeleteConfirm={() => handleDelete(listing.id)}
               onDeleteCancel={() => setDeleteConfirm(null)}
@@ -384,19 +401,28 @@ export default function ListingsPage() {
 // ─── Listing Row ─────────────────────────────────────────────────────────────
 
 function ListingRow({
-  listing, onEdit, onToggle, onDelete,
+  listing, onEdit, onToggle, onDelete, onRelist, hasCredits,
   deleteConfirmOpen, onDeleteConfirm, onDeleteCancel,
 }: {
   listing: Listing;
   onEdit: () => void;
   onToggle: () => void;
   onDelete: () => void;
+  onRelist: () => void;
+  hasCredits: boolean;
   deleteConfirmOpen: boolean;
   onDeleteConfirm: () => void;
   onDeleteCancel: () => void;
 }) {
+  const [relisting, setRelisting] = useState(false);
   const expired = isExpired(listing.expires_at);
   const remaining = timeRemaining(listing.expires_at);
+
+  async function handleRelist() {
+    setRelisting(true);
+    await onRelist();
+    setRelisting(false);
+  }
 
   return (
     <div className={cn(
@@ -443,6 +469,21 @@ function ListingRow({
           </p>
         )}
       </div>
+
+      {/* Relist banner for expired listings */}
+      {expired && (
+        <div className="flex items-center justify-between border-t border-amber-400/10 bg-amber-400/5 px-4 py-2.5">
+          <p className="text-[12px] text-amber-400">Expired — relist for 1 credit</p>
+          <button
+            onClick={handleRelist}
+            disabled={!hasCredits || relisting}
+            className="flex items-center gap-1.5 rounded-full bg-amber-400 px-3.5 py-1.5 text-[11px] font-bold text-zinc-950 transition hover:bg-amber-300 disabled:opacity-50"
+          >
+            {relisting ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
+            {relisting ? "Relisting…" : "Relist"}
+          </button>
+        </div>
+      )}
 
       {/* Action bar */}
       <div className="flex items-center border-t border-white/5">

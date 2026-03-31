@@ -5,12 +5,18 @@ import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ChevronLeft, CheckCircle, Send, Loader2, MoreVertical, Flag, Trash2,
+  ChevronLeft, CheckCircle, Send, Loader2, MoreVertical, Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { useStreamChat } from "@/contexts/StreamChatContext";
 import { ReportButton } from "@/components/ui/ReportButton";
+import type { Channel as StreamChannel, MessageResponse, Event } from "stream-chat";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 type Profile = {
   id: string;
@@ -19,13 +25,16 @@ type Profile = {
   verification_status: string;
 };
 
-type Message = {
+type ChatMessage = {
   id: string;
-  body: string;
-  sender_id: string;
-  created_at: string;
-  is_read: boolean;
+  text: string;
+  userId: string;
+  createdAt: string;
 };
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function formatTime(iso: string) {
   const d = new Date(iso);
@@ -45,122 +54,125 @@ function dateSeparator(iso: string) {
   return d.toLocaleDateString("en-CA", { weekday: "long", month: "short", day: "numeric" });
 }
 
+function toChat(msg: MessageResponse): ChatMessage {
+  return {
+    id: msg.id,
+    text: msg.text ?? "",
+    userId: msg.user?.id ?? "",
+    createdAt: msg.created_at ?? new Date().toISOString(),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
 export default function ThreadPage() {
   const router = useRouter();
   const params = useParams();
   const username = params.username as string;
   const { user, checked } = useSession();
+  const { client, ready } = useStreamChat();
 
-  const [partner, setPartner]     = useState<Profile | null>(null);
-  const [messages, setMessages]   = useState<Message[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [input, setInput]         = useState("");
-  const [sending, setSending]     = useState(false);
-  const [menuOpen, setMenuOpen]   = useState(false);
+  const [partner, setPartner] = useState<Profile | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [channel, setChannel] = useState<StreamChannel | null>(null);
+  const [noChannel, setNoChannel] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef  = useRef<HTMLTextAreaElement>(null);
 
+  // Redirect if not authenticated
   useEffect(() => {
-    if (!checked) return;
-    if (!user) { router.replace("/auth/signin"); return; }
-    loadThread();
-  }, [user, checked, username]);
+    if (checked && !user) router.replace("/auth/signin");
+  }, [user, checked, router]);
 
-  async function loadThread() {
+  // Load partner profile
+  useEffect(() => {
     if (!user) return;
-    // Fetch partner profile
-    const { data: p } = await supabase
+    supabase
       .from("profiles")
       .select("id, username, avatar_url, verification_status")
       .eq("username", username)
-      .single();
-    if (!p) { router.replace("/messages"); return; }
-    setPartner(p);
+      .single()
+      .then(({ data }) => {
+        if (!data) { router.replace("/messages"); return; }
+        setPartner(data);
+      });
+  }, [user, username, router]);
 
-    // Fetch messages between the two users
-    const { data: msgs } = await supabase
-      .from("messages")
-      .select("id, body, sender_id, created_at, is_read")
-      .or(
-        `and(sender_id.eq.${user.id},recipient_id.eq.${p.id}),` +
-        `and(sender_id.eq.${p.id},recipient_id.eq.${user.id})`
-      )
-      .order("created_at", { ascending: true });
+  // Connect to Stream channel once partner + client ready
+  const connectChannel = useCallback(async () => {
+    if (!client || !ready || !user || !partner) return;
 
-    setMessages((msgs as Message[]) ?? []);
+    const channelId = [user.id, partner.id].sort().join("--");
+
+    try {
+      const ch = client.channel("messaging", channelId);
+      const state = await ch.watch();
+
+      // Load existing messages
+      const msgs = (state.messages ?? []).map(toChat);
+      setMessages(msgs);
+      setChannel(ch);
+      setNoChannel(false);
+
+      // Mark as read
+      await ch.markRead();
+    } catch {
+      // Channel doesn't exist yet (request not accepted)
+      setNoChannel(true);
+    }
+
     setLoading(false);
+  }, [client, ready, user, partner]);
 
-    // Mark received messages as read
-    await supabase
-      .from("messages")
-      .update({ is_read: true })
-      .eq("sender_id", p.id)
-      .eq("recipient_id", user.id)
-      .eq("is_read", false);
-  }
+  useEffect(() => {
+    connectChannel();
+  }, [connectChannel]);
+
+  // Listen for new messages
+  useEffect(() => {
+    if (!channel) return;
+
+    const handler = (event: Event) => {
+      if (event.message) {
+        setMessages((prev) => {
+          // Avoid duplicates
+          if (prev.some((m) => m.id === event.message!.id)) return prev;
+          return [...prev, toChat(event.message as MessageResponse)];
+        });
+        // Auto mark read
+        channel.markRead();
+      }
+    };
+
+    channel.on("message.new", handler);
+    return () => { channel.off("message.new", handler); };
+  }, [channel]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: loading ? "instant" : "smooth" });
-  }, [messages]);
-
-  // Realtime subscription
-  useEffect(() => {
-    if (!user || !partner) return;
-    const channel = supabase
-      .channel(`thread:${user.id}:${partner.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `recipient_id=eq.${user.id}`,
-        },
-        (payload) => {
-          const msg = payload.new as Message;
-          if (msg.sender_id === partner.id) {
-            setMessages((prev) => [...prev, msg]);
-            supabase.from("messages").update({ is_read: true }).eq("id", msg.id);
-          }
-        }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [user, partner]);
+  }, [messages, loading]);
 
   async function sendMessage() {
-    if (!user || !partner || !input.trim() || sending) return;
-    const body = input.trim();
+    if (!channel || !user || !input.trim() || sending) return;
+    const text = input.trim();
     setInput("");
     setSending(true);
 
-    // Optimistic
-    const optimistic: Message = {
-      id:         `opt-${Date.now()}`,
-      body,
-      sender_id:  user.id,
-      created_at: new Date().toISOString(),
-      is_read:    false,
-    };
-    setMessages((prev) => [...prev, optimistic]);
-
-    const { data, error } = await supabase
-      .from("messages")
-      .insert({ sender_id: user.id, recipient_id: partner.id, body })
-      .select("id, body, sender_id, created_at, is_read")
-      .single();
+    try {
+      await channel.sendMessage({ text });
+    } catch {
+      // If send fails, restore input
+      setInput(text);
+    }
 
     setSending(false);
-    if (!error && data) {
-      setMessages((prev) =>
-        prev.map((m) => (m.id === optimistic.id ? (data as Message) : m))
-      );
-    } else {
-      // Revert optimistic on error
-      setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
-    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -171,12 +183,14 @@ export default function ThreadPage() {
   }
 
   // Group messages with date separators
-  const groups: Array<{ type: "separator"; label: string } | { type: "message"; msg: Message }> = [];
+  const groups: Array<
+    { type: "separator"; label: string } | { type: "message"; msg: ChatMessage }
+  > = [];
   let lastDate = "";
   for (const msg of messages) {
-    const d = new Date(msg.created_at).toDateString();
+    const d = new Date(msg.createdAt).toDateString();
     if (d !== lastDate) {
-      groups.push({ type: "separator", label: dateSeparator(msg.created_at) });
+      groups.push({ type: "separator", label: dateSeparator(msg.createdAt) });
       lastDate = d;
     }
     groups.push({ type: "message", msg });
@@ -260,6 +274,26 @@ export default function ThreadPage() {
           <div className="flex items-center justify-center pt-16">
             <Loader2 size={24} className="animate-spin text-zinc-600" />
           </div>
+        ) : noChannel ? (
+          /* No channel — request not yet accepted */
+          <div className="flex flex-col items-center justify-center gap-4 pt-20 text-center px-6">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-400/10">
+              <Clock size={28} className="text-amber-400" />
+            </div>
+            <div>
+              <p className="text-[15px] font-semibold text-white">Waiting for approval</p>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500">
+                Your message request to @{partner?.username} is pending.
+                You&apos;ll be able to chat once they accept.
+              </p>
+            </div>
+            <button
+              onClick={() => router.push(`/u/${partner?.username}`)}
+              className="rounded-full border border-white/10 px-5 py-2.5 text-[13px] font-medium text-zinc-300 transition-all hover:border-white/20 hover:text-white"
+            >
+              View Profile
+            </button>
+          </div>
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 pt-20 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-800/60">
@@ -286,7 +320,7 @@ export default function ThreadPage() {
               <MessageBubble
                 key={item.msg.id}
                 msg={item.msg}
-                isMine={item.msg.sender_id === user?.id}
+                isMine={item.msg.userId === user?.id}
               />
             )
           )
@@ -294,55 +328,63 @@ export default function ThreadPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div className="sticky bottom-0 border-t border-white/5 bg-zinc-950/95 px-4 py-3 backdrop-blur-xl">
-        <div className="flex items-end gap-3">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Message…"
-            rows={1}
-            maxLength={2000}
-            className="flex-1 resize-none rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-[14px] text-white placeholder-zinc-600 outline-none focus:border-amber-400/30 max-h-32 overflow-y-auto"
-            style={{ minHeight: "44px" }}
-          />
-          <button
-            onClick={sendMessage}
-            disabled={!input.trim() || sending}
-            className={cn(
-              "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full transition",
-              input.trim() && !sending
-                ? "bg-amber-400 text-zinc-950 hover:bg-amber-300"
-                : "bg-zinc-800 text-zinc-600 cursor-not-allowed"
-            )}
-          >
-            {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-          </button>
+      {/* Input — only show when channel exists */}
+      {!noChannel && !loading && (
+        <div className="sticky bottom-0 border-t border-white/5 bg-zinc-950/95 px-4 py-3 backdrop-blur-xl">
+          <div className="flex items-end gap-3">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Message..."
+              rows={1}
+              maxLength={2000}
+              className="flex-1 resize-none rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-[14px] text-white placeholder-zinc-600 outline-none focus:border-amber-400/30 max-h-32 overflow-y-auto"
+              style={{ minHeight: "44px" }}
+            />
+            <button
+              onClick={sendMessage}
+              disabled={!input.trim() || sending}
+              className={cn(
+                "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full transition",
+                input.trim() && !sending
+                  ? "bg-amber-400 text-zinc-950 hover:bg-amber-300"
+                  : "bg-zinc-800 text-zinc-600 cursor-not-allowed"
+              )}
+            >
+              {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+            </button>
+          </div>
+          <p className="mt-1 text-right text-[10px] text-zinc-700">{input.length}/2000</p>
         </div>
-        <p className="mt-1 text-right text-[10px] text-zinc-700">{input.length}/2000</p>
-      </div>
+      )}
     </div>
   );
 }
 
-function MessageBubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
+// ---------------------------------------------------------------------------
+// Bubble
+// ---------------------------------------------------------------------------
+
+function MessageBubble({ msg, isMine }: { msg: ChatMessage; isMine: boolean }) {
   return (
     <div className={cn("flex", isMine ? "justify-end" : "justify-start")}>
-      <div className={cn(
-        "max-w-[75%] rounded-2xl px-4 py-2.5 text-[14px] leading-snug",
-        isMine
-          ? "rounded-tr-sm bg-amber-400 text-zinc-950"
-          : "rounded-tl-sm bg-zinc-800 text-white"
-      )}>
-        <p className="whitespace-pre-wrap break-words">{msg.body}</p>
-        <p className={cn(
-          "mt-1 text-right text-[10px]",
-          isMine ? "text-zinc-700" : "text-zinc-500"
-        )}>
-          {formatTime(msg.created_at)}
-          {isMine && msg.is_read && <span className="ml-1">✓</span>}
+      <div
+        className={cn(
+          "max-w-[75%] rounded-2xl px-4 py-2.5 text-[14px] leading-snug",
+          isMine
+            ? "rounded-tr-sm bg-amber-400 text-zinc-950"
+            : "rounded-tl-sm bg-zinc-800 text-white"
+        )}
+      >
+        <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+        <p
+          className={cn(
+            "mt-1 text-right text-[10px]",
+            isMine ? "text-zinc-700" : "text-zinc-500"
+          )}
+        >
+          {formatTime(msg.createdAt)}
         </p>
       </div>
     </div>

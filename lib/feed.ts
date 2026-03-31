@@ -141,6 +141,7 @@ export async function getPostComments(
       profiles:user_id (username, avatar_url)
     `)
     .eq("status_update_id", statusUpdateId)
+    .eq("is_approved", true)
     .order("created_at", { ascending: true })
     .limit(limit);
 

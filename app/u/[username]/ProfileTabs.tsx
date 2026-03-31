@@ -13,7 +13,6 @@ import {
   MapPin,
   Phone,
   ChevronRight,
-  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -53,22 +52,12 @@ export type ProfileAttributes = {
   hourly_rate: number | null;
 };
 
-export type ReviewItem = {
-  id: string;
-  rating: number;
-  body: string | null;
-  created_at: string;
-  reviewer: { username: string; avatar_url: string | null } | null;
-};
-
-type Tab = "posts" | "listings" | "about" | "reviews";
+type Tab = "posts" | "listings" | "about";
 
 type Props = {
   posts: PostItem[];
   listings: ListingItem[];
   attributes: ProfileAttributes;
-  reviews: ReviewItem[];
-  avgRating: number | null;
   isOwnProfile: boolean;
   isProvider?: boolean;
 };
@@ -104,14 +93,13 @@ function heightDisplay(cm: number | null): string {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function ProfileTabs({ posts, listings, attributes, reviews, avgRating, isOwnProfile, isProvider = true }: Props) {
+export function ProfileTabs({ posts, listings, attributes, isOwnProfile, isProvider = true }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>("posts");
 
   const tabs: { id: Tab; label: string; icon: React.ElementType; count?: number }[] = [
     { id: "posts", label: "Posts", icon: Grid3X3, count: posts.length },
     ...(isProvider ? [
       { id: "listings" as Tab, label: "Listings", icon: ListOrdered, count: listings.length },
-      { id: "reviews" as Tab, label: "Reviews", icon: Star, count: reviews.length },
     ] : []),
     { id: "about", label: "About", icon: User },
   ];
@@ -156,7 +144,6 @@ export function ProfileTabs({ posts, listings, attributes, reviews, avgRating, i
       {activeTab === "listings" && (
         <ListingsTab listings={listings} isOwnProfile={isOwnProfile} />
       )}
-      {activeTab === "reviews" && <ReviewsTab reviews={reviews} avgRating={avgRating} />}
       {activeTab === "about" && <AboutTab attributes={attributes} />}
     </div>
   );
@@ -283,85 +270,6 @@ function ListingCard({ listing }: { listing: ListingItem }) {
         </div>
       </div>
     </Link>
-  );
-}
-
-// ─── Reviews tab ──────────────────────────────────────────────────────────────
-
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const d = Math.floor(diff / 86400000);
-  const m = Math.floor(diff / 2592000000);
-  if (d < 1) return "Today";
-  if (d < 30) return `${d}d ago`;
-  if (m < 12) return `${m}mo ago`;
-  return `${Math.floor(m / 12)}yr ago`;
-}
-
-function ReviewsTab({ reviews, avgRating }: { reviews: ReviewItem[]; avgRating: number | null }) {
-  if (reviews.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-2 py-16 px-4 text-center">
-        <Star size={28} className="text-zinc-700" />
-        <p className="text-[15px] font-medium text-zinc-400">No reviews yet.</p>
-        <p className="text-[13px] text-zinc-600">Reviews appear after completed bookings.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3 px-4 py-4 pb-8">
-      {avgRating !== null && (
-        <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-zinc-900 px-4 py-3">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl font-bold text-white">{Number(avgRating).toFixed(1)}</span>
-            <Star size={16} className="fill-amber-400 text-amber-400" />
-          </div>
-          <div>
-            <div className="flex gap-0.5">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <Star
-                  key={s}
-                  size={14}
-                  className={s <= Math.round(avgRating) ? "fill-amber-400 text-amber-400" : "text-zinc-700"}
-                />
-              ))}
-            </div>
-            <p className="mt-0.5 text-[12px] text-zinc-500">{reviews.length} review{reviews.length !== 1 ? "s" : ""}</p>
-          </div>
-        </div>
-      )}
-
-      {reviews.map((review) => (
-        <div key={review.id} className="overflow-hidden rounded-2xl border border-white/5 bg-zinc-900 px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 overflow-hidden rounded-full bg-zinc-800 flex-shrink-0">
-                {review.reviewer?.avatar_url ? (
-                  <Image src={review.reviewer.avatar_url} alt={review.reviewer.username} width={32} height={32} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-xs font-bold text-zinc-400">
-                    {review.reviewer?.username?.[0]?.toUpperCase() ?? "?"}
-                  </div>
-                )}
-              </div>
-              <div>
-                <p className="text-[13px] font-semibold text-white">@{review.reviewer?.username ?? "user"}</p>
-                <p className="text-[11px] text-zinc-600">{timeAgo(review.created_at)}</p>
-              </div>
-            </div>
-            <div className="flex gap-0.5">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <Star key={s} size={12} className={s <= review.rating ? "fill-amber-400 text-amber-400" : "text-zinc-700"} />
-              ))}
-            </div>
-          </div>
-          {review.body && (
-            <p className="mt-3 text-[13px] leading-relaxed text-zinc-300">{review.body}</p>
-          )}
-        </div>
-      ))}
-    </div>
   );
 }
 

@@ -1,0 +1,22 @@
+/*
+ * Minimal Stream Chat React overrides to match Cleopatra's dark theme.
+ * We use custom components for rendering, so this mainly resets defaults.
+ */
+
+.str-chat {
+  --str-chat__primary-color: #fbbf24; /* amber-400 */
+  --str-chat__active-primary-color: #fcd34d; /* amber-300 */
+  --str-chat__background-color: #09090b; /* zinc-950 */
+  --str-chat__secondary-background-color: #18181b; /* zinc-900 */
+  --str-chat__primary-surface-color: #27272a; /* zinc-800 */
+  --str-chat__font-family: inherit;
+  background-color: transparent;
+}
+
+.str-chat__container {
+  background-color: transparent;
+}
+
+.str-chat__main-panel {
+  background-color: transparent;
+}

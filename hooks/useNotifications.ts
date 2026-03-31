@@ -31,7 +31,17 @@ export function useUnreadCount(pollIntervalMs: number = 30_000) {
   useEffect(() => {
     fetchCount();
     const interval = setInterval(fetchCount, pollIntervalMs);
-    return () => clearInterval(interval);
+
+    // Listen for manual badge resets (e.g. "Mark all as read")
+    const handler = () => {
+      setCount(0);
+    };
+    window.addEventListener("notifications:cleared", handler);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("notifications:cleared", handler);
+    };
   }, [fetchCount, pollIntervalMs]);
 
   return { count, refresh: fetchCount };
@@ -112,6 +122,9 @@ export function useNotifications(limit: number = 30) {
         prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n))
       );
 
+      // Tell useUnreadCount to decrement immediately
+      window.dispatchEvent(new Event("notifications:cleared"));
+
       await supabase.rpc("mark_notification_read", {
         p_notification_id: notificationId,
       });
@@ -123,6 +136,9 @@ export function useNotifications(limit: number = 30) {
     if (!profile) return;
 
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+
+    // Tell useUnreadCount to reset badge immediately
+    window.dispatchEvent(new Event("notifications:cleared"));
 
     await supabase.rpc("mark_all_notifications_read", {
       p_user_id: profile.id,

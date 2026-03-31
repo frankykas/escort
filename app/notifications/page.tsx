@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import {
   Bell, BellOff, CalendarCheck, CheckCheck, Heart, MessageCircle,
-  Star, UserPlus, ArrowLeft, Loader2,
+  UserPlus, ArrowLeft, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -20,12 +20,13 @@ const TYPE_CONFIG: Record<NotificationType, { icon: React.ElementType; color: st
   booking_declined:  { icon: CalendarCheck, color: "text-red-400" },
   booking_completed: { icon: CalendarCheck, color: "text-amber-400" },
   booking_cancelled: { icon: CalendarCheck, color: "text-zinc-400" },
-  review_received:   { icon: Star,          color: "text-yellow-400" },
   new_follower:      { icon: UserPlus,      color: "text-purple-400" },
   new_subscriber:    { icon: UserPlus,      color: "text-amber-400" },
   post_liked:        { icon: Heart,         color: "text-pink-400" },
   post_commented:    { icon: MessageCircle, color: "text-blue-400" },
   new_message:       { icon: MessageCircle, color: "text-green-400" },
+  message_request:          { icon: MessageCircle, color: "text-amber-400" },
+  message_request_accepted: { icon: MessageCircle, color: "text-green-400" },
 };
 
 function timeAgo(dateStr: string): string {
@@ -49,7 +50,7 @@ function NotificationRow({
   notification: Notification;
   onTap: (n: Notification) => void;
 }) {
-  const config = TYPE_CONFIG[notification.type];
+  const config = TYPE_CONFIG[notification.type] ?? { icon: Bell, color: "text-zinc-400" };
   const Icon = config.icon;
 
   return (

@@ -68,6 +68,7 @@ export default async function PostPage({ params }: Props) {
         "id, body, created_at, profiles!comments_user_id_fkey(username, avatar_url)"
       )
       .eq("status_update_id", id)
+      .eq("is_approved", true)
       .order("created_at", { ascending: true })
       .limit(50),
     supabase.auth.getUser(),

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { CheckCircle, MapPin, Star, Clock } from "lucide-react";
+import { CheckCircle, MapPin, Clock } from "lucide-react";
 import { createServerClient } from "@/lib/supabase/server";
 import { BackButton } from "@/components/ui/BackButton";
 import { ReportButton } from "@/components/ui/ReportButton";
@@ -44,7 +44,7 @@ export default async function ProfilePage({ params }: Props) {
       `id, username, avatar_url, bio, bio_long, verification_status, is_provider,
        city, country_code, incall, outcall, age, available_until,
        height_cm, build, hair_color, eye_color, nationality, languages,
-       review_count, average_rating, completed_bookings_count,
+       completed_bookings_count,
        service_categories, hourly_rate,
        contact_whatsapp, contact_telegram, contact_phone`
     )
@@ -54,7 +54,7 @@ export default async function ProfilePage({ params }: Props) {
   if (profileError || !profile) notFound();
 
   // Parallel fetches
-  const [postsResult, listingsResult, followersResult, followingResult, sessionResult, reviewsResult] =
+  const [postsResult, listingsResult, followersResult, followingResult, sessionResult] =
     await Promise.all([
       supabase
         .from("status_updates")
@@ -77,16 +77,6 @@ export default async function ProfilePage({ params }: Props) {
         .select("*", { count: "exact", head: true })
         .eq("follower_id", profile.id),
       supabase.auth.getUser(),
-      supabase
-        .from("reviews")
-        .select(`
-          id, rating, body, created_at,
-          reviewer:profiles!reviews_reviewer_id_fkey(username, avatar_url)
-        `)
-        .eq("reviewee_id", profile.id)
-        .eq("is_visible", true)
-        .order("created_at", { ascending: false })
-        .limit(10),
     ]);
 
   const posts = postsResult.data ?? [];
@@ -94,9 +84,6 @@ export default async function ProfilePage({ params }: Props) {
   const followersCount = followersResult.count ?? 0;
   const followingCount = followingResult.count ?? 0;
   const currentUserId = sessionResult.data.user?.id ?? null;
-  const reviews = (reviewsResult.data ?? []) as unknown as import("./ProfileTabs").ReviewItem[];
-  const reviewCount = (profile.review_count as number) ?? 0;
-  const avgRating = (profile.average_rating as number | null) ?? null;
   const completedBookings = (profile.completed_bookings_count as number) ?? 0;
   const isOwnProfile = currentUserId === profile.id;
 
@@ -215,21 +202,12 @@ export default async function ProfilePage({ params }: Props) {
           )}
         </div>
 
-        {/* Rating + completed bookings */}
-        {(avgRating !== null || (USE_BOOKINGS && completedBookings > 0)) && (
+        {/* Completed bookings */}
+        {USE_BOOKINGS && completedBookings > 0 && (
           <div className="mt-2.5 flex items-center gap-3">
-            {avgRating !== null && (
-              <div className="flex items-center gap-1.5">
-                <Star size={13} className="fill-amber-400 text-amber-400" />
-                <span className="text-[13px] font-semibold text-white">{Number(avgRating).toFixed(1)}</span>
-                <span className="text-[12px] text-zinc-500">({reviewCount})</span>
-              </div>
-            )}
-            {USE_BOOKINGS && completedBookings > 0 && (
-              <span className="flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-400">
-                {completedBookings} completed
-              </span>
-            )}
+            <span className="flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-400">
+              {completedBookings} completed
+            </span>
           </div>
         )}
 
@@ -278,8 +256,6 @@ export default async function ProfilePage({ params }: Props) {
         posts={posts}
         listings={listings as import("./ProfileTabs").ListingItem[]}
         attributes={attributes}
-        reviews={reviews}
-        avgRating={avgRating}
         isOwnProfile={isOwnProfile}
         isProvider={profile.is_provider as boolean}
       />

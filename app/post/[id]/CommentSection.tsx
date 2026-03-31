@@ -25,7 +25,7 @@ function formatTimestamp(isoString: string): string {
 }
 
 export function CommentSection({ postId, userId, initialComments }: Props) {
-  const { comments, submit, submitting } = useComment({
+  const { comments, submit, submitting, sent } = useComment({
     postId,
     userId,
     initialComments,
@@ -81,6 +81,15 @@ export function CommentSection({ postId, userId, initialComments }: Props) {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Sent confirmation */}
+      {sent && (
+        <div className="px-3 py-2">
+          <p className="text-[12px] text-emerald-400/80">
+            Comment sent — visible once approved by the creator.
+          </p>
         </div>
       )}
 

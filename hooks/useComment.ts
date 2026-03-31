@@ -20,29 +20,27 @@ type Args = {
 };
 
 export function useComment({ postId, userId, initialComments }: Args) {
-  const [comments, setComments] = useState<CommentRow[]>(initialComments);
+  const [comments] = useState<CommentRow[]>(initialComments);
   const [submitting, setSubmitting] = useState(false);
+  const [sent, setSent] = useState(false);
 
   const submit = useCallback(
     async (body: string) => {
       if (!userId || !body.trim()) return;
       setSubmitting(true);
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("comments")
-        .insert({ status_update_id: postId, user_id: userId, body: body.trim() })
-        .select(
-          "id, body, created_at, profiles!comments_user_id_fkey(username, avatar_url)"
-        )
-        .single();
+        .insert({ status_update_id: postId, user_id: userId, body: body.trim() });
 
-      if (!error && data) {
-        setComments((prev) => [...prev, data as unknown as CommentRow]);
+      if (!error) {
+        setSent(true);
+        setTimeout(() => setSent(false), 4000);
       }
       setSubmitting(false);
     },
     [postId, userId]
   );
 
-  return { comments, submit, submitting };
+  return { comments, submit, submitting, sent };
 }

@@ -263,9 +263,13 @@ export default function ProfilePage() {
       <ListCard>
         <Row icon={Pencil}     label={t("profile_edit")}             href="/profile/edit"          iconClassName="text-amber-400" />
         <Row icon={Eye}        label={t("profile_privacy")}          href="/profile/privacy"       value={profile.is_private ? t("profile_private") : t("profile_public")} />
-        <Row icon={Shield}     label={t("profile_id_verification")}  href="/profile/verify"        value={isVerified ? t("profile_verified") : t("profile_not_verified")} iconClassName={isVerified ? "text-amber-400" : "text-zinc-500"} />
+        {profile.is_provider && (
+          <Row icon={Shield}   label={t("profile_id_verification")}  href="/profile/verify"        value={isVerified ? t("profile_verified") : t("profile_not_verified")} iconClassName={isVerified ? "text-amber-400" : "text-zinc-500"} />
+        )}
         <Row icon={Bell}       label={t("profile_notifications")}    href="/profile/notifications" />
-        <Row icon={CreditCard} label={t("profile_billing")}          href="/profile/billing" />
+        {profile.is_provider && (
+          <Row icon={CreditCard} label={t("profile_billing")}        href="/profile/billing" />
+        )}
         <Row icon={Settings}   label={t("profile_account_settings")} href="/profile/settings" />
       </ListCard>
 

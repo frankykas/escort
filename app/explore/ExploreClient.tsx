@@ -6,7 +6,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, MapPin, SlidersHorizontal, CheckCircle,
-  X, Heart, MessageCircle, Share2, Send,
+  X, Heart, MessageCircle, Share2, Send, MoreHorizontal, Trash2,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -389,12 +389,11 @@ export function ExploreClient() {
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      // For search queries, we fall back to the city-based filter for now
-      // (search by username requires a different approach — city filter covers the main use case)
-      fetchFeed(searchQuery.trim() || cityQuery);
+      // City query goes directly to RPC; text search fetches all then filters client-side
+      fetchFeed(cityQuery);
     }, 350);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [searchQuery, cityQuery, fetchFeed]);
+  }, [cityQuery, fetchFeed]);
 
   async function handleNearMe() {
     if (!navigator.geolocation) return;
@@ -429,6 +428,17 @@ export function ExploreClient() {
   }
 
   const activeCount = countActiveFilters(filters);
+
+  // Client-side text search: filter by username or caption
+  const displayPosts = searchQuery.trim()
+    ? posts.filter((p) => {
+        const q = searchQuery.trim().toLowerCase();
+        return (
+          p.provider_username?.toLowerCase().includes(q) ||
+          p.caption?.toLowerCase().includes(q)
+        );
+      })
+    : posts;
 
   return (
     <div className="min-h-screen bg-black pb-24">
@@ -551,7 +561,7 @@ export function ExploreClient() {
       {/* ── Feed ── */}
       {loading ? (
         <FeedSkeleton />
-      ) : posts.length === 0 ? (
+      ) : displayPosts.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 px-8 pt-24">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-900">
             <Search size={28} className="text-zinc-600" />
@@ -562,12 +572,13 @@ export function ExploreClient() {
       ) : (
         <div>
           <p className="px-4 py-2.5 text-[12px] text-zinc-600">
-            <span className="font-medium text-zinc-400">{posts.length}</span>
+            <span className="font-medium text-zinc-400">{displayPosts.length}</span>
             {" "}posts
             {cityQuery && <span> in {cityQuery}</span>}
+            {searchQuery.trim() && <span> matching &ldquo;{searchQuery.trim()}&rdquo;</span>}
           </p>
 
-          {posts.map((post, i) => (
+          {displayPosts.map((post, i) => (
             <motion.div
               key={post.post_id}
               initial={{ opacity: 0, y: 8 }}
@@ -579,6 +590,7 @@ export function ExploreClient() {
                 userId={user?.id ?? null}
                 isLiked={likedPostIds.has(post.post_id)}
                 isFollowing={followedIds.has(post.provider_id)}
+                onDelete={(id) => setPosts((prev) => prev.filter((p) => p.post_id !== id))}
               />
             </motion.div>
           ))}
@@ -620,11 +632,13 @@ function PostFeedCard({
   userId,
   isLiked,
   isFollowing,
+  onDelete,
 }: {
   post: FeedPost;
   userId: string | null;
   isLiked: boolean;
   isFollowing: boolean;
+  onDelete?: (postId: string) => void;
 }) {
   const isVerified = post.provider_verified === "verified";
   const isOwnProfile = userId === post.provider_id;
@@ -632,6 +646,8 @@ function PostFeedCard({
   const [submitting, setSubmitting] = useState(false);
   const [commentSent, setCommentSent] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const localComments = post.latest_comments ?? [];
 
   const { isLiked: liked, likesCount, toggle: toggleLike } = useLike({
@@ -720,7 +736,7 @@ function PostFeedCard({
           <p className="mt-0.5 text-[10px] text-zinc-500 uppercase tracking-wide">{timeAgo(post.created_at)}</p>
         </div>
 
-        {!isOwnProfile && (
+        {!isOwnProfile ? (
           <button
             onClick={toggleFollow}
             className={cn(
@@ -732,6 +748,42 @@ function PostFeedCard({
           >
             {following ? "Following" : "Follow"}
           </button>
+        ) : (
+          <div className="relative">
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+            >
+              <MoreHorizontal size={18} />
+            </button>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
+                <div className="absolute right-0 top-9 z-40 w-44 overflow-hidden rounded-xl border border-white/10 bg-zinc-900 shadow-xl">
+                  <button
+                    onClick={async () => {
+                      if (deleting) return;
+                      setDeleting(true);
+                      const { error } = await supabase
+                        .from("status_updates")
+                        .delete()
+                        .eq("id", post.post_id);
+                      if (!error) {
+                        onDelete?.(post.post_id);
+                      }
+                      setDeleting(false);
+                      setMenuOpen(false);
+                    }}
+                    disabled={deleting}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-[13px] text-red-400 transition hover:bg-zinc-800 disabled:opacity-50"
+                  >
+                    <Trash2 size={14} />
+                    {deleting ? "Deleting..." : "Delete post"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
 

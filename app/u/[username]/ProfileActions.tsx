@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Crown } from "lucide-react";
+import { Crown, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFollow } from "@/hooks/useFollow";
+import { useRequestStatus } from "@/hooks/useMessageRequests";
 import { supabase } from "@/lib/supabase/client";
 
 type Props = {
@@ -25,6 +26,11 @@ export function ProfileActions({
     initialIsFollowing,
     userId,
   });
+
+  const { status: requestStatus, loading: statusLoading } = useRequestStatus(
+    userId,
+    profileId
+  );
 
   const [hasSubscriptionTier, setHasSubscriptionTier] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -80,7 +86,13 @@ export function ProfileActions({
 
   function handleMessage() {
     if (!userId) { router.push("/auth/signin"); return; }
-    router.push(`/messages/${username}`);
+
+    if (requestStatus === "accepted") {
+      router.push(`/messages/${username}`);
+    } else {
+      // For pending or no request — scroll to EnquireBar CTA which handles the flow
+      router.push(`/messages/${username}`);
+    }
   }
 
   async function handleSubscribe() {
@@ -96,6 +108,16 @@ export function ProfileActions({
 
     if (!error) setIsSubscribed(true);
   }
+
+  const messageLabel = statusLoading
+    ? "Message"
+    : requestStatus === "accepted"
+      ? "Chat"
+      : requestStatus === "pending"
+        ? "Pending"
+        : "Message";
+
+  const isPending = requestStatus === "pending";
 
   return (
     <div className="space-y-2">
@@ -113,9 +135,16 @@ export function ProfileActions({
         </button>
         <button
           onClick={handleMessage}
-          className="flex-1 rounded-lg border border-zinc-700 py-2 text-sm font-semibold text-white transition-colors hover:bg-zinc-800"
+          disabled={isPending}
+          className={cn(
+            "flex-1 rounded-lg py-2 text-sm font-semibold transition-colors flex items-center justify-center gap-1.5",
+            isPending
+              ? "border border-zinc-700 text-zinc-500 cursor-not-allowed"
+              : "border border-zinc-700 text-white hover:bg-zinc-800"
+          )}
         >
-          Message
+          {isPending && <Clock size={13} />}
+          {messageLabel}
         </button>
       </div>
 

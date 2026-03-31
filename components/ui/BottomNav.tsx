@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect, useCallback } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -11,31 +11,8 @@ import { cn } from "@/lib/utils";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { useUnreadCount } from "@/hooks/useNotifications";
-import { supabase } from "@/lib/supabase/client";
+import { useStreamUnread } from "@/hooks/useStreamUnread";
 import type { TranslationKey } from "@/lib/i18n/en";
-
-function useUnreadMessages(pollMs = 30_000) {
-  const { profile } = useProfile();
-  const [count, setCount] = useState(0);
-
-  const fetch = useCallback(async () => {
-    if (!profile) return;
-    const { count: c } = await supabase
-      .from("messages")
-      .select("*", { count: "exact", head: true })
-      .eq("recipient_id", profile.id)
-      .eq("is_read", false);
-    setCount(c ?? 0);
-  }, [profile]);
-
-  useEffect(() => {
-    fetch();
-    const id = setInterval(fetch, pollMs);
-    return () => clearInterval(id);
-  }, [fetch, pollMs]);
-
-  return count;
-}
 
 const HIDDEN_ON = ["/auth/signin", "/auth/signup", "/messages/", "/onboarding"];
 
@@ -46,7 +23,6 @@ type TabDef = {
   icon: React.ElementType;
   href: string;
   active: boolean;
-  /** Optional badge count (e.g. unread notifications) */
   badge?: number;
 };
 
@@ -54,12 +30,14 @@ function useClientTabs(
   pathname: string,
   t: (k: TranslationKey) => string,
   unreadNotifs: number,
+  unreadMsgs: number,
 ): TabDef[] {
   return [
-    { label: t("nav_home"),    icon: Home,    href: "/",              active: pathname === "/" },
-    { label: t("nav_explore"), icon: Compass, href: "/explore",      active: pathname.startsWith("/explore") },
-    { label: t("nav_alerts"),  icon: Bell,    href: "/notifications", active: pathname.startsWith("/notifications"), badge: unreadNotifs },
-    { label: t("nav_profile"), icon: User,    href: "/profile",      active: pathname.startsWith("/profile") },
+    { label: t("nav_home"),     icon: Home,          href: "/",              active: pathname === "/" },
+    { label: t("nav_explore"),  icon: Compass,       href: "/explore",       active: pathname.startsWith("/explore") },
+    { label: t("nav_messages"), icon: MessageSquare,  href: "/messages",      active: pathname === "/messages", badge: unreadMsgs },
+    { label: t("nav_alerts"),   icon: Bell,           href: "/notifications", active: pathname.startsWith("/notifications"), badge: unreadNotifs },
+    { label: t("nav_profile"),  icon: User,           href: "/profile",       active: pathname.startsWith("/profile") },
   ];
 }
 
@@ -68,9 +46,10 @@ function useProviderTabs(
   t: (k: TranslationKey) => string,
   unreadNotifs: number,
   unreadMsgs: number,
+  username: string,
 ): TabDef[] {
   return [
-    { label: t("nav_dashboard"),     icon: LayoutDashboard, href: "/",                 active: pathname === "/" },
+    { label: "My Page",              icon: LayoutDashboard, href: `/u/${username}`,     active: pathname === `/u/${username}` },
     { label: t("nav_create"),        icon: PlusCircle,      href: "/profile/upload",   active: pathname === "/profile/upload" },
     { label: t("nav_messages"),      icon: MessageSquare,   href: "/messages",         active: pathname === "/messages", badge: unreadMsgs },
     { label: t("nav_alerts"),        icon: Bell,            href: "/notifications",    active: pathname.startsWith("/notifications"), badge: unreadNotifs },
@@ -82,13 +61,13 @@ function useProviderTabs(
 
 function BottomNavInner() {
   const pathname = usePathname();
-  const { profile, isProvider, loading } = useProfile();
+  const { isProvider, loading, profile } = useProfile();
   const { t } = useTranslation();
   const { count: unreadNotifs } = useUnreadCount();
-  const unreadMsgs = useUnreadMessages();
+  const unreadMsgs = useStreamUnread();
 
-  const clientTabs = useClientTabs(pathname, t, unreadNotifs);
-  const providerTabs = useProviderTabs(pathname, t, unreadNotifs, unreadMsgs);
+  const clientTabs = useClientTabs(pathname, t, unreadNotifs, unreadMsgs);
+  const providerTabs = useProviderTabs(pathname, t, unreadNotifs, unreadMsgs, profile?.username ?? "");
 
   // Hide on auth and full-screen message threads
   if (HIDDEN_ON.some((p) => pathname.startsWith(p))) return null;
@@ -108,7 +87,6 @@ function BottomNavInner() {
               className={cn(
                 "relative flex flex-col items-center gap-[3px] py-3 px-4 transition-all duration-150",
                 tab.active ? "text-white" : "text-zinc-600",
-                // Dim while role is still loading to avoid wrong-tab flash
                 loading && "opacity-0 pointer-events-none"
               )}
             >
@@ -121,7 +99,6 @@ function BottomNavInner() {
                     tab.active && "drop-shadow-[0_0_8px_rgba(251,191,36,0.45)]"
                   )}
                 />
-                {/* Unread badge */}
                 {tab.badge != null && tab.badge > 0 && (
                   <span
                     className={cn(

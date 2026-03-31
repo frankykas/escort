@@ -62,6 +62,7 @@ const SORT_KEYS: { id: SortBy; key: string }[] = [
   { id: "price_desc", key: "listings_sort_price_desc" },
 ];
 
+const PAGE_SIZE = 20;
 const TODAY_CUTOFF = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -118,18 +119,15 @@ export function ListingsClient() {
   const [sortOpen, setSortOpen]     = useState(false);
   const [listings, setListings]     = useState<ListingCard[]>([]);
   const [loading, setLoading]       = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore]       = useState(true);
+  const dbOffsetRef = useRef(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const SORT_OPTIONS = SORT_KEYS.map((s) => ({ id: s.id, label: t(s.key as Parameters<typeof t>[0]) }));
 
-  const fetchListings = useCallback(async (
-    cat: string,
-    q: string,
-    sort: SortBy,
-    f: ListingFilters,
-  ) => {
-    setLoading(true);
-
+  const buildQuery = useCallback((cat: string, sort: SortBy, f: ListingFilters, offset: number) => {
     let query = supabase
       .from("listings")
       .select(`
@@ -140,12 +138,9 @@ export function ListingsClient() {
         )
       `)
       .eq("is_active", true)
-      .limit(80);
+      .range(offset, offset + PAGE_SIZE - 1);
 
     if (cat !== "all") query = query.eq("service_type", cat);
-    if (f.verifiedOnly) {
-      // verified filter applies on the joined provider — filter client-side
-    }
     if (f.availableNow) query = query.gt(
       "profiles.available_until" as never, new Date().toISOString()
     );
@@ -157,30 +152,28 @@ export function ListingsClient() {
       case "price_desc": query = query.order("rate", { ascending: false }); break;
       default:           query = query.order("created_at", { ascending: false });
     }
+    return query;
+  }, []);
 
-    const { data } = await query;
-    let rows = (data ?? []) as unknown as ListingCard[];
-
-    // Client-side filters that need joins (Supabase JS can't filter on relation columns)
+  const applyClientFilters = useCallback((rows: ListingCard[], q: string, f: ListingFilters) => {
+    let filtered = rows;
     if (q.trim()) {
       const lq = q.trim().toLowerCase();
-      rows = rows.filter(
+      filtered = filtered.filter(
         (r) =>
           r.title.toLowerCase().includes(lq) ||
           r.provider?.username?.toLowerCase().includes(lq) ||
           r.provider?.city?.toLowerCase().includes(lq)
       );
     }
-    if (f.verifiedOnly) {
-      rows = rows.filter((r) => r.provider?.verification_status === "verified");
-    }
-    if (f.availableNow) {
-      rows = rows.filter((r) => isAvailableNow(r.provider?.available_until ?? null));
-    }
-    if (f.incall && !f.outcall) rows = rows.filter((r) => r.provider?.incall);
-    if (f.outcall && !f.incall) rows = rows.filter((r) => r.provider?.outcall);
+    if (f.verifiedOnly) filtered = filtered.filter((r) => r.provider?.verification_status === "verified");
+    if (f.availableNow) filtered = filtered.filter((r) => isAvailableNow(r.provider?.available_until ?? null));
+    if (f.incall && !f.outcall) filtered = filtered.filter((r) => r.provider?.incall);
+    if (f.outcall && !f.incall) filtered = filtered.filter((r) => r.provider?.outcall);
+    return filtered;
+  }, []);
 
-    // Hydrate cover images from latest post per provider
+  const hydrateCoverImages = useCallback(async (rows: ListingCard[]): Promise<ListingCard[]> => {
     const providerIds = [...new Set(rows.map((r) => r.provider?.id).filter(Boolean))];
     const coverMap = new Map<string, string>();
     if (providerIds.length > 0) {
@@ -196,13 +189,49 @@ export function ListingsClient() {
         if (!coverMap.has(r.provider_id)) coverMap.set(r.provider_id, r.media_url);
       }
     }
-
-    setListings(rows.map((r) => ({
+    return rows.map((r) => ({
       ...r,
       cover_url: coverMap.get(r.provider?.id ?? "") ?? null,
-    })));
-    setLoading(false);
+    }));
   }, []);
+
+  const fetchListings = useCallback(async (
+    cat: string,
+    q: string,
+    sort: SortBy,
+    f: ListingFilters,
+  ) => {
+    setLoading(true);
+    setHasMore(true);
+    dbOffsetRef.current = 0;
+
+    const { data } = await buildQuery(cat, sort, f, 0);
+    let rows = (data ?? []) as unknown as ListingCard[];
+
+    dbOffsetRef.current = rows.length;
+    setHasMore(rows.length >= PAGE_SIZE);
+    rows = applyClientFilters(rows, q, f);
+    rows = await hydrateCoverImages(rows);
+
+    setListings(rows);
+    setLoading(false);
+  }, [buildQuery, applyClientFilters, hydrateCoverImages]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+
+    const { data } = await buildQuery(category, sortBy, filters, dbOffsetRef.current);
+    let rows = (data ?? []) as unknown as ListingCard[];
+
+    dbOffsetRef.current += rows.length;
+    setHasMore(rows.length >= PAGE_SIZE);
+    rows = applyClientFilters(rows, search, filters);
+    rows = await hydrateCoverImages(rows);
+
+    setListings((prev) => [...prev, ...rows]);
+    setLoadingMore(false);
+  }, [loadingMore, hasMore, buildQuery, category, sortBy, filters, applyClientFilters, search, hydrateCoverImages]);
 
   useEffect(() => { fetchListings("all", "", "newest", DEFAULT_FILTERS); }, [fetchListings]);
 
@@ -214,6 +243,18 @@ export function ListingsClient() {
     );
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [category, search, sortBy, filters, fetchListings]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) loadMore(); },
+      { rootMargin: "200px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loadMore]);
 
   const liveNow    = listings.filter((l) => isAvailableNow(l.provider?.available_until ?? null));
   const newToday   = listings.filter((l) => isNewToday(l.created_at));
@@ -459,6 +500,19 @@ export function ListingsClient() {
                   </motion.div>
                 ))}
               </div>
+            )}
+
+            {/* Infinite scroll sentinel */}
+            <div ref={sentinelRef} className="h-1" />
+            {loadingMore && (
+              <div className="flex justify-center py-6">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-amber-400" />
+              </div>
+            )}
+            {!hasMore && listings.length > 0 && (
+              <p className="py-6 text-center text-[12px] text-zinc-700">
+                All listings loaded
+              </p>
             )}
           </section>
         </div>

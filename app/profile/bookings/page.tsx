@@ -102,7 +102,7 @@ export default function ProviderBookingsPage() {
     const msgs: Record<string, string> = {
       accepted: "Booking accepted",
       declined: "Booking declined",
-      completed: "Marked as completed — client can now leave a review",
+      completed: "Marked as completed",
       cancelled: "Booking cancelled",
     };
     showToast(msgs[status] ?? "Updated", true);
@@ -295,7 +295,7 @@ function BookingCard({
       ) : booking.status === "completed" ? (
         <div className="flex items-center gap-2 border-t border-white/5 px-4 py-3">
           <CheckCircle size={14} className="text-emerald-400" />
-          <p className="text-[12px] text-zinc-500">Client has been prompted to leave a review.</p>
+          <p className="text-[12px] text-zinc-500">Booking completed.</p>
         </div>
       ) : null}
     </div>

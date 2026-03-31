@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageCircle, Send, X, ChevronRight,
-  CheckCircle, Loader2, ExternalLink, Phone,
+  CheckCircle, Loader2, ExternalLink, Phone, Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
-import { supabase } from "@/lib/supabase/client";
+import { useRequestStatus } from "@/hooks/useMessageRequests";
 
 // ─── WhatsApp / Telegram brand icons (inline SVG) ──────────────────────────
 
@@ -40,20 +40,17 @@ type Props = {
   contactPhone?: string | null;
 };
 
-type Step = "options" | "compose" | "sent";
-
-const inputCls =
-  "w-full rounded-xl border border-white/8 bg-zinc-900 px-4 py-3 text-[14px] text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-amber-400/40 focus:ring-1 focus:ring-amber-400/20";
+type Step = "options" | "compose" | "sending" | "sent" | "pending";
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp, contactTelegram, contactPhone }: Props) {
   const router = useRouter();
   const { user } = useSession();
+  const { status: requestStatus, loading: statusLoading, refresh: refreshStatus } = useRequestStatus(user?.id ?? null, providerId);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [step, setStep] = useState<Step>("options");
   const [message, setMessage] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   if (isOwnProfile) return null;
@@ -70,7 +67,21 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
 
   function handleMainCta() {
     if (!user) { router.push("/auth/signin"); return; }
-    // If no external contact methods, go straight to compose
+
+    // If already accepted, go straight to chat
+    if (requestStatus === "accepted") {
+      router.push(`/messages/${username}`);
+      return;
+    }
+
+    // If pending, show pending state
+    if (requestStatus === "pending") {
+      setStep("pending");
+      setSheetOpen(true);
+      return;
+    }
+
+    // Otherwise show options or compose
     if (!hasExternalContact) {
       setStep("compose");
       setSheetOpen(true);
@@ -84,21 +95,34 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
     if (!user) { router.push("/auth/signin"); return; }
     if (!message.trim()) return;
 
-    setSubmitting(true);
+    setStep("sending");
     setSubmitError(null);
 
-    const { error } = await supabase.from("messages").insert({
-      sender_id: user.id,
-      recipient_id: providerId,
-      body: message.trim(),
+    const res = await fetch("/api/chat/requests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        senderId: user.id,
+        recipientId: providerId,
+        introMessage: message.trim(),
+      }),
     });
 
-    setSubmitting(false);
-    if (error) {
-      setSubmitError("Failed to send message. Please try again.");
+    if (!res.ok) {
+      const data = await res.json();
+      setSubmitError(data.error ?? "Failed to send request. Please try again.");
+      setStep("compose");
       return;
     }
+
+    const data = await res.json();
+    if (data.alreadyAccepted) {
+      router.push(`/messages/${username}`);
+      return;
+    }
+
     setStep("sent");
+    refreshStatus();
   }
 
   function openWhatsapp() {
@@ -118,6 +142,15 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
     const clean = contactPhone.replace(/\D/g, "");
     window.open(`tel:+${clean}`, "_self");
   }
+
+  // Button label based on request status
+  const ctaLabel = statusLoading
+    ? "Message"
+    : requestStatus === "accepted"
+      ? "Open Chat"
+      : requestStatus === "pending"
+        ? "Request Pending"
+        : "Message";
 
   const contactOptions = [
     ...(hasWhatsapp ? [{
@@ -152,14 +185,24 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
     }] : []),
     {
       icon: MessageCircle,
-      label: "Send a Message",
-      sub: "Private in-app message to @" + username,
+      label: requestStatus === "accepted" ? "Open Chat" : "Send a Message Request",
+      sub: requestStatus === "accepted"
+        ? `Continue your conversation with @${username}`
+        : requestStatus === "pending"
+          ? "Request pending — waiting for approval"
+          : `Request to chat privately with @${username}`,
       color: "text-amber-400",
       iconBg: "bg-amber-400/15",
       border: "border-amber-400/20",
       action: () => {
         if (!user) { router.push("/auth/signin"); return; }
-        setStep("compose");
+        if (requestStatus === "accepted") {
+          router.push(`/messages/${username}`);
+        } else if (requestStatus === "pending") {
+          setStep("pending");
+        } else {
+          setStep("compose");
+        }
       },
       external: false,
     },
@@ -183,10 +226,19 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
 
           <button
             onClick={handleMainCta}
-            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 shadow-[0_0_28px_rgba(251,191,36,0.4)] transition-all hover:bg-amber-300 active:scale-[0.98]"
+            disabled={requestStatus === "pending"}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 text-[14px] font-bold transition-all active:scale-[0.98]",
+              requestStatus === "pending"
+                ? "border border-zinc-700 bg-zinc-900 text-zinc-400"
+                : "bg-amber-400 text-zinc-950 shadow-[0_0_28px_rgba(251,191,36,0.4)] hover:bg-amber-300"
+            )}
           >
-            <MessageCircle size={17} strokeWidth={2.5} />
-            Message
+            {requestStatus === "pending" ? (
+              <><Clock size={17} strokeWidth={2.5} /> {ctaLabel}</>
+            ) : (
+              <><MessageCircle size={17} strokeWidth={2.5} /> {ctaLabel}</>
+            )}
           </button>
 
           {hasTelegram && (
@@ -249,12 +301,18 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
                   )}
                   {step === "compose" && (
                     <>
-                      <p className="text-[16px] font-semibold text-white">New Message</p>
-                      <p className="mt-0.5 text-[12px] text-zinc-500">to @{username}</p>
+                      <p className="text-[16px] font-semibold text-white">Message Request</p>
+                      <p className="mt-0.5 text-[12px] text-zinc-500">Introduce yourself to @{username}</p>
                     </>
                   )}
+                  {step === "sending" && (
+                    <p className="text-[16px] font-semibold text-white">Sending request...</p>
+                  )}
                   {step === "sent" && (
-                    <p className="text-[16px] font-semibold text-white">Message sent!</p>
+                    <p className="text-[16px] font-semibold text-white">Request sent!</p>
+                  )}
+                  {step === "pending" && (
+                    <p className="text-[16px] font-semibold text-white">Request pending</p>
                   )}
                 </div>
                 <button
@@ -327,14 +385,23 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
 
                     <button
                       onClick={handleSend}
-                      disabled={!message.trim() || submitting}
+                      disabled={!message.trim()}
                       className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:bg-amber-300 active:scale-[0.99] disabled:opacity-40"
                     >
-                      {submitting
-                        ? <><Loader2 size={15} className="animate-spin" /> Sending&hellip;</>
-                        : <><Send size={15} strokeWidth={2.5} /> Send Message</>
-                      }
+                      <Send size={15} strokeWidth={2.5} /> Send Request
                     </button>
+                  </motion.div>
+                )}
+
+                {/* ── Sending ── */}
+                {step === "sending" && (
+                  <motion.div
+                    key="sending"
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                    className="flex flex-col items-center gap-4 py-10 text-center"
+                  >
+                    <Loader2 size={32} className="animate-spin text-amber-400" />
+                    <p className="text-[14px] text-zinc-400">Sending your request...</p>
                   </motion.div>
                 )}
 
@@ -350,25 +417,45 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
                       <CheckCircle size={32} className="text-amber-400" />
                     </div>
                     <div>
-                      <p className="text-[17px] font-semibold text-white">Message sent!</p>
+                      <p className="text-[17px] font-semibold text-white">Request sent!</p>
                       <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500">
-                        @{username} will see your message in their inbox.
+                        @{username} will review your message request.
+                        You&apos;ll be notified when they respond.
                       </p>
                     </div>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => router.push(`/messages/${username}`)}
-                        className="rounded-full bg-amber-400/10 px-5 py-2.5 text-[13px] font-medium text-amber-400 transition-all hover:bg-amber-400/20"
-                      >
-                        View Conversation
-                      </button>
-                      <button
-                        onClick={closeSheet}
-                        className="rounded-full border border-white/10 px-5 py-2.5 text-[13px] font-medium text-zinc-300 transition-all hover:border-white/20 hover:text-white"
-                      >
-                        Close
-                      </button>
+                    <button
+                      onClick={closeSheet}
+                      className="rounded-full border border-white/10 px-5 py-2.5 text-[13px] font-medium text-zinc-300 transition-all hover:border-white/20 hover:text-white"
+                    >
+                      Close
+                    </button>
+                  </motion.div>
+                )}
+
+                {/* ── Pending state ── */}
+                {step === "pending" && (
+                  <motion.div
+                    key="pending"
+                    initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex flex-col items-center gap-4 py-10 text-center"
+                  >
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-400/10">
+                      <Clock size={32} className="text-amber-400" />
                     </div>
+                    <div>
+                      <p className="text-[17px] font-semibold text-white">Request pending</p>
+                      <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500">
+                        Your message request to @{username} is waiting for their approval.
+                        You&apos;ll be notified when they respond.
+                      </p>
+                    </div>
+                    <button
+                      onClick={closeSheet}
+                      className="rounded-full border border-white/10 px-5 py-2.5 text-[13px] font-medium text-zinc-300 transition-all hover:border-white/20 hover:text-white"
+                    >
+                      Close
+                    </button>
                   </motion.div>
                 )}
 

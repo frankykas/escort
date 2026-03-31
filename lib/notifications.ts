@@ -25,12 +25,13 @@ export type NotificationType =
   | "booking_declined"
   | "booking_completed"
   | "booking_cancelled"
-  | "review_received"
   | "new_follower"
   | "new_subscriber"
   | "post_liked"
   | "post_commented"
-  | "new_message";
+  | "new_message"
+  | "message_request"
+  | "message_request_accepted";
 
 // ---------------------------------------------------------------------------
 // Get notifications for a user
@@ -164,9 +165,6 @@ export function getNotificationRoute(notification: Notification): string {
     case "booking_cancelled":
       return "/profile/bookings";
 
-    case "review_received":
-      return `/u/${notification.actor_username ?? ""}`;
-
     case "new_follower":
     case "new_subscriber":
       return notification.actor_username
@@ -178,6 +176,14 @@ export function getNotificationRoute(notification: Notification): string {
       return "/"; // feed / home
 
     case "new_message":
+      return notification.actor_username
+        ? `/messages/${notification.actor_username}`
+        : "/messages";
+
+    case "message_request":
+      return "/messages?tab=requests";
+
+    case "message_request_accepted":
       return notification.actor_username
         ? `/messages/${notification.actor_username}`
         : "/messages";

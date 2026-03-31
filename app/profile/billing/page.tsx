@@ -111,7 +111,7 @@ export default function BillingPage() {
             {[
               "Creating feed posts (1 credit each)",
               "Publishing service listings (1 credit, live for 24h)",
-              "Bumping listings to the top of search",
+              "Relisting expired listings (1 credit)",
             ].map((f) => (
               <div key={f} className="flex items-center gap-3 px-4 py-3.5">
                 <CheckCircle size={14} className="flex-shrink-0 text-emerald-400 fill-emerald-400/20" />

@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   CheckCircle, Clock, Calendar, MessageCircle,
-  Zap, ListOrdered, Star, ChevronRight,
+  Zap, ListOrdered, ChevronRight,
   ImagePlus, Eye, Check, X, Loader2, TrendingUp,
   Heart, BarChart3, CreditCard, ShieldCheck, Coins,
 } from "lucide-react";
@@ -38,8 +38,6 @@ type DashboardStats = {
   pendingCount: number;
   acceptedCount: number;
   completedCount: number;
-  reviewCount: number;
-  averageRating: number | null;
   listingsCount: number;
   liveListingsCount: number;
   isAvailableNow: boolean;
@@ -104,7 +102,7 @@ export function ProviderDashboard() {
       // Profile stats
       supabase
         .from("profiles")
-        .select("completed_bookings_count, review_count, average_rating, available_until, post_credits_balance")
+        .select("completed_bookings_count, available_until, post_credits_balance")
         .eq("id", user.id)
         .single(),
 
@@ -189,8 +187,6 @@ export function ProviderDashboard() {
       pendingCount,
       acceptedCount,
       completedCount: (p?.completed_bookings_count as number) ?? 0,
-      reviewCount: (p?.review_count as number) ?? 0,
-      averageRating: (p?.average_rating as number) ?? null,
       listingsCount: listingsResult.count ?? 0,
       liveListingsCount: liveListings,
       isAvailableNow: isAvailNow,
@@ -359,7 +355,7 @@ export function ProviderDashboard() {
           <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-zinc-600">
             {t("dash_overview")}
           </p>
-          <div className="grid grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-2 gap-2.5">
             <StatCard
               icon={Eye}
               label="Views"
@@ -374,14 +370,6 @@ export function ProviderDashboard() {
               value={formatCompact(stats.totalLikes)}
               sub={`${stats.postsCount} posts`}
               color="text-rose-400"
-              href={`/u/${profile.username}`}
-            />
-            <StatCard
-              icon={Star}
-              label={t("dash_rating")}
-              value={stats.averageRating ? Number(stats.averageRating).toFixed(1) : "—"}
-              sub={stats.reviewCount > 0 ? `${stats.reviewCount} reviews` : "No reviews"}
-              color="text-amber-400"
               href={`/u/${profile.username}`}
             />
           </div>

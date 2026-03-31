@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Zap, Loader2 } from "lucide-react";
+import { ChevronLeft, Zap, Loader2, Globe } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
@@ -19,6 +19,7 @@ type Schedule = Partial<Record<Day, Slot[]>>;
 type Availability = {
   available_now: boolean;
   schedule: Schedule;
+  timezone?: string;
 };
 
 const DEFAULT: Availability = { available_now: false, schedule: {} };
@@ -147,6 +148,38 @@ export default function AvailabilityPage() {
                 )} />
               </div>
             </button>
+          </div>
+
+          {/* Timezone */}
+          <div className="overflow-hidden rounded-2xl border border-white/5 bg-zinc-900">
+            <div className="flex items-center gap-4 px-4 py-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/15 text-sky-400">
+                <Globe size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="text-[15px] font-semibold text-white">Timezone</p>
+                <p className="text-[12px] text-zinc-500">Shown alongside your schedule</p>
+              </div>
+            </div>
+            <div className="border-t border-white/5 px-4 py-3">
+              <select
+                value={avail.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone}
+                onChange={(e) => setAvail((prev) => ({ ...prev, timezone: e.target.value }))}
+                className="w-full rounded-xl border border-white/10 bg-zinc-800 px-3 py-2.5 text-[14px] text-white outline-none focus:border-amber-400/30 appearance-none"
+              >
+                {[
+                  "America/Toronto", "America/Montreal", "America/Vancouver",
+                  "America/Edmonton", "America/Winnipeg", "America/Halifax",
+                  "America/St_Johns", "America/New_York", "America/Chicago",
+                  "America/Denver", "America/Los_Angeles", "America/Phoenix",
+                  "Europe/London", "Europe/Paris", "Europe/Berlin",
+                  "Asia/Dubai", "Asia/Singapore", "Asia/Tokyo",
+                  "Australia/Sydney", "Pacific/Auckland",
+                ].map((tz) => (
+                  <option key={tz} value={tz}>{tz.replace(/_/g, " ")}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Weekly schedule */}

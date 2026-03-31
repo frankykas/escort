@@ -28,10 +28,16 @@ export default function UploadPostPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep]               = useState<Step>("editor");
-  const [postType, setPostType]       = useState<PostType>("post");
+  const [postType, setPostType]       = useState<PostType>(() => {
+    if (typeof window === "undefined") return "post";
+    return (localStorage.getItem("upload_draft_type") as PostType) ?? "post";
+  });
   const [preview, setPreview]         = useState<string | null>(null);
   const [file, setFile]               = useState<File | null>(null);
-  const [caption, setCaption]         = useState("");
+  const [caption, setCaption]         = useState(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("upload_draft_caption") ?? "";
+  });
   const [isPremium, setIsPremium]     = useState(false);
   const [unlockPrice, setUnlockPrice] = useState("");
   const [uploading, setUploading]     = useState(false);
@@ -54,6 +60,14 @@ export default function UploadPostPage() {
         setLoadingCredits(false);
       });
   }, [user]);
+
+  // Persist draft to localStorage
+  useEffect(() => {
+    localStorage.setItem("upload_draft_caption", caption);
+  }, [caption]);
+  useEffect(() => {
+    localStorage.setItem("upload_draft_type", postType);
+  }, [postType]);
 
   if (checked && !user) {
     router.replace("/auth/signin");
@@ -194,6 +208,10 @@ export default function UploadPostPage() {
     if (needsCredits && creditBalance !== null) {
       setCreditBalance(creditBalance - 1);
     }
+
+    // Clear draft
+    localStorage.removeItem("upload_draft_caption");
+    localStorage.removeItem("upload_draft_type");
 
     setUploading(false);
     setStep("success");
