@@ -1,25 +1,67 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { AnimatePresence } from "framer-motion";
-import { StoryViewer } from "./StoryViewer";
-import type { FeedPostData } from "./SocialHome";
+import { StoriesViewer } from "./StoriesViewer";
+import { getActiveStories } from "@/lib/stories";
+import { useSession } from "@/hooks/useSession";
+import { cn } from "@/lib/utils";
 
-type Props = { posts: FeedPostData[] };
+type StoryGroup = {
+  provider_id: string;
+  username: string;
+  avatar_url: string | null;
+  verification_status: string;
+  latest_story_at: string;
+  story_count: number;
+  has_unseen: boolean;
+  stories: {
+    id: string;
+    media_url: string | null;
+    media_type: string;
+    caption: string | null;
+    created_at: string;
+    expires_at: string;
+    views_count: number;
+  }[];
+};
 
-export function StoriesBar({ posts }: Props) {
+export function StoriesBar() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [stories, setStories] = useState<StoryGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useSession();
 
-  // One story per provider — keep the most recent post per provider
-  const seen = new Set<string>();
-  const stories = posts
-    .filter((p) => {
-      if (seen.has(p.provider_id)) return false;
-      seen.add(p.provider_id);
-      return true;
-    })
-    .slice(0, 12);
+  useEffect(() => {
+    const loadStories = async () => {
+      try {
+        const storiesData = await getActiveStories(user?.id);
+        setStories(storiesData);
+      } catch (error) {
+        console.error("Failed to load stories:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadStories();
+  }, [user?.id]);
+
+  if (loading) {
+    return (
+      <div className="border-b border-white/5 bg-zinc-950/70 backdrop-blur-xl backdrop-saturate-150">
+        <div className="flex gap-4 overflow-x-auto px-4 py-3">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="flex flex-col items-center gap-1.5 flex-shrink-0">
+              <div className="h-14 w-14 rounded-full bg-zinc-800 animate-pulse" />
+              <div className="h-2 w-12 rounded-full bg-zinc-800 animate-pulse" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (stories.length === 0) return null;
 
@@ -30,8 +72,9 @@ export function StoriesBar({ posts }: Props) {
           className="flex gap-4 overflow-x-auto px-4 py-3"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {stories.map((post, index) => {
-            const { provider_id: id, provider_username: username, provider_avatar: avatar_url } = post;
+          {stories.map((story, index) => {
+            const { provider_id: id, username, avatar_url, verification_status, has_unseen } = story;
+            const isVerified = verification_status === "verified";
             return (
               <button
                 key={id}
@@ -39,8 +82,13 @@ export function StoriesBar({ posts }: Props) {
                 className="flex flex-col items-center gap-1.5 flex-shrink-0 focus:outline-none"
                 aria-label={`View ${username}'s story`}
               >
-                {/* Amber gradient ring */}
-                <div className="rounded-full p-[2px] bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 transition-opacity hover:opacity-80">
+                {/* Amber gradient ring with unseen indicator */}
+                <div className={cn(
+                  "rounded-full p-[2px] bg-gradient-to-tr transition-opacity hover:opacity-80",
+                  has_unseen 
+                    ? "from-amber-500 via-amber-400 to-yellow-300" 
+                    : "from-zinc-600 via-zinc-500 to-zinc-400"
+                )}>
                   <div className="rounded-full p-[2px] bg-black">
                     {avatar_url ? (
                       <div className="relative h-14 w-14 overflow-hidden rounded-full">
@@ -71,7 +119,7 @@ export function StoriesBar({ posts }: Props) {
       {/* Story viewer — rendered in a portal-like fixed overlay */}
       <AnimatePresence>
         {activeIndex !== null && (
-          <StoryViewer
+          <StoriesViewer
             stories={stories}
             initialIndex={activeIndex}
             onClose={() => setActiveIndex(null)}

@@ -59,7 +59,7 @@ export function FeedList({ posts }: Props) {
 
   return (
     <div className="w-full pb-24 bg-zinc-950">
-      <StoriesBar posts={posts} />
+      <StoriesBar />
 
       <div className="flex flex-col pt-1">
         {posts.map((post, index) => (

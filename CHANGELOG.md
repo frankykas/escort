@@ -4,6 +4,37 @@ A running log of all features, fixes, and improvements shipped. Newest entries f
 
 ---
 
+## 2026-03-30 — Social Feed Overhaul, Stories System, Posting Packages
+
+### New Features
+- **Complete Social Feed System** — Instagram-style feed with embedded comments, likes, shares, and real-time engagement tracking
+- **Stories System (Full Implementation)** — 24-hour ephemeral stories with view tracking, unseen indicators, and tap-through navigation
+- **Posting Packages & Credit System** — Revenue engine with Stripe Checkout integration. Providers purchase post credits (Starter 10 credits, Popular 30 credits, Pro 75 credits, Unlimited 200 credits)
+- **Enhanced Post Creation** — Support for both posts (credit-based, permanent) and stories (free, 24h expiry) with proper credit checking and validation
+- **Real Stories Bar** — Stories bar now shows actual stories from database with unseen ring indicators, not just fake avatars
+- **Comments Visible on Feed** — Latest 3 comments embedded directly in feed posts with "View all X comments" links
+- **Advanced Database Functions** — `get_feed_posts()` and `get_active_stories()` RPC functions for optimized queries
+- **Post Type System** — Distinguishes between permanent feed posts and ephemeral stories with different behaviors
+
+### Improvements
+- **Feed Performance** — Switched from raw queries to optimized database functions with embedded comment data
+- **Credit Balance Real-time Updates** — Local credit count decrements immediately after successful post publishing
+- **Story Expiration Logic** — Stories automatically expire after 24 hours, posts get far-future expiry for permanence
+- **Type Safety** — Updated all TypeScript interfaces to match new database schema with proper property names
+- **Suspense Boundaries** — Fixed Next.js build errors by properly wrapping useSearchParams in Suspense components
+
+### Bug Fixes
+- **Fixed: "expires_at violates not-null constraint"** — Posts now get proper expiry timestamps (2099 for posts, 24h for stories)
+- **Fixed: TypeScript compilation errors** — Updated all components to use new FeedPostData structure with provider_* properties
+- **Fixed: useSearchParams Suspense error** — Wrapped packages page in proper Suspense boundary
+
+### Backend / Migrations
+- **Migration 015** — Complete stories system, posting packages, analytics, and admin controls
+- **API Endpoints** — `/api/posts`, `/api/stories`, `/api/packages`, `/api/packages/checkout` with full Stripe integration
+- **Database Functions** — `get_feed_posts()`, `get_active_stories()`, `deduct_post_credit()` for optimized operations
+
+---
+
 ## 2026-03-30 — Onboarding, Messaging, Reports, Password Reset, UX Polish
 
 ### New Features
