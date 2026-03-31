@@ -34,6 +34,7 @@ type ListingCard = {
     available_until: string | null;
     incall: boolean;
     outcall: boolean;
+    last_seen_at: string | null;
   };
 };
 

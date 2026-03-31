@@ -2,13 +2,6 @@
 
 /**
  * ProfileContext — single source of truth for the authenticated user's profile.
- *
- * Architecture notes:
- * - One Supabase query per session. Re-fetches only when user.id changes.
- * - Every component that needs role or profile data consumes this context.
- *   Nothing fetches "id, username, is_provider" on its own.
- * - `refetch()` is exposed for after profile mutations (edit profile, toggle
- *   is_provider, etc.) so the nav and dashboard update without a full reload.
  */
 
 import {
@@ -21,6 +14,7 @@ import {
 } from "react";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { useLastActive } from "@/hooks/useLastActive";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -59,6 +53,9 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const { user, checked } = useSession();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
+
+  // Track last active status
+  useLastActive(user?.id);
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabase

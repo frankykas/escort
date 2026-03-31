@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useComment, type CommentRow } from "@/hooks/useComment";
 import { CommentInput } from "./CommentInput";
+import { ReportButton } from "@/components/ui/ReportButton";
 
 type Props = {
   postId: string;
@@ -58,15 +59,22 @@ export function CommentSection({ postId, userId, initialComments }: Props) {
 
               {/* Body */}
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] leading-relaxed text-zinc-100">
-                  <Link
-                    href={`/u/${comment.profiles.username}`}
-                    className="font-semibold text-white hover:underline mr-1.5"
-                  >
-                    {comment.profiles.username}
-                  </Link>
-                  {comment.body}
-                </p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-[13px] leading-relaxed text-zinc-100">
+                    <Link
+                      href={`/u/${comment.profiles.username}`}
+                      className="font-semibold text-white hover:underline mr-1.5"
+                    >
+                      {comment.profiles.username}
+                    </Link>
+                    {comment.body}
+                  </p>
+                  <ReportButton
+                    targetType="message"
+                    targetId={comment.id}
+                    className="mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                  />
+                </div>
                 <p className="mt-0.5 text-[11px] text-zinc-600">
                   {formatTimestamp(comment.created_at)}
                 </p>

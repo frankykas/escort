@@ -7,6 +7,8 @@ export const fr: Record<TranslationKey, string> = {
   nav_explore:      "Explorer",
   nav_listings:     "Annonces",
   nav_messages:     "Messages",
+  nav_alerts:       "Alertes",
+  nav_create:       "Créer",
   nav_favorites:    "Favoris",
   nav_profile:      "Profil",
   nav_dashboard:    "Tableau de bord",

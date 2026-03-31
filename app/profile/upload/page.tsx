@@ -6,10 +6,11 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ImagePlus, X, Lock, Unlock, ChevronLeft, Loader2,
-  Film, Camera, Coins, ShoppingBag,
+  Film, Camera, Coins, ShoppingBag, CheckCircle, Share2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
+import { useProfile } from "@/contexts/ProfileContext";
 import { supabase } from "@/lib/supabase/client";
 import { USE_POSTING_PACKAGES } from "@/lib/features";
 
@@ -18,12 +19,15 @@ import { USE_POSTING_PACKAGES } from "@/lib/features";
 // ---------------------------------------------------------------------------
 
 type PostType = "post" | "story";
+type Step = "editor" | "success";
 
 export default function UploadPostPage() {
   const router = useRouter();
   const { user, checked } = useSession();
+  const { profile: myProfile } = useProfile();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [step, setStep]               = useState<Step>("editor");
   const [postType, setPostType]       = useState<PostType>("post");
   const [preview, setPreview]         = useState<string | null>(null);
   const [file, setFile]               = useState<File | null>(null);
@@ -135,8 +139,6 @@ export default function UploadPostPage() {
         ? Math.round(parseFloat(unlockPrice) * 100)
         : null;
 
-      // If we have a media URL, use posts API. Otherwise insert directly
-      // (posts API requires mediaUrl, but text-only posts are valid)
       if (mediaUrl) {
         const res = await fetch("/api/posts", {
           method: "POST",
@@ -156,7 +158,6 @@ export default function UploadPostPage() {
           return;
         }
 
-        // If premium, update the row (the API doesn't handle premium fields yet)
         if (isPremium && json.postId) {
           await supabase.from("status_updates").update({
             is_premium: true,
@@ -164,7 +165,6 @@ export default function UploadPostPage() {
           }).eq("id", json.postId);
         }
       } else {
-        // Text-only post — use API as well with a placeholder
         const res = await fetch("/api/posts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -191,12 +191,12 @@ export default function UploadPostPage() {
       }
     }
 
-    // Decrement local credit count after successful post publish
     if (needsCredits && creditBalance !== null) {
       setCreditBalance(creditBalance - 1);
     }
 
-    router.push(postType === "story" ? "/explore" : "/profile");
+    setUploading(false);
+    setStep("success");
   }
 
   const isStory = postType === "story";
@@ -205,6 +205,61 @@ export default function UploadPostPage() {
   );
   const needsCredits = USE_POSTING_PACKAGES && postType === "post";
   const hasCredits = creditBalance !== null && creditBalance > 0;
+
+  if (step === "success") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-950 px-6 text-center pb-20">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center gap-6"
+        >
+          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+            <CheckCircle size={48} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white">
+              {isStory ? "Story Shared!" : "Post Published!"}
+            </h1>
+            <p className="mt-2 text-zinc-400">
+              {isStory
+                ? "Your story is now visible to your followers for the next 24 hours."
+                : "Your post is now live on your profile and explore feed."
+              }
+            </p>
+          </div>
+
+          <div className="mt-4 flex w-full max-w-sm flex-col gap-3">
+            <button
+              onClick={async () => {
+                if (navigator.share) {
+                  await navigator.share({
+                    title: `Check out my new ${isStory ? "story" : "post"}!`,
+                    url: `${window.location.origin}/u/${myProfile?.username ?? ""}`
+                  }).catch(() => {});
+                }
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-4 text-[15px] font-bold text-zinc-950 transition hover:bg-amber-300"
+            >
+              <Share2 size={18} /> Share Update
+            </button>
+            <button
+              onClick={() => router.push(myProfile?.username ? `/u/${myProfile.username}` : "/profile")}
+              className="w-full rounded-2xl bg-zinc-900 py-4 text-[15px] font-semibold text-zinc-300 transition hover:bg-zinc-800"
+            >
+              View on Profile
+            </button>
+            <button
+              onClick={() => router.push("/")}
+              className="text-[14px] font-medium text-zinc-500 hover:text-zinc-300 transition"
+            >
+              Go to Dashboard
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 pb-20">
@@ -234,7 +289,6 @@ export default function UploadPostPage() {
       </header>
 
       <div className="mx-auto max-w-lg space-y-0">
-        {/* ── Post type toggle ─────────────────────────────────────────── */}
         <div className="flex border-b border-white/5">
           <button
             onClick={() => setPostType("post")}
@@ -262,7 +316,6 @@ export default function UploadPostPage() {
           </button>
         </div>
 
-        {/* ── Credit balance banner (posts only, when packages enabled) ── */}
         {needsCredits && (
           <div className={cn(
             "flex items-center justify-between px-4 py-3 border-b border-white/5",
@@ -291,7 +344,6 @@ export default function UploadPostPage() {
           </div>
         )}
 
-        {/* ── Story info banner ──────────────────────────────────────── */}
         {isStory && (
           <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/5 bg-blue-500/5">
             <Film size={16} className="text-blue-400" />
@@ -301,7 +353,6 @@ export default function UploadPostPage() {
           </div>
         )}
 
-        {/* ── Photo picker ───────────────────────────────────────────── */}
         <div
           onClick={() => !preview && fileInputRef.current?.click()}
           className={cn(
@@ -341,7 +392,6 @@ export default function UploadPostPage() {
           />
         </div>
 
-        {/* ── Caption ────────────────────────────────────────────────── */}
         <div className="border-b border-white/5 px-4 py-4">
           <textarea
             value={caption}
@@ -354,7 +404,6 @@ export default function UploadPostPage() {
           <p className="mt-1 text-right text-[11px] text-zinc-600">{caption.length}/500</p>
         </div>
 
-        {/* ── Premium toggle (posts only) ────────────────────────────── */}
         {!isStory && (
           <div className="border-b border-white/5 px-4 py-4">
             <button
@@ -413,7 +462,6 @@ export default function UploadPostPage() {
           </div>
         )}
 
-        {/* ── Error ──────────────────────────────────────────────────── */}
         <AnimatePresence>
           {error && (
             <motion.div
@@ -427,7 +475,6 @@ export default function UploadPostPage() {
           )}
         </AnimatePresence>
 
-        {/* ── Bottom publish ─────────────────────────────────────────── */}
         <div className="px-4 pt-6">
           <button
             onClick={handlePublish}

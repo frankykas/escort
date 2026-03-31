@@ -6,7 +6,8 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight, Camera, Loader2, User, Sparkles,
-  MapPin, CheckCircle, Search, Crown,
+  MapPin, CheckCircle, Search, Crown, DollarSign,
+  PlusCircle, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
@@ -15,7 +16,7 @@ import { supabase } from "@/lib/supabase/client";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const SERVICE_CATS = ["Companionship", "Dinner Date", "Travel", "GFE", "Couples", "Massage", "Domination"];
+const SERVICE_CATS = ["Escorts", "GFE", "Companionship", "Dinner Date", "Travel", "Massage", "Domination", "Couples"];
 const COUNTRY_OPTIONS = [
   { code: "CA", name: "Canada" },
   { code: "US", name: "United States" },
@@ -27,7 +28,7 @@ const COUNTRY_OPTIONS = [
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 type Role = "client" | "provider" | null;
-type Step = "role" | "profile" | "done";
+type Step = "role" | "profile" | "rate" | "listing" | "done";
 
 const inputCls =
   "w-full rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3 text-[14px] text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-amber-400/40 focus:ring-1 focus:ring-amber-400/20";
@@ -41,6 +42,8 @@ export default function OnboardingPage() {
 
   const [step, setStep] = useState<Step>("role");
   const [role, setRole] = useState<Role>(null);
+
+  // Profile fields
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [city, setCity] = useState("");
@@ -49,6 +52,15 @@ export default function OnboardingPage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  // Rate field
+  const [hourlyRate, setHourlyRate] = useState("");
+
+  // First listing fields
+  const [listingTitle, setListingTitle] = useState("");
+  const [listingPrice, setListingPrice] = useState("");
+  const [listingDuration, setListingDuration] = useState("60");
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -100,7 +112,7 @@ export default function OnboardingPage() {
     setSaving(true);
     setError(null);
 
-    const payload: Record<string, unknown> = {
+    const payload: Record<string, any> = {
       username: username.trim().toLowerCase().replace(/\s+/g, "."),
       is_provider: role === "provider",
       onboarding_completed: true,
@@ -111,18 +123,19 @@ export default function OnboardingPage() {
       if (city.trim()) payload.city = city.trim();
       payload.country_code = countryCode;
       if (categories.length > 0) payload.service_categories = categories;
+      if (hourlyRate) payload.hourly_rate = Math.round(parseFloat(hourlyRate) * 100);
     }
 
     if (avatarUrl) payload.avatar_url = avatarUrl;
 
+    // Update profile
     const { error: saveErr } = await supabase
       .from("profiles")
       .update(payload)
       .eq("id", user.id);
 
-    setSaving(false);
-
     if (saveErr) {
+      setSaving(false);
       if (saveErr.message.includes("profiles_username_key")) {
         setError("That username is taken. Try another.");
       } else {
@@ -131,6 +144,19 @@ export default function OnboardingPage() {
       return;
     }
 
+    // Create first listing if provided
+    if (role === "provider" && listingTitle.trim() && listingPrice) {
+      await supabase.from("listings").insert({
+        provider_id: user.id,
+        title: listingTitle.trim(),
+        rate: Math.round(parseFloat(listingPrice) * 100),
+        duration_minutes: parseInt(listingDuration),
+        service_type: categories[0] ?? "Escorts",
+        is_active: true,
+      });
+    }
+
+    setSaving(false);
     refetch();
     setStep("done");
   }
@@ -269,9 +295,6 @@ export default function OnboardingPage() {
                     maxLength={30}
                     className={inputCls}
                   />
-                  <p className="mt-1 text-[10px] text-zinc-600">
-                    Lowercase, no spaces. This will be your @handle.
-                  </p>
                 </div>
 
                 {/* Provider-only fields */}
@@ -351,14 +374,14 @@ export default function OnboardingPage() {
                 {error && <p className="text-[12px] text-red-400">{error}</p>}
 
                 <button
-                  onClick={handleFinish}
+                  onClick={() => role === "provider" ? setStep("rate") : handleFinish()}
                   disabled={saving || !username.trim()}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 transition hover:bg-amber-300 active:scale-[0.99] disabled:opacity-40"
                 >
                   {saving ? (
                     <><Loader2 size={14} className="animate-spin" /> Saving...</>
                   ) : (
-                    <><Sparkles size={15} /> {role === "provider" ? "Launch My Profile" : "Get Started"}</>
+                    <>{role === "provider" ? "Next" : "Get Started"} <ArrowRight size={15} /></>
                   )}
                 </button>
 
@@ -367,6 +390,135 @@ export default function OnboardingPage() {
                   className="w-full text-center text-[12px] text-zinc-600 hover:text-zinc-400 transition"
                 >
                   Go back
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── Step 2.1: Rate setup ── */}
+          {step === "rate" && (
+            <motion.div
+              key="rate"
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.3 }}
+              className="rounded-2xl border border-white/10 bg-zinc-900/80 p-6 backdrop-blur-xl"
+            >
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-400/10">
+                <DollarSign size={24} className="text-amber-400" />
+              </div>
+              <h1 className="text-[18px] font-bold text-white">What is your base rate?</h1>
+              <p className="mt-1 text-[13px] text-zinc-500">
+                Set a starting hourly rate. You can customize prices for different durations later.
+              </p>
+
+              <div className="mt-6 space-y-5">
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[14px] font-semibold text-zinc-500">CA$</span>
+                  <input
+                    type="number"
+                    value={hourlyRate}
+                    onChange={(e) => setHourlyRate(e.target.value)}
+                    placeholder="250"
+                    className={cn(inputCls, "pl-12")}
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[12px] text-zinc-600">per hour</span>
+                </div>
+
+                <button
+                  onClick={() => setStep("listing")}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 transition hover:bg-amber-300 active:scale-[0.99]"
+                >
+                  Next <ArrowRight size={15} />
+                </button>
+
+                <button
+                  onClick={() => setStep("profile")}
+                  className="w-full text-center text-[12px] text-zinc-600 hover:text-zinc-400 transition"
+                >
+                  Go back
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── Step 2.2: First Listing ── */}
+          {step === "listing" && (
+            <motion.div
+              key="listing"
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.3 }}
+              className="rounded-2xl border border-white/10 bg-zinc-900/80 p-6 backdrop-blur-xl"
+            >
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500/10">
+                <PlusCircle size={24} className="text-sky-400" />
+              </div>
+              <h1 className="text-[18px] font-bold text-white">Add your first listing</h1>
+              <p className="mt-1 text-[13px] text-zinc-500">
+                Listings help clients find specific services and durations you offer.
+              </p>
+
+              <div className="mt-6 space-y-4">
+                <div>
+                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
+                    Listing title
+                  </label>
+                  <input
+                    type="text"
+                    value={listingTitle}
+                    onChange={(e) => setListingTitle(e.target.value)}
+                    placeholder="e.g. 1h Companionship"
+                    className={inputCls}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
+                      Duration (min)
+                    </label>
+                    <select
+                      value={listingDuration}
+                      onChange={(e) => setListingDuration(e.target.value)}
+                      className={inputCls}
+                    >
+                      <option value="30">30 min</option>
+                      <option value="60">60 min</option>
+                      <option value="90">90 min</option>
+                      <option value="120">2 hours</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
+                      Price (CA$)
+                    </label>
+                    <input
+                      type="number"
+                      value={listingPrice}
+                      onChange={(e) => setListingPrice(e.target.value)}
+                      placeholder={hourlyRate || "250"}
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleFinish}
+                  disabled={saving}
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 transition hover:bg-amber-300 active:scale-[0.99] disabled:opacity-40"
+                >
+                  {saving ? (
+                    <><Loader2 size={14} className="animate-spin" /> Launching...</>
+                  ) : (
+                    <><Sparkles size={15} /> Launch My Profile</>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleFinish()}
+                  disabled={saving}
+                  className="w-full text-center text-[12px] text-zinc-600 hover:text-zinc-400 transition"
+                >
+                  Skip for now
                 </button>
               </div>
             </motion.div>
@@ -388,7 +540,7 @@ export default function OnboardingPage() {
               </h1>
               <p className="mt-2 text-[14px] text-zinc-400">
                 {role === "provider"
-                  ? "Your profile is set up. Create your first post or listing to start getting discovered."
+                  ? "Your profile is set up. Check your dashboard to manage your listings and posts."
                   : "You're all set. Start exploring providers and listings."
                 }
               </p>

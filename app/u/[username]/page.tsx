@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { CheckCircle, MapPin, Star } from "lucide-react";
+import { CheckCircle, MapPin, Star, Clock } from "lucide-react";
 import { createServerClient } from "@/lib/supabase/server";
 import { BackButton } from "@/components/ui/BackButton";
 import { ReportButton } from "@/components/ui/ReportButton";
@@ -9,6 +9,7 @@ import { ProfileTabs } from "./ProfileTabs";
 import { HeroCarousel } from "./HeroCarousel";
 import { EnquireBar } from "./EnquireBar";
 import { USE_BOOKINGS } from "@/lib/features";
+import { cn, formatLastSeen } from "@/lib/utils";
 import type { ProfileAttributes } from "./ProfileTabs";
 
 function formatCount(n: number): string {
@@ -135,6 +136,8 @@ export default async function ProfilePage({ params }: Props) {
     hourly_rate: profile.hourly_rate as number | null,
   };
 
+  const lastSeenStr = formatLastSeen((profile as Record<string, unknown>).last_seen_at as string | null ?? null);
+
   return (
     <main className="min-h-screen bg-zinc-950 pb-44">
       {/* ── Sticky header ── */}
@@ -187,21 +190,34 @@ export default async function ProfilePage({ params }: Props) {
           )}
         </div>
 
-        {/* City + age */}
-        {(profile.city || profile.age) && (
-          <div className="mt-1 flex items-center gap-1 text-zinc-500">
-            {profile.city && <MapPin size={11} className="flex-shrink-0" />}
-            <span className="text-[13px]">
-              {[profile.city, profile.age ? `Age ${profile.age}` : null]
-                .filter(Boolean)
-                .join(" · ")}
-            </span>
-          </div>
-        )}
+        {/* City + age + Last Seen */}
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-zinc-500">
+          {(profile.city || profile.age) && (
+            <div className="flex items-center gap-1">
+              {profile.city && <MapPin size={12} className="flex-shrink-0" />}
+              <span className="text-[13px]">
+                {[profile.city, profile.age ? `Age ${profile.age}` : null]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </span>
+            </div>
+          )}
+          {lastSeenStr && (
+            <div className="flex items-center gap-1">
+              <Clock size={12} className="flex-shrink-0" />
+              <span className={cn(
+                "text-[13px]",
+                lastSeenStr === "Online now" && "font-medium text-emerald-400"
+              )}>
+                {lastSeenStr}
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Rating + completed bookings */}
         {(avgRating !== null || (USE_BOOKINGS && completedBookings > 0)) && (
-          <div className="mt-2 flex items-center gap-3">
+          <div className="mt-2.5 flex items-center gap-3">
             {avgRating !== null && (
               <div className="flex items-center gap-1.5">
                 <Star size={13} className="fill-amber-400 text-amber-400" />
@@ -219,7 +235,7 @@ export default async function ProfilePage({ params }: Props) {
 
         {/* Short bio */}
         {profile.bio && !profile.bio_long && (
-          <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-400">
+          <p className="mt-2 text-[13px] leading-relaxed text-zinc-400">
             {profile.bio as string}
           </p>
         )}

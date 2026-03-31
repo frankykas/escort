@@ -123,7 +123,7 @@ export default function ProfilePage() {
     if (!user) { router.replace("/auth/signin"); return; }
 
     async function load() {
-      const [profileResult, followingResult, likedResult] = await Promise.all([
+      const [profileResult, followingResult, likedResult, subscriptionsResult] = await Promise.all([
         supabase
           .from("profiles")
           .select("id, username, avatar_url, bio, is_provider, verification_status, is_private, followers_count, following_count, created_at")
@@ -137,13 +137,18 @@ export default function ProfilePage() {
           .from("likes")
           .select("*", { count: "exact", head: true })
           .eq("user_id", user!.id),
+        supabase
+          .from("subscriptions")
+          .select("*", { count: "exact", head: true })
+          .eq("subscriber_id", user!.id)
+          .eq("status", "active"),
       ]);
 
       setProfile((profileResult.data as ProfileData) ?? null);
       setStats({
         following: followingResult.count ?? 0,
         liked: likedResult.count ?? 0,
-        subscriptions: 0,
+        subscriptions: subscriptionsResult.count ?? 0,
       });
       setLoading(false);
     }

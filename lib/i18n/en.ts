@@ -5,6 +5,8 @@ export const en = {
   nav_explore:      "Explore",
   nav_listings:     "Listings",
   nav_messages:     "Messages",
+  nav_alerts:       "Alerts",
+  nav_create:       "Create",
   nav_favorites:    "Favorites",
   nav_profile:      "Profile",
   nav_dashboard:    "Dashboard",

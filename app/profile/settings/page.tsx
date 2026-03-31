@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -39,6 +40,7 @@ function Field({
 export default function AccountSettingsPage() {
   const router = useRouter();
   const { user, checked } = useSession();
+  const { t } = useTranslation();
 
   const [currentEmail, setCurrentEmail] = useState("");
 
@@ -48,10 +50,8 @@ export default function AccountSettingsPage() {
   const [emailMsg, setEmailMsg]         = useState<{ text: string; ok: boolean } | null>(null);
 
   // Password form
-  const [currentPw, setCurrentPw]       = useState("");
   const [newPw, setNewPw]               = useState("");
   const [confirmPw, setConfirmPw]       = useState("");
-  const [showCurrent, setShowCurrent]   = useState(false);
   const [showNew, setShowNew]           = useState(false);
   const [pwLoading, setPwLoading]       = useState(false);
   const [pwMsg, setPwMsg]               = useState<{ text: string; ok: boolean } | null>(null);
@@ -61,18 +61,11 @@ export default function AccountSettingsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
-
   useEffect(() => {
     if (!checked) return;
     if (!user) { router.replace("/auth/signin"); return; }
     setCurrentEmail(user.email ?? "");
-  }, [user, checked]);
-
-  function showToast(msg: string, ok: boolean) {
-    setToast({ msg, ok });
-    setTimeout(() => setToast(null), 3000);
-  }
+  }, [user, checked, router]);
 
   async function handleEmailChange(e: FormEvent) {
     e.preventDefault();
@@ -84,7 +77,7 @@ export default function AccountSettingsPage() {
     if (error) {
       setEmailMsg({ text: error.message, ok: false });
     } else {
-      setEmailMsg({ text: "Confirmation sent to both addresses.", ok: true });
+      setEmailMsg({ text: t("settings_email_sent"), ok: true });
       setNewEmail("");
     }
   }
@@ -107,15 +100,13 @@ export default function AccountSettingsPage() {
       setPwMsg({ text: error.message, ok: false });
     } else {
       setPwMsg({ text: "Password updated successfully.", ok: true });
-      setCurrentPw(""); setNewPw(""); setConfirmPw("");
+      setNewPw(""); setConfirmPw("");
     }
   }
 
   async function handleDeleteAccount() {
     if (deleteConfirm !== "DELETE") return;
     setDeleteLoading(true);
-    // Sign out — actual account deletion requires a server-side function
-    // Placeholder: sign out and show info
     await supabase.auth.signOut();
     router.replace("/");
   }
@@ -129,25 +120,25 @@ export default function AccountSettingsPage() {
         >
           <ChevronLeft size={20} />
         </button>
-        <span className="text-[15px] font-semibold text-white">Account Settings</span>
+        <span className="text-[15px] font-semibold text-white">{t("settings_title")}</span>
       </header>
 
       <div className="mx-auto max-w-lg space-y-6 px-4 pt-6">
         {/* Email */}
-        <Section title="Email address">
-          <Field label="Current email">
+        <Section title={t("settings_email")}>
+          <Field label={t("settings_current_email")}>
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3">
               <Mail size={15} className="text-zinc-500" />
               <span className="text-[14px] text-zinc-300">{currentEmail || "—"}</span>
             </div>
           </Field>
           <form onSubmit={handleEmailChange} className="px-4 pb-4">
-            <p className="mb-1.5 text-[11px] font-medium uppercase tracking-widest text-zinc-600">New email</p>
+            <p className="mb-1.5 text-[11px] font-medium uppercase tracking-widest text-zinc-600">{t("settings_new_email")}</p>
             <input
               type="email"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
-              placeholder="Enter new email address"
+              placeholder={t("settings_new_email_ph")}
               className="w-full rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3 text-[14px] text-white placeholder-zinc-600 outline-none focus:border-amber-400/40"
             />
             {emailMsg && (
@@ -166,17 +157,17 @@ export default function AccountSettingsPage() {
               )}
             >
               {emailLoading && <Loader2 size={14} className="animate-spin" />}
-              Update Email
+              {t("settings_update_email")}
             </button>
           </form>
         </Section>
 
         {/* Password */}
-        <Section title="Password">
+        <Section title={t("settings_password")}>
           <form onSubmit={handlePasswordChange} className="px-4 py-4 space-y-3">
             {[
-              { label: "New password", value: newPw, set: setNewPw, show: showNew, toggle: () => setShowNew((s) => !s) },
-              { label: "Confirm new password", value: confirmPw, set: setConfirmPw, show: showNew, toggle: () => {} },
+              { label: t("settings_new_password"), value: newPw, set: setNewPw, show: showNew, toggle: () => setShowNew((s) => !s) },
+              { label: t("settings_confirm_pw"), value: confirmPw, set: setConfirmPw, show: showNew, toggle: () => {} },
             ].map(({ label, value, set, show, toggle }) => (
               <div key={label}>
                 <p className="mb-1.5 text-[11px] font-medium uppercase tracking-widest text-zinc-600">{label}</p>
@@ -189,7 +180,7 @@ export default function AccountSettingsPage() {
                     placeholder="••••••••"
                     className="flex-1 bg-transparent text-[14px] text-white placeholder-zinc-600 outline-none"
                   />
-                  {label === "New password" && (
+                  {label === t("settings_new_password") && (
                     <button type="button" onClick={toggle} className="text-zinc-500 hover:text-zinc-300">
                       {show ? <EyeOff size={15} /> : <Eye size={15} />}
                     </button>
@@ -213,13 +204,13 @@ export default function AccountSettingsPage() {
               )}
             >
               {pwLoading && <Loader2 size={14} className="animate-spin" />}
-              Change Password
+              {t("settings_change_pw")}
             </button>
           </form>
         </Section>
 
         {/* Danger zone */}
-        <Section title="Danger zone">
+        <Section title={t("settings_danger")}>
           <button
             onClick={() => setDeleteOpen(true)}
             className="flex w-full items-center gap-3 px-4 py-4 transition hover:bg-red-500/5"
@@ -228,8 +219,8 @@ export default function AccountSettingsPage() {
               <Trash2 size={18} />
             </div>
             <div className="text-left">
-              <p className="text-[14px] font-medium text-red-400">Delete account</p>
-              <p className="text-[12px] text-zinc-500">Permanently remove your account and all data</p>
+              <p className="text-[14px] font-medium text-red-400">{t("settings_delete")}</p>
+              <p className="text-[12px] text-zinc-500">{t("settings_delete_sub")}</p>
             </div>
           </button>
         </Section>
@@ -255,11 +246,9 @@ export default function AccountSettingsPage() {
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/10">
                 <AlertTriangle size={24} className="text-red-400" />
               </div>
-              <h2 className="text-[17px] font-semibold text-white">Delete account?</h2>
-              <p className="mt-1 text-[13px] text-zinc-400">
-                This will permanently delete your profile, listings, posts, and all data. This cannot be undone.
-              </p>
-              <p className="mt-4 text-[12px] text-zinc-500">Type <strong className="text-zinc-300">DELETE</strong> to confirm</p>
+              <h2 className="text-[17px] font-semibold text-white">{t("settings_delete_confirm")}</h2>
+              <p className="mt-1 text-[13px] text-zinc-400">{t("settings_delete_body")}</p>
+              <p className="mt-4 text-[12px] text-zinc-500">{t("settings_type_delete")}</p>
               <input
                 type="text"
                 value={deleteConfirm}
@@ -272,7 +261,7 @@ export default function AccountSettingsPage() {
                   onClick={() => { setDeleteOpen(false); setDeleteConfirm(""); }}
                   className="flex-1 rounded-xl border border-white/10 py-3 text-[14px] font-medium text-zinc-300 transition hover:bg-zinc-800"
                 >
-                  Cancel
+                  {t("cancel")}
                 </button>
                 <button
                   onClick={handleDeleteAccount}
@@ -284,27 +273,11 @@ export default function AccountSettingsPage() {
                       : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
                   )}
                 >
-                  {deleteLoading ? <Loader2 size={14} className="mx-auto animate-spin" /> : "Delete"}
+                  {deleteLoading ? <Loader2 size={14} className="mx-auto animate-spin" /> : t("delete")}
                 </button>
               </div>
             </motion.div>
           </>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
-            className={cn(
-              "fixed bottom-24 left-1/2 -translate-x-1/2 rounded-full px-5 py-2.5 text-[13px] font-medium shadow-xl",
-              toast.ok ? "bg-emerald-500 text-white" : "bg-red-500 text-white"
-            )}
-          >
-            {toast.msg}
-          </motion.div>
         )}
       </AnimatePresence>
     </div>

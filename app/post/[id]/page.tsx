@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CheckCircle } from "lucide-react";
 import { createServerClient } from "@/lib/supabase/server";
 import { BackButton } from "@/components/ui/BackButton";
+import { ReportButton } from "@/components/ui/ReportButton";
 import { PostActions } from "./PostActions";
 import { CommentSection } from "./CommentSection";
 import type { CommentRow } from "@/hooks/useComment";
@@ -163,8 +164,9 @@ export default async function PostPage({ params }: Props) {
         )}
 
         {/* ── Timestamp ── */}
-        <div className="px-3 pb-3">
+        <div className="flex items-center justify-between px-3 pb-3">
           <p className="text-[11px] text-zinc-600">{formatTimestamp(post.created_at)}</p>
+          <ReportButton targetType="post" targetId={post.id} />
         </div>
 
         {/* ── Comments section ── */}

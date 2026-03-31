@@ -4,8 +4,8 @@ import { Suspense, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Home, Compass, LayoutGrid, User, Bell,
-  LayoutDashboard, ListOrdered, PlusCircle, MessageSquare,
+  Home, Compass, User, Bell,
+  LayoutDashboard, PlusCircle, MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -54,14 +54,12 @@ function useClientTabs(
   pathname: string,
   t: (k: TranslationKey) => string,
   unreadNotifs: number,
-  unreadMsgs: number,
 ): TabDef[] {
   return [
-    { label: t("nav_home"),          icon: Home,          href: "/",              active: pathname === "/" },
-    { label: t("nav_explore"),       icon: Compass,      href: "/explore",      active: pathname.startsWith("/explore") },
-    { label: "Messages",             icon: MessageSquare, href: "/messages",     active: pathname === "/messages", badge: unreadMsgs },
-    { label: "Alerts",               icon: Bell,          href: "/notifications", active: pathname.startsWith("/notifications"), badge: unreadNotifs },
-    { label: t("nav_profile"),       icon: User,          href: "/profile",      active: pathname.startsWith("/profile") },
+    { label: t("nav_home"),    icon: Home,    href: "/",              active: pathname === "/" },
+    { label: t("nav_explore"), icon: Compass, href: "/explore",      active: pathname.startsWith("/explore") },
+    { label: t("nav_alerts"),  icon: Bell,    href: "/notifications", active: pathname.startsWith("/notifications"), badge: unreadNotifs },
+    { label: t("nav_profile"), icon: User,    href: "/profile",      active: pathname.startsWith("/profile") },
   ];
 }
 
@@ -73,9 +71,9 @@ function useProviderTabs(
 ): TabDef[] {
   return [
     { label: t("nav_dashboard"),     icon: LayoutDashboard, href: "/",                 active: pathname === "/" },
-    { label: "Create",               icon: PlusCircle,      href: "/profile/upload",   active: pathname === "/profile/upload" },
-    { label: "Messages",             icon: MessageSquare,   href: "/messages",         active: pathname === "/messages", badge: unreadMsgs },
-    { label: "Alerts",               icon: Bell,            href: "/notifications",    active: pathname.startsWith("/notifications"), badge: unreadNotifs },
+    { label: t("nav_create"),        icon: PlusCircle,      href: "/profile/upload",   active: pathname === "/profile/upload" },
+    { label: t("nav_messages"),      icon: MessageSquare,   href: "/messages",         active: pathname === "/messages", badge: unreadMsgs },
+    { label: t("nav_alerts"),        icon: Bell,            href: "/notifications",    active: pathname.startsWith("/notifications"), badge: unreadNotifs },
     { label: t("nav_profile"),       icon: User,            href: "/profile",          active: pathname.startsWith("/profile") && pathname !== "/profile/upload" },
   ];
 }
@@ -89,7 +87,7 @@ function BottomNavInner() {
   const { count: unreadNotifs } = useUnreadCount();
   const unreadMsgs = useUnreadMessages();
 
-  const clientTabs = useClientTabs(pathname, t, unreadNotifs, unreadMsgs);
+  const clientTabs = useClientTabs(pathname, t, unreadNotifs);
   const providerTabs = useProviderTabs(pathname, t, unreadNotifs, unreadMsgs);
 
   // Hide on auth and full-screen message threads

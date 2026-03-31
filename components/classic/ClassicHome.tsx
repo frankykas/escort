@@ -1,26 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { AnimatePresence } from "framer-motion";
 import { ArrowRight, Search, PlusCircle, ShieldCheck, Zap, MapPin } from "lucide-react";
-import { useSession } from "@/hooks/useSession";
 import { NavAuth } from "@/components/social/NavAuth";
-import { CreateStatusDrawer } from "@/components/social/CreateStatusDrawer";
 
 export function ClassicHome() {
-  const router = useRouter();
-  const { user } = useSession();
-  const [drawerOpen, setDrawerOpen] = useState(false);
-
-  function handlePostAdClick() {
-    if (user) {
-      setDrawerOpen(true);
-    } else {
-      router.push("/auth/signup");
-    }
-  }
 
   return (
     <main className="flex flex-col flex-1">
@@ -52,70 +36,57 @@ export function ClassicHome() {
         {/* Badge */}
         <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-1.5 text-xs font-medium text-amber-300">
           <Zap size={12} className="fill-amber-400 text-amber-400" />
-          Now Live — Browse thousands of local listings
+          Now Live — Discover premium companions near you
         </div>
 
         {/* Heading */}
         <h1 className="mx-auto max-w-3xl text-4xl font-extrabold leading-tight tracking-tight text-zinc-50 sm:text-6xl lg:text-7xl">
-          Buy &amp; Sell.{" "}
-          <span className="text-amber-400">Locally.</span>
+          Meet.{" "}
+          <span className="text-amber-400">Connect.</span>
         </h1>
 
         {/* Subtext */}
         <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-zinc-400 sm:text-lg">
-          The premium classifieds marketplace. Post a free ad in seconds, reach
-          real buyers in your area, and close deals fast.
+          The premium companion directory. Browse verified profiles,
+          explore services, and connect with confidence.
         </p>
 
         {/* CTAs */}
         <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Link
-            href="/listings"
+            href="/explore"
             className="flex items-center gap-2 rounded-full bg-amber-400 px-7 py-3 text-sm font-semibold text-zinc-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-300 active:scale-95"
           >
             <Search size={16} />
-            Browse Listings
+            Browse Profiles
           </Link>
-          <button
-            onClick={handlePostAdClick}
+          <Link
+            href="/auth/signup"
             className="flex items-center gap-2 rounded-full border border-zinc-700 px-7 py-3 text-sm font-semibold text-zinc-200 transition hover:border-zinc-500 hover:text-zinc-50 active:scale-95"
           >
             <PlusCircle size={16} />
-            Post an Ad
+            Join as a Provider
             <ArrowRight size={14} className="text-zinc-500" />
-          </button>
+          </Link>
         </div>
 
         {/* Trust row */}
         <div className="mt-16 flex flex-wrap items-center justify-center gap-6 text-xs text-zinc-500">
           <span className="flex items-center gap-1.5">
             <ShieldCheck size={14} className="text-amber-400/70" />
-            Free to list
+            ID-verified providers
           </span>
           <span className="flex items-center gap-1.5">
             <MapPin size={14} className="text-amber-400/70" />
-            Local &amp; nationwide
+            Your city &amp; beyond
           </span>
           <span className="flex items-center gap-1.5">
             <Zap size={14} className="text-amber-400/70" />
-            Live in under 60 seconds
+            Discreet &amp; secure
           </span>
         </div>
       </section>
 
-      {/* Create Status Drawer */}
-      <AnimatePresence>
-        {drawerOpen && user && (
-          <CreateStatusDrawer
-            userId={user.id}
-            onClose={() => setDrawerOpen(false)}
-            onPublished={() => {
-              setDrawerOpen(false);
-              router.refresh();
-            }}
-          />
-        )}
-      </AnimatePresence>
     </main>
   );
 }
