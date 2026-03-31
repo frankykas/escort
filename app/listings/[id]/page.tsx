@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { createServerClient } from "@/lib/supabase/server";
 import { BackButton } from "@/components/ui/BackButton";
+import { ReportButton } from "@/components/ui/ReportButton";
 import { EnquireBar } from "../EnquireBar";
 import { ListingActions } from "./ListingActions";
 
@@ -22,6 +23,9 @@ type Provider = {
   incall: boolean;
   outcall: boolean;
   followers_count: number;
+  contact_whatsapp: string | null;
+  contact_telegram: string | null;
+  contact_phone: string | null;
 };
 
 type Listing = {
@@ -96,7 +100,8 @@ export default async function ListingPage({
        outcall_areas, cancellation_policy,
        provider:profiles!provider_id (
          id, username, avatar_url, verification_status,
-         city, age, incall, outcall, followers_count
+         city, age, incall, outcall, followers_count,
+         contact_whatsapp, contact_telegram, contact_phone
        )`
     )
     .eq("id", id)
@@ -369,17 +374,22 @@ export default async function ListingPage({
           </p>
         </div>
 
+        <div className="flex justify-center pt-2">
+          <ReportButton targetType="listing" targetId={listing.id} />
+        </div>
+
       </div>
 
       <EnquireBar
         username={provider.username}
         providerId={listing.provider_id}
         listingId={listing.id}
+        listingTitle={listing.title}
         rate={listing.rate}
         duration={listing.duration_minutes}
-        depositRequired={listing.deposit_required}
-        depositAmount={listing.deposit_amount}
-        advanceNoticeHours={listing.advance_notice_hours}
+        contactWhatsapp={provider.contact_whatsapp}
+        contactTelegram={provider.contact_telegram}
+        contactPhone={provider.contact_phone}
       />
     </div>
   );

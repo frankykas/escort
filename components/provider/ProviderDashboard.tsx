@@ -3,11 +3,11 @@
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   CheckCircle, Clock, Calendar, MessageCircle,
   Zap, ListOrdered, Star, ChevronRight,
   ImagePlus, Eye, Check, X, Loader2, TrendingUp,
+  Heart, BarChart3, CreditCard, ShieldCheck, Coins,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -41,7 +41,14 @@ type DashboardStats = {
   reviewCount: number;
   averageRating: number | null;
   listingsCount: number;
+  liveListingsCount: number;
   isAvailableNow: boolean;
+  postCredits: number;
+  totalPostViews: number;
+  totalLikes: number;
+  postsCount: number;
+  unreadMessages: number;
+  pendingComments: number;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -70,10 +77,15 @@ function formatDate(date: string): string {
   });
 }
 
+function formatCompact(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return n.toString();
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function ProviderDashboard() {
-  const router = useRouter();
   const { user } = useSession();
   const { profile } = useProfile();
   const { t } = useTranslation();
@@ -87,61 +99,107 @@ export function ProviderDashboard() {
   const load = useCallback(async () => {
     if (!user) return;
 
-    const [
-      pendingResult,
-      acceptedResult,
-      profileResult,
-      listingsResult,
-    ] = await Promise.all([
-      // Pending booking requests — show up to 3 on dashboard
-      supabase
-        .from("bookings")
-        .select(
-          `id, requested_date, requested_time, service_type, area, notes, created_at,
-           client:profiles!bookings_client_id_fkey(id, username, avatar_url)`
-        )
-        .eq("provider_id", user.id)
-        .eq("status", "pending")
-        .order("created_at", { ascending: true }) // oldest first — fairness
-        .limit(3),
-
-      // Accepted bookings count
-      supabase
-        .from("bookings")
-        .select("id", { count: "exact", head: true })
-        .eq("provider_id", user.id)
-        .eq("status", "accepted"),
-
-      // Profile stats (completed bookings, reviews, availability)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const queries: PromiseLike<any>[] = [
+      // Profile stats
       supabase
         .from("profiles")
-        .select("completed_bookings_count, review_count, average_rating, available_until")
+        .select("completed_bookings_count, review_count, average_rating, available_until, post_credits_balance")
         .eq("id", user.id)
         .single(),
 
       // Active listings count
       supabase
         .from("listings")
-        .select("id", { count: "exact", head: true })
+        .select("id, expires_at", { count: "exact" })
         .eq("provider_id", user.id)
         .eq("is_active", true),
-    ]);
 
-    setPendingBookings((pendingResult.data ?? []) as unknown as PendingBooking[]);
+      // Post stats (views + likes)
+      supabase
+        .from("status_updates")
+        .select("views_count, likes_count")
+        .eq("provider_id", user.id)
+        .eq("post_type", "post"),
+
+      // Unread messages
+      supabase
+        .from("messages")
+        .select("id", { count: "exact", head: true })
+        .eq("recipient_id", user.id)
+        .eq("is_read", false),
+
+      // Pending comments
+      supabase.rpc("count_pending_comments", { p_provider_id: user.id }),
+    ];
+
+    if (USE_BOOKINGS) {
+      queries.push(
+        supabase
+          .from("bookings")
+          .select(
+            `id, requested_date, requested_time, service_type, area, notes, created_at,
+             client:profiles!bookings_client_id_fkey(id, username, avatar_url)`
+          )
+          .eq("provider_id", user.id)
+          .eq("status", "pending")
+          .order("created_at", { ascending: true })
+          .limit(3),
+        supabase
+          .from("bookings")
+          .select("id", { count: "exact", head: true })
+          .eq("provider_id", user.id)
+          .eq("status", "accepted"),
+      );
+    }
+
+    const results = await Promise.all(queries);
+    const profileResult = results[0] as { data: Record<string, unknown> | null };
+    const listingsResult = results[1] as { data: { id: string; expires_at: string }[] | null; count: number | null };
+    const postsResult = results[2] as { data: { views_count: number; likes_count: number }[] | null };
+    const unreadResult = results[3] as { count: number | null };
+    const pendingCommentsResult = results[4] as { data: number | null };
 
     const p = profileResult.data;
     const isAvailNow = p?.available_until
-      ? new Date(p.available_until) > new Date()
+      ? new Date(p.available_until as string) > new Date()
       : false;
 
+    const posts = postsResult.data ?? [];
+    const totalViews = posts.reduce((sum, post) => sum + (post.views_count ?? 0), 0);
+    const totalLikes = posts.reduce((sum, post) => sum + (post.likes_count ?? 0), 0);
+
+    // Count live listings (active + not expired)
+    const now = new Date();
+    const liveListings = (listingsResult.data ?? []).filter(
+      (l) => new Date(l.expires_at) > now
+    ).length;
+
+    let pendingCount = 0;
+    let acceptedCount = 0;
+    if (USE_BOOKINGS && results.length > 5) {
+      const pendingBookingsResult = results[5] as { data: PendingBooking[] | null };
+      const acceptedResult = results[6] as { count: number | null };
+      setPendingBookings((pendingBookingsResult.data ?? []) as unknown as PendingBooking[]);
+      pendingCount = pendingBookingsResult.data?.length ?? 0;
+      acceptedCount = acceptedResult.count ?? 0;
+    }
+
     setStats({
-      pendingCount: pendingResult.data?.length ?? 0,
-      acceptedCount: acceptedResult.count ?? 0,
-      completedCount: p?.completed_bookings_count ?? 0,
-      reviewCount: p?.review_count ?? 0,
-      averageRating: p?.average_rating ?? null,
+      pendingCount,
+      acceptedCount,
+      completedCount: (p?.completed_bookings_count as number) ?? 0,
+      reviewCount: (p?.review_count as number) ?? 0,
+      averageRating: (p?.average_rating as number) ?? null,
       listingsCount: listingsResult.count ?? 0,
+      liveListingsCount: liveListings,
       isAvailableNow: isAvailNow,
+      postCredits: (p?.post_credits_balance as number) ?? 0,
+      totalPostViews: totalViews,
+      totalLikes: totalLikes,
+      postsCount: posts.length,
+      unreadMessages: unreadResult.count ?? 0,
+      pendingComments: (pendingCommentsResult.data as number) ?? 0,
     });
 
     setLoading(false);
@@ -149,16 +207,12 @@ export function ProviderDashboard() {
 
   useEffect(() => { load(); }, [load]);
 
-  // Accept / decline a pending booking directly from the dashboard
   async function handleBookingAction(bookingId: string, status: "accepted" | "declined") {
     setActingOn(bookingId);
     const patch: Record<string, unknown> = { status };
     if (status === "accepted") patch.accepted_at = new Date().toISOString();
-
     await supabase.from("bookings").update(patch).eq("id", bookingId);
     setActingOn(null);
-
-    // Remove from pending list, update count
     setPendingBookings((prev) => prev.filter((b) => b.id !== bookingId));
     setStats((prev) =>
       prev
@@ -171,7 +225,6 @@ export function ProviderDashboard() {
     );
   }
 
-  // Toggle Available Now (sets available_until to +4h or clears it)
   async function toggleAvailability() {
     if (!user || availToggling) return;
     setAvailToggling(true);
@@ -213,7 +266,6 @@ export function ProviderDashboard() {
             </div>
           </div>
 
-          {/* Availability toggle */}
           <button
             onClick={toggleAvailability}
             disabled={availToggling}
@@ -241,7 +293,32 @@ export function ProviderDashboard() {
 
       <div className="space-y-6 px-4 pt-5">
 
-        {/* ── Pending requests — urgent strip ── */}
+        {/* ── Credit balance banner ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between rounded-2xl border border-amber-400/15 bg-gradient-to-r from-amber-400/5 to-transparent px-4 py-3.5"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400/10">
+              <Coins size={18} className="text-amber-400" />
+            </div>
+            <div>
+              <p className="text-[13px] font-semibold text-white">
+                {stats.postCredits} {stats.postCredits === 1 ? "Credit" : "Credits"}
+              </p>
+              <p className="text-[11px] text-zinc-500">For posts &amp; listings</p>
+            </div>
+          </div>
+          <Link
+            href="/profile/packages"
+            className="rounded-full bg-amber-400 px-4 py-2 text-[12px] font-bold text-zinc-950 transition hover:bg-amber-300 active:scale-[0.97]"
+          >
+            Buy More
+          </Link>
+        </motion.div>
+
+        {/* ── Pending requests — booking strip (only when USE_BOOKINGS) ── */}
         {USE_BOOKINGS && hasPending && (
           <motion.section
             initial={{ opacity: 0, y: 8 }}
@@ -263,7 +340,6 @@ export function ProviderDashboard() {
                 {t("dash_view_all")}
               </Link>
             </div>
-
             <div className="space-y-2.5">
               {pendingBookings.map((booking) => (
                 <PendingBookingCard
@@ -278,47 +354,57 @@ export function ProviderDashboard() {
           </motion.section>
         )}
 
-        {/* ── Stats row ── */}
+        {/* ── Performance stats ── */}
         <section>
           <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-zinc-600">
             {t("dash_overview")}
           </p>
-          <div className="grid grid-cols-2 gap-2.5">
-            {USE_BOOKINGS && (
-              <>
-                <StatCard
-                  icon={Calendar}
-                  label={t("dash_confirmed")}
-                  value={String(stats.acceptedCount)}
-                  sub={t("dash_upcoming")}
-                  color="text-sky-400"
-                  href="/profile/bookings"
-                />
-                <StatCard
-                  icon={CheckCircle}
-                  label={t("dash_completed")}
-                  value={String(stats.completedCount)}
-                  sub={t("dash_all_time")}
-                  color="text-emerald-400"
-                  href="/profile/bookings"
-                />
-              </>
-            )}
+          <div className="grid grid-cols-3 gap-2.5">
+            <StatCard
+              icon={Eye}
+              label="Views"
+              value={formatCompact(stats.totalPostViews)}
+              sub="All time"
+              color="text-sky-400"
+              href={`/u/${profile.username}`}
+            />
+            <StatCard
+              icon={Heart}
+              label="Likes"
+              value={formatCompact(stats.totalLikes)}
+              sub={`${stats.postsCount} posts`}
+              color="text-rose-400"
+              href={`/u/${profile.username}`}
+            />
             <StatCard
               icon={Star}
               label={t("dash_rating")}
               value={stats.averageRating ? Number(stats.averageRating).toFixed(1) : "—"}
-              sub={stats.reviewCount > 0 ? `${stats.reviewCount} ${stats.reviewCount !== 1 ? t("dash_reviews_many") : t("dash_reviews_one")}` : t("dash_no_reviews")}
+              sub={stats.reviewCount > 0 ? `${stats.reviewCount} reviews` : "No reviews"}
               color="text-amber-400"
               href={`/u/${profile.username}`}
             />
+          </div>
+
+          <div className="mt-2.5 grid grid-cols-2 gap-2.5">
             <StatCard
               icon={ListOrdered}
               label={t("dash_listings")}
-              value={String(stats.listingsCount)}
-              sub={stats.listingsCount === 0 ? t("dash_add_first") : t("dash_active")}
+              value={String(stats.liveListingsCount)}
+              sub={stats.listingsCount > stats.liveListingsCount
+                ? `${stats.listingsCount - stats.liveListingsCount} expired`
+                : stats.listingsCount === 0 ? t("dash_add_first") : t("dash_active")
+              }
               color="text-violet-400"
               href="/profile/listings"
+            />
+            <StatCard
+              icon={BarChart3}
+              label="Posts"
+              value={String(stats.postsCount)}
+              sub="Feed posts"
+              color="text-emerald-400"
+              href="/profile/upload"
             />
           </div>
         </section>
@@ -330,17 +416,9 @@ export function ProviderDashboard() {
           </p>
           <div className="grid grid-cols-2 gap-2.5">
             <QuickAction
-              icon={Zap}
-              label={t("dash_set_avail")}
-              sub={t("dash_set_avail_sub")}
-              href="/profile/availability"
-              iconColor="text-emerald-400"
-              iconBg="bg-emerald-500/10"
-            />
-            <QuickAction
               icon={ImagePlus}
               label={t("dash_upload")}
-              sub={t("dash_upload_sub")}
+              sub="Post or story"
               href="/profile/upload"
               iconColor="text-sky-400"
               iconBg="bg-sky-500/10"
@@ -354,20 +432,40 @@ export function ProviderDashboard() {
               iconBg="bg-amber-400/10"
             />
             <QuickAction
-              icon={Eye}
-              label={t("dash_view_profile")}
-              sub={t("dash_view_profile_sub")}
-              href={`/u/${profile.username}`}
+              icon={MessageCircle}
+              label="Comments"
+              sub={stats.pendingComments > 0
+                ? `${stats.pendingComments} pending`
+                : "Review & approve"
+              }
+              href="/profile/comments"
+              iconColor="text-emerald-400"
+              iconBg="bg-emerald-500/10"
+              badge={stats.pendingComments > 0 ? stats.pendingComments : undefined}
+            />
+            <QuickAction
+              icon={Zap}
+              label={t("dash_set_avail")}
+              sub={t("dash_set_avail_sub")}
+              href="/profile/availability"
               iconColor="text-violet-400"
               iconBg="bg-violet-500/10"
             />
             <QuickAction
-              icon={MessageCircle}
-              label="Comments"
-              sub="Review & approve"
-              href="/profile/comments"
-              iconColor="text-emerald-400"
-              iconBg="bg-emerald-500/10"
+              icon={Eye}
+              label={t("dash_view_profile")}
+              sub={t("dash_view_profile_sub")}
+              href={`/u/${profile.username}`}
+              iconColor="text-zinc-400"
+              iconBg="bg-zinc-800"
+            />
+            <QuickAction
+              icon={CreditCard}
+              label="Buy Credits"
+              sub={`${stats.postCredits} remaining`}
+              href="/profile/packages"
+              iconColor="text-amber-400"
+              iconBg="bg-amber-400/10"
             />
           </div>
         </section>
@@ -382,25 +480,43 @@ export function ProviderDashboard() {
           </div>
           <div className="flex-1">
             <p className="text-[14px] font-semibold text-white">{t("dash_messages")}</p>
-            <p className="text-[12px] text-zinc-500">{t("dash_inbox")}</p>
+            <p className="text-[12px] text-zinc-500">
+              {stats.unreadMessages > 0
+                ? `${stats.unreadMessages} unread message${stats.unreadMessages !== 1 ? "s" : ""}`
+                : t("dash_inbox")
+              }
+            </p>
           </div>
+          {stats.unreadMessages > 0 && (
+            <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-bold text-zinc-950">
+              {stats.unreadMessages > 99 ? "99+" : stats.unreadMessages}
+            </span>
+          )}
           <ChevronRight size={16} className="text-zinc-600" />
         </Link>
 
-        {/* ── No pending — helpful nudge ── */}
-        {USE_BOOKINGS && !hasPending && stats.pendingCount === 0 && (
-          <div className="rounded-2xl border border-white/5 bg-zinc-900/50 px-4 py-5 text-center">
-            <TrendingUp size={22} className="mx-auto mb-2 text-zinc-700" />
-            <p className="text-[14px] font-semibold text-white">{t("dash_no_pending")}</p>
-            <p className="mt-1 text-[12px] text-zinc-500">{t("dash_no_pending_sub")}</p>
-            {stats.listingsCount === 0 && (
+        {/* ── Empty state nudge ── */}
+        {stats.postsCount === 0 && stats.listingsCount === 0 && (
+          <div className="rounded-2xl border border-white/5 bg-zinc-900/50 px-4 py-6 text-center">
+            <TrendingUp size={24} className="mx-auto mb-2 text-zinc-700" />
+            <p className="text-[15px] font-semibold text-white">Get started</p>
+            <p className="mt-1 text-[12px] text-zinc-500">
+              Create your first post or listing to start getting noticed.
+            </p>
+            <div className="mt-4 flex justify-center gap-3">
+              <Link
+                href="/profile/upload"
+                className="rounded-full bg-amber-400 px-5 py-2.5 text-[13px] font-semibold text-zinc-950 transition hover:bg-amber-300"
+              >
+                Create Post
+              </Link>
               <Link
                 href="/profile/listings"
-                className="mt-3 inline-block rounded-full bg-amber-400 px-5 py-2 text-[13px] font-semibold text-zinc-950 transition hover:bg-amber-300"
+                className="rounded-full border border-white/10 px-5 py-2.5 text-[13px] font-semibold text-zinc-300 transition hover:border-white/20"
               >
-                {t("dash_add_listing")}
+                Add Listing
               </Link>
-            )}
+            </div>
           </div>
         )}
 
@@ -424,7 +540,6 @@ function PendingBookingCard({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-amber-400/20 bg-zinc-900">
-      {/* Client + time */}
       <div className="flex items-center gap-3 border-b border-white/5 px-4 py-3">
         <div className="h-9 w-9 flex-shrink-0 overflow-hidden rounded-full bg-zinc-800">
           {client?.avatar_url ? (
@@ -452,7 +567,6 @@ function PendingBookingCard({
         </div>
       </div>
 
-      {/* Details */}
       <div className="px-4 py-3">
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           <span className="flex items-center gap-1.5 text-[12px] text-zinc-300">
@@ -463,9 +577,7 @@ function PendingBookingCard({
             )}
           </span>
           {booking.service_type && (
-            <span className="text-[12px] capitalize text-zinc-400">
-              {booking.service_type}
-            </span>
+            <span className="text-[12px] capitalize text-zinc-400">{booking.service_type}</span>
           )}
           {booking.area && (
             <span className="text-[12px] text-zinc-500">{booking.area}</span>
@@ -478,7 +590,6 @@ function PendingBookingCard({
         )}
       </div>
 
-      {/* Actions */}
       {acting ? (
         <div className="flex items-center justify-center border-t border-white/5 py-3">
           <Loader2 size={16} className="animate-spin text-zinc-500" />
@@ -534,7 +645,7 @@ function StatCard({
 // ─── Quick Action ─────────────────────────────────────────────────────────────
 
 function QuickAction({
-  icon: Icon, label, sub, href, iconColor, iconBg,
+  icon: Icon, label, sub, href, iconColor, iconBg, badge,
 }: {
   icon: React.ElementType;
   label: string;
@@ -542,11 +653,12 @@ function QuickAction({
   href: string;
   iconColor: string;
   iconBg: string;
+  badge?: number;
 }) {
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 rounded-2xl border border-white/5 bg-zinc-900 px-4 py-4 transition-all hover:border-white/10 active:scale-[0.98]"
+      className="relative flex items-center gap-3 rounded-2xl border border-white/5 bg-zinc-900 px-4 py-4 transition-all hover:border-white/10 active:scale-[0.98]"
     >
       <div className={cn("flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl", iconBg)}>
         <Icon size={16} className={iconColor} />
@@ -555,6 +667,11 @@ function QuickAction({
         <p className="text-[13px] font-semibold text-white leading-tight">{label}</p>
         <p className="mt-0.5 text-[11px] text-zinc-500 leading-tight">{sub}</p>
       </div>
+      {badge != null && badge > 0 && (
+        <span className="absolute top-2 right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-zinc-950">
+          {badge}
+        </span>
+      )}
     </Link>
   );
 }
@@ -569,8 +686,9 @@ function DashboardSkeleton() {
         <div className="mt-2 h-6 w-36 rounded-full bg-zinc-800" />
       </div>
       <div className="space-y-6 px-4 pt-5">
-        <div className="grid grid-cols-2 gap-2.5">
-          {[1, 2, 3, 4].map((i) => (
+        <div className="h-16 rounded-2xl bg-zinc-900" />
+        <div className="grid grid-cols-3 gap-2.5">
+          {[1, 2, 3].map((i) => (
             <div key={i} className="h-28 rounded-2xl bg-zinc-900" />
           ))}
         </div>

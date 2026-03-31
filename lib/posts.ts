@@ -84,7 +84,10 @@ export async function createPost(params: CreatePostParams): Promise<CreatePostRe
       media_type: mediaType,
       post_type: postType,
       country_code: countryCode,
-      expires_at: postType === "story" ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() : null, // Stories expire in 24h
+      // Posts get a far-future expiry (effectively permanent); stories expire in 24h
+      expires_at: postType === "story"
+        ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        : new Date("2099-01-01T00:00:00Z").toISOString(),
     })
     .select("id")
     .single();

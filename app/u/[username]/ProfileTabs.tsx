@@ -49,6 +49,8 @@ export type ProfileAttributes = {
   incall: boolean;
   outcall: boolean;
   age: number | null;
+  service_categories: string[];
+  hourly_rate: number | null;
 };
 
 export type ReviewItem = {
@@ -68,6 +70,7 @@ type Props = {
   reviews: ReviewItem[];
   avgRating: number | null;
   isOwnProfile: boolean;
+  isProvider?: boolean;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -101,13 +104,15 @@ function heightDisplay(cm: number | null): string {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function ProfileTabs({ posts, listings, attributes, reviews, avgRating, isOwnProfile }: Props) {
+export function ProfileTabs({ posts, listings, attributes, reviews, avgRating, isOwnProfile, isProvider = true }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>("posts");
 
   const tabs: { id: Tab; label: string; icon: React.ElementType; count?: number }[] = [
     { id: "posts", label: "Posts", icon: Grid3X3, count: posts.length },
-    { id: "listings", label: "Listings", icon: ListOrdered, count: listings.length },
-    { id: "reviews", label: "Reviews", icon: Star, count: reviews.length },
+    ...(isProvider ? [
+      { id: "listings" as Tab, label: "Listings", icon: ListOrdered, count: listings.length },
+      { id: "reviews" as Tab, label: "Reviews", icon: Star, count: reviews.length },
+    ] : []),
     { id: "about", label: "About", icon: User },
   ];
 
@@ -378,7 +383,8 @@ function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
   const hasAttrs = attrs.length > 0;
   const hasBio = !!(attributes.bio_long || attributes.bio);
   const hasLocation = !!(attributes.city || attributes.incall || attributes.outcall);
-  const isEmpty = !hasAttrs && !hasBio && !hasLocation;
+  const hasServices = attributes.service_categories.length > 0 || attributes.hourly_rate !== null;
+  const isEmpty = !hasAttrs && !hasBio && !hasLocation && !hasServices;
 
   if (isEmpty) {
     return (
@@ -418,10 +424,37 @@ function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
         </section>
       )}
 
+      {/* Services */}
+      {hasServices && (
+        <section>
+          <SectionLabel>Services</SectionLabel>
+          <div className="mt-2 rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 px-4 py-4 shadow-md space-y-3">
+            {attributes.hourly_rate !== null && (
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] text-zinc-500">Starting rate</span>
+                <span className="text-[15px] font-semibold text-amber-400">{formatRate(attributes.hourly_rate)}/hr</span>
+              </div>
+            )}
+            {attributes.service_categories.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {attributes.service_categories.map((cat) => (
+                  <span
+                    key={cat}
+                    className="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-[12px] font-medium text-amber-400"
+                  >
+                    {cat}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* Location & availability */}
       {hasLocation && (
         <section>
-          <SectionLabel>Location & services</SectionLabel>
+          <SectionLabel>Location & availability</SectionLabel>
           <div className="mt-2 overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 divide-y divide-white/5 shadow-md">
             {attributes.city && (
               <div className="flex items-center gap-3 px-4 py-3">

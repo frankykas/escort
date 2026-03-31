@@ -30,6 +30,7 @@ export type UserProfile = {
   avatar_url: string | null;
   is_provider: boolean;
   verification_status: "none" | "pending" | "verified";
+  onboarding_completed: boolean;
 };
 
 type ProfileContextValue = {
@@ -62,7 +63,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, username, avatar_url, is_provider, verification_status")
+      .select("id, username, avatar_url, is_provider, verification_status, onboarding_completed")
       .eq("id", userId)
       .single();
 

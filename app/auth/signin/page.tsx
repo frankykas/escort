@@ -85,6 +85,15 @@ export default function SignInPage() {
 
             {error && <p className="text-xs text-red-400">{error}</p>}
 
+            <div className="flex justify-end">
+              <Link
+                href="/auth/reset-password"
+                className="text-[11px] text-zinc-500 transition-colors hover:text-zinc-300"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
             <button
               type="submit"
               disabled={isLoading}

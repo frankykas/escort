@@ -191,6 +191,11 @@ export default function UploadPostPage() {
       }
     }
 
+    // Decrement local credit count after successful post publish
+    if (needsCredits && creditBalance !== null) {
+      setCreditBalance(creditBalance - 1);
+    }
+
     router.push(postType === "story" ? "/explore" : "/profile");
   }
 

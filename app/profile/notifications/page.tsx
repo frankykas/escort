@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronLeft, MessageCircle, UserPlus, Crown,
-  Mail, Smartphone, Heart, Loader2,
+  Mail, Heart, Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -174,23 +174,6 @@ export default function NotificationsPage() {
               onChange={(v) => updatePref("email_new_follower", v)}
             />
           </div>
-
-          {/* Push notifications */}
-          <p className="px-1 pb-1 pt-4 text-[11px] font-medium uppercase tracking-widest text-zinc-600">Push</p>
-          <div className="overflow-hidden rounded-2xl bg-zinc-900 border border-white/5">
-            <Row
-              icon={Smartphone}
-              title="Push notifications"
-              description="Real-time alerts on your device (coming soon)"
-              checked={prefs.push_enabled}
-              iconColor="text-zinc-400"
-              onChange={(v) => updatePref("push_enabled", v)}
-              disabled
-            />
-          </div>
-          <p className="px-1 pt-1 text-[12px] text-zinc-600">
-            Push notifications will be available in a future update.
-          </p>
 
           {/* Likes row — always on, no toggle */}
           <p className="px-1 pb-1 pt-4 text-[11px] font-medium uppercase tracking-widest text-zinc-600">Always on</p>

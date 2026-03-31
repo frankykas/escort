@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { USE_SOCIAL_FEED } from "@/lib/features";
 import { ClassicHome } from "@/components/classic/ClassicHome";
 import { SocialHome } from "@/components/social/SocialHome";
@@ -8,17 +9,6 @@ type Props = {
   searchParams: Promise<{ tab?: string }>;
 };
 
-/**
- * Home page — Server Component.
- *
- * Routing logic (server-side, no client flicker):
- *   authenticated provider  → ProviderDashboard
- *   authenticated client    → SocialHome / ClassicHome (feature flag)
- *   unauthenticated         → SocialHome / ClassicHome (feature flag)
- *
- * The DB call is a single PK lookup on `profiles` — fast and idempotent.
- * Only runs for authenticated users; anonymous visitors skip it entirely.
- */
 export default async function Page({ searchParams }: Props) {
   const supabase = createServerClient();
 
@@ -30,9 +20,13 @@ export default async function Page({ searchParams }: Props) {
     if (user) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("is_provider")
+        .select("is_provider, onboarding_completed")
         .eq("id", user.id)
         .single();
+
+      if (profile && !profile.onboarding_completed) {
+        redirect("/onboarding");
+      }
 
       if (profile?.is_provider) {
         return <ProviderDashboard />;

@@ -6,7 +6,8 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Plus, Pencil, Trash2, Clock, X, Check,
-  ListOrdered, ExternalLink, TrendingUp,
+  ListOrdered, ExternalLink, TrendingUp, Coins, ShoppingBag,
+  Timer,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
@@ -24,6 +25,7 @@ type Listing = {
   sort_order: number;
   service_type: string | null;
   perks: string[];
+  expires_at: string;
 };
 
 type FormData = {
@@ -32,7 +34,7 @@ type FormData = {
   duration_minutes: string;
   rate_pounds: string;
   service_type: string;
-  perks_text: string; // one perk per line
+  perks_text: string;
 };
 
 const EMPTY_FORM: FormData = {
@@ -77,6 +79,24 @@ function avgRate(listings: Listing[]): string {
   return `CA$${Math.round(avg / 100)}`;
 }
 
+function isExpired(expiresAt: string): boolean {
+  return new Date(expiresAt) <= new Date();
+}
+
+function timeRemaining(expiresAt: string): string {
+  const diff = new Date(expiresAt).getTime() - Date.now();
+  if (diff <= 0) return "Expired";
+  const hours = Math.floor(diff / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+  if (hours >= 24) {
+    const days = Math.floor(hours / 24);
+    const h = hours % 24;
+    return `${days}d ${h}h left`;
+  }
+  if (hours > 0) return `${hours}h ${mins}m left`;
+  return `${mins}m left`;
+}
+
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function ListingsPage() {
@@ -90,15 +110,23 @@ export default function ListingsPage() {
   const [saving, setSaving]             = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [formError, setFormError]       = useState<string | null>(null);
+  const [creditBalance, setCreditBalance] = useState<number>(0);
 
   const fetchListings = useCallback(async (userId: string) => {
-    const { data } = await supabase
-      .from("listings")
-      .select("id, title, description, duration_minutes, rate, is_active, sort_order, service_type, perks")
-      .eq("provider_id", userId)
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true });
-    setListings((data as Listing[]) ?? []);
+    const [listingsResult, balanceResult] = await Promise.all([
+      supabase
+        .from("listings")
+        .select("id, title, description, duration_minutes, rate, is_active, sort_order, service_type, perks, expires_at")
+        .eq("provider_id", userId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("profiles")
+        .select("post_credits_balance")
+        .eq("id", userId)
+        .single(),
+    ]);
+    setListings((listingsResult.data as Listing[]) ?? []);
+    setCreditBalance(balanceResult.data?.post_credits_balance ?? 0);
     setLoading(false);
   }, []);
 
@@ -107,6 +135,12 @@ export default function ListingsPage() {
     if (!user) { router.replace("/auth/signin"); return; }
     fetchListings(user.id);
   }, [user, sessionLoading, router, fetchListings]);
+
+  // Refresh countdown every minute
+  useEffect(() => {
+    const interval = setInterval(() => setListings((l) => [...l]), 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   function openAdd() {
     setEditingId(null); setFormData(EMPTY_FORM); setFormError(null); setDrawerOpen(true);
@@ -143,21 +177,40 @@ export default function ListingsPage() {
       .map((p) => p.trim())
       .filter(Boolean);
 
-    const payload = {
-      title,
-      description:      formData.description.trim() || null,
-      duration_minutes: formData.duration_minutes ? parseInt(formData.duration_minutes, 10) : null,
-      rate:             rate * 100,
-      service_type:     formData.service_type || null,
-      perks,
-    };
-
     if (editingId) {
+      // Editing — direct update (no credit cost)
+      const payload = {
+        title,
+        description:      formData.description.trim() || null,
+        duration_minutes: formData.duration_minutes ? parseInt(formData.duration_minutes, 10) : null,
+        rate:             rate * 100,
+        service_type:     formData.service_type || null,
+        perks,
+      };
       const { error } = await supabase.from("listings").update(payload).eq("id", editingId);
       if (error) { setFormError(error.message); setSaving(false); return; }
     } else {
-      const { error } = await supabase.from("listings").insert({ ...payload, provider_id: user.id });
-      if (error) { setFormError(error.message); setSaving(false); return; }
+      // Creating — costs 1 credit, goes through API
+      const res = await fetch("/api/listings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          providerId: user.id,
+          title,
+          description: formData.description.trim() || null,
+          durationMinutes: formData.duration_minutes ? parseInt(formData.duration_minutes, 10) : null,
+          rate: rate * 100,
+          serviceType: formData.service_type || null,
+          perks,
+          durationHours: 24,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setFormError(json.error ?? "Failed to create listing.");
+        setSaving(false);
+        return;
+      }
     }
 
     await fetchListings(user.id);
@@ -178,7 +231,8 @@ export default function ListingsPage() {
 
   if (sessionLoading || loading) return <PageSkeleton />;
 
-  const activeCount = listings.filter((l) => l.is_active).length;
+  const activeCount = listings.filter((l) => l.is_active && !isExpired(l.expires_at)).length;
+  const hasCredits = creditBalance > 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-950 to-black pb-24 animate-[fadeIn_0.4s_ease-out]">
@@ -194,18 +248,49 @@ export default function ListingsPage() {
         <span className="text-[15px] font-semibold text-white">My Listings</span>
         <button
           onClick={openAdd}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-400 text-zinc-950 shadow-[0_0_15px_rgba(251,191,36,0.3)] transition-all hover:bg-amber-300 active:scale-95"
+          disabled={!hasCredits}
+          className={cn(
+            "flex h-8 w-8 items-center justify-center rounded-full transition-all active:scale-95",
+            hasCredits
+              ? "bg-amber-400 text-zinc-950 shadow-[0_0_15px_rgba(251,191,36,0.3)] hover:bg-amber-300"
+              : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+          )}
         >
           <Plus size={18} />
         </button>
       </header>
 
+      {/* ── Credit balance ── */}
+      <div className={cn(
+        "mx-4 mt-4 flex items-center justify-between rounded-2xl border px-4 py-3",
+        hasCredits
+          ? "border-amber-400/20 bg-amber-400/5"
+          : "border-red-500/20 bg-red-500/5"
+      )}>
+        <div className="flex items-center gap-2.5">
+          <Coins size={16} className={hasCredits ? "text-amber-400" : "text-red-400"} />
+          <div>
+            <span className="text-[13px] font-medium text-zinc-300">
+              {creditBalance} credit{creditBalance !== 1 ? "s" : ""}
+            </span>
+            <p className="text-[11px] text-zinc-500">1 credit = 1 listing (24h)</p>
+          </div>
+        </div>
+        <Link
+          href="/profile/packages"
+          className="flex items-center gap-1.5 rounded-full bg-amber-400 px-3 py-1.5 text-[11px] font-semibold text-zinc-950 hover:bg-amber-300 transition"
+        >
+          <ShoppingBag size={12} />
+          Buy Credits
+        </Link>
+      </div>
+
       {/* ── Stats strip ── */}
       {listings.length > 0 && (
-        <div className="mx-4 mt-4 flex gap-3">
+        <div className="mx-4 mt-3 flex gap-3">
           {[
             { value: String(listings.length),     label: "Total" },
-            { value: String(activeCount),          label: "Active", highlight: activeCount > 0 },
+            { value: String(activeCount),          label: "Live", highlight: activeCount > 0 },
             { value: avgRate(listings),            label: "Avg rate" },
           ].map(({ value, label, highlight }) => (
             <div
@@ -230,15 +315,26 @@ export default function ListingsPage() {
           <div>
             <p className="text-[16px] font-semibold text-zinc-200">No listings yet</p>
             <p className="mt-1 text-[13px] leading-relaxed text-zinc-500">
-              Add your first service listing so clients can see what you offer.
+              Add your first service listing to start attracting clients.
+              Each listing costs 1 credit and stays live for 24 hours.
             </p>
           </div>
-          <button
-            onClick={openAdd}
-            className="mt-2 rounded-full bg-amber-400 px-6 py-2.5 text-[13px] font-semibold text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.25)] transition-all hover:bg-amber-300 active:scale-[0.98]"
-          >
-            Add your first listing
-          </button>
+          {hasCredits ? (
+            <button
+              onClick={openAdd}
+              className="mt-2 rounded-full bg-amber-400 px-6 py-2.5 text-[13px] font-semibold text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.25)] transition-all hover:bg-amber-300 active:scale-[0.98]"
+            >
+              Add your first listing
+            </button>
+          ) : (
+            <Link
+              href="/profile/packages"
+              className="mt-2 flex items-center gap-2 rounded-full bg-amber-400 px-6 py-2.5 text-[13px] font-semibold text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.25)] transition-all hover:bg-amber-300"
+            >
+              <ShoppingBag size={14} />
+              Buy credits to get started
+            </Link>
+          )}
         </div>
       ) : (
         <div className="space-y-2.5 px-4 pt-4">
@@ -255,13 +351,15 @@ export default function ListingsPage() {
             />
           ))}
 
-          <button
-            onClick={openAdd}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/10 py-4 text-[13px] font-medium text-zinc-500 transition-all hover:border-amber-400/30 hover:text-amber-400"
-          >
-            <Plus size={15} />
-            Add another listing
-          </button>
+          {hasCredits && (
+            <button
+              onClick={openAdd}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/10 py-4 text-[13px] font-medium text-zinc-500 transition-all hover:border-amber-400/30 hover:text-amber-400"
+            >
+              <Plus size={15} />
+              Add another listing (1 credit)
+            </button>
+          )}
         </div>
       )}
 
@@ -297,18 +395,31 @@ function ListingRow({
   onDeleteConfirm: () => void;
   onDeleteCancel: () => void;
 }) {
+  const expired = isExpired(listing.expires_at);
+  const remaining = timeRemaining(listing.expires_at);
+
   return (
     <div className={cn(
       "overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-md transition-all duration-200",
-      !listing.is_active && "opacity-50"
+      (expired || !listing.is_active) && "opacity-50"
     )}>
       <div className="px-4 pt-4 pb-3">
-        {/* Service type chip */}
-        {listing.service_type && (
-          <span className="mb-2 inline-block rounded-full border border-amber-400/20 bg-amber-400/8 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-amber-400">
-            {listing.service_type}
+        {/* Top row: service type + expiry timer */}
+        <div className="flex items-center justify-between mb-2">
+          {listing.service_type ? (
+            <span className="inline-block rounded-full border border-amber-400/20 bg-amber-400/8 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-amber-400">
+              {listing.service_type}
+            </span>
+          ) : <span />}
+
+          <span className={cn(
+            "flex items-center gap-1 text-[10px] font-semibold",
+            expired ? "text-red-400" : "text-zinc-500"
+          )}>
+            <Timer size={10} />
+            {remaining}
           </span>
-        )}
+        </div>
 
         <div className="flex items-start justify-between gap-2">
           <span className="text-[14px] font-semibold leading-tight text-white">{listing.title}</span>
@@ -339,11 +450,11 @@ function ListingRow({
           onClick={onToggle}
           className={cn(
             "flex flex-1 items-center justify-center gap-1.5 py-2.5 text-[11px] font-semibold uppercase tracking-wide transition-colors",
-            listing.is_active ? "text-emerald-400 hover:bg-emerald-400/5" : "text-zinc-600 hover:bg-white/5"
+            listing.is_active && !expired ? "text-emerald-400 hover:bg-emerald-400/5" : "text-zinc-600 hover:bg-white/5"
           )}
         >
-          <span className={cn("h-1.5 w-1.5 rounded-full", listing.is_active ? "bg-emerald-400" : "bg-zinc-700")} />
-          {listing.is_active ? "Active" : "Inactive"}
+          <span className={cn("h-1.5 w-1.5 rounded-full", listing.is_active && !expired ? "bg-emerald-400" : "bg-zinc-700")} />
+          {expired ? "Expired" : listing.is_active ? "Live" : "Paused"}
         </button>
 
         <div className="h-6 w-px bg-white/5" />
@@ -427,7 +538,12 @@ function ListingDrawer({
 
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/5 px-5 py-3">
-          <h2 className="text-[15px] font-semibold text-white">{isEdit ? "Edit Listing" : "New Listing"}</h2>
+          <div>
+            <h2 className="text-[15px] font-semibold text-white">{isEdit ? "Edit Listing" : "New Listing"}</h2>
+            {!isEdit && (
+              <p className="text-[11px] text-zinc-500">Costs 1 credit · Live for 24 hours</p>
+            )}
+          </div>
           <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200">
             <X size={16} />
           </button>
@@ -529,7 +645,13 @@ function ListingDrawer({
             onClick={onSave} disabled={saving}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:bg-amber-300 active:scale-[0.99] disabled:opacity-60"
           >
-            {saving ? <span className="animate-pulse">Saving…</span> : <><Check size={16} /> {isEdit ? "Save changes" : "Add listing"}</>}
+            {saving ? (
+              <span className="animate-pulse">Saving…</span>
+            ) : isEdit ? (
+              <><Check size={16} /> Save changes</>
+            ) : (
+              <><Plus size={16} /> Create listing (1 credit)</>
+            )}
           </button>
         </div>
       </motion.div>

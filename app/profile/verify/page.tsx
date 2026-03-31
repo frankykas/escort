@@ -118,16 +118,13 @@ export default function VerifyPage() {
             <Zap size={14} className="text-amber-400" />
             <span className="text-[13px] font-medium text-amber-400">Verification usually takes under 5 minutes</span>
           </div>
-          <button
-            disabled
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zinc-800 py-4 text-[15px] font-semibold text-zinc-500 cursor-not-allowed"
-          >
-            <ShieldCheck size={18} />
-            Start Verification — Coming Soon
-          </button>
-          <p className="text-center text-[12px] text-zinc-600">
-            Yoti integration is being finalised. You'll be notified when it's live.
-          </p>
+          <div className="rounded-2xl border border-white/5 bg-zinc-900 px-4 py-5 text-center">
+            <ShieldCheck size={20} className="mx-auto text-zinc-500" />
+            <p className="mt-2 text-[14px] font-medium text-zinc-300">Launching soon</p>
+            <p className="mt-1 text-[12px] text-zinc-600">
+              We&apos;ll notify you when verification opens.
+            </p>
+          </div>
         </div>
       </div>
     </div>

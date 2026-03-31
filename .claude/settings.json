@@ -31,7 +31,22 @@
       "Bash(find /c/dev/cleopatre -type f -name *message* -o -name *i18n* -o -name *locale*)",
       "Bash(grep -r \"stripe\\\\|payment\\\\|checkout\" /c/dev/cleopatre --include=*.ts --include=*.tsx --exclude-dir=node_modules --exclude-dir=.next)",
       "Bash(grep -l \"stripe\\\\|payment\\\\|billing\" /c/dev/cleopatre/supabase/migrations/*.sql)",
-      "Bash(node -e \"const Stripe = require\\(''''stripe''''\\); console.log\\(Stripe.default ? ''''esm'''' : ''''cjs''''\\); const s = new \\(Stripe.default || Stripe\\)\\(''''sk_test_dummy''''\\); console.log\\(''''API Version:'''', s.getApiField\\(''''version''''\\) || ''''auto''''\\)\")"
+      "Bash(node -e \"const Stripe = require\\(''''stripe''''\\); console.log\\(Stripe.default ? ''''esm'''' : ''''cjs''''\\); const s = new \\(Stripe.default || Stripe\\)\\(''''sk_test_dummy''''\\); console.log\\(''''API Version:'''', s.getApiField\\(''''version''''\\) || ''''auto''''\\)\")",
+      "Bash(find /c/dev/cleopatre -type f -name *listing*)",
+      "Bash(grep -v \"^d.*\\\\.$\")",
+      "Bash(ls -la /c/dev/cleopatre/app/listings/[id]/)",
+      "Bash(grep -n \"status_updates\\\\|story_views\" /c/dev/cleopatre/supabase/migrations/*.sql)",
+      "Bash(find /c/dev/cleopatre/app -type f -name *.ts -o -name *.tsx -o -name *.js)",
+      "Bash(ls -la /c/dev/cleopatre/.env*)",
+      "Bash(find /c/dev/cleopatre/supabase -type f -name *.sql)",
+      "Bash(wc -l /c/dev/cleopatre/supabase/migrations/*.sql)",
+      "Bash(grep -h \"CREATE TABLE\\\\|ALTER TABLE\" /c/dev/cleopatre/supabase/migrations/*.sql)",
+      "Bash(grep -h \"CREATE TABLE\" /c/dev/cleopatre/supabase/migrations/*.sql)",
+      "Read(//c/dev/cleopatre/**)",
+      "Bash(npx next:*)",
+      "Bash(find c:/dev/cleopatre -name *booking* -type f)",
+      "Bash(grep -r href=/u/ /c/dev/cleopatre/app /c/dev/cleopatre/components --include=*.tsx -l)",
+      "Bash(grep -n \"MoreVertical\" /c/dev/cleopatre/app/messages/[username]/page.tsx)"
     ],
     "additionalDirectories": [
       "c:\\dev\\cleopatre\\app\\listings",

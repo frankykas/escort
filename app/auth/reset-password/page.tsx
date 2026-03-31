@@ -2,50 +2,34 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Loader2, CheckCircle } from "lucide-react";
+import { Loader2, CheckCircle, ArrowLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
-import { useTranslation } from "@/lib/i18n/useTranslation";
 
-type State = "idle" | "loading" | "success";
+type State = "idle" | "loading" | "sent";
 
-export default function SignUpPage() {
-  const router = useRouter();
-  const { t } = useTranslation();
+export default function ResetPasswordPage() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState<State>("idle");
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-
-    if (password !== confirm) {
-      setError("Passwords do not match.");
-      return;
-    }
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
-    }
-
     setState("loading");
-    const { data, error: authError } = await supabase.auth.signUp({ email, password });
 
-    if (authError) {
-      setError(authError.message);
+    const { error: resetErr } = await supabase.auth.resetPasswordForEmail(
+      email.trim(),
+      { redirectTo: `${window.location.origin}/auth/update-password` }
+    );
+
+    if (resetErr) {
+      setError(resetErr.message);
       setState("idle");
       return;
     }
 
-    if (data.session) {
-      router.push("/onboarding");
-    } else {
-      setState("success");
-    }
+    setState("sent");
   }
 
   return (
@@ -60,32 +44,36 @@ export default function SignUpPage() {
           Cleopatra
         </p>
 
-        {state === "success" ? (
+        {state === "sent" ? (
           <div className="rounded-2xl border border-white/10 bg-zinc-900/80 p-8 text-center backdrop-blur-xl">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-400/10">
               <CheckCircle size={24} className="text-amber-400" />
             </div>
-            <h2 className="text-base font-semibold text-zinc-100">{t("auth_account_created")}</h2>
+            <h2 className="text-base font-semibold text-zinc-100">Check your email</h2>
             <p className="mt-2 text-sm text-zinc-400">
-              {t("auth_confirm_sent")}{" "}
-              <span className="text-zinc-200">{email}</span>.
+              If an account exists for{" "}
+              <span className="text-zinc-200">{email}</span>, you&apos;ll receive a
+              password reset link shortly.
             </p>
             <Link
-              href="/"
-              className="mt-6 flex w-full items-center justify-center rounded-xl bg-white py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
+              href="/auth/signin"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
             >
-              {t("nav_home")}
+              <ArrowLeft size={14} />
+              Back to Sign In
             </Link>
           </div>
         ) : (
           <div className="rounded-2xl border border-white/10 bg-zinc-900/80 p-8 backdrop-blur-xl">
-            <h1 className="mb-1 text-base font-semibold text-zinc-100">{t("auth_signup_title")}</h1>
-            <p className="mb-6 text-xs text-zinc-500">{t("auth_signup_subtitle")}</p>
+            <h1 className="mb-1 text-base font-semibold text-zinc-100">Reset your password</h1>
+            <p className="mb-6 text-xs text-zinc-500">
+              Enter your email and we&apos;ll send you a link to reset your password.
+            </p>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
               <div className="rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3">
                 <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                  {t("auth_email")}
+                  Email
                 </label>
                 <input
                   type="email"
@@ -94,36 +82,6 @@ export default function SignUpPage() {
                   required
                   autoComplete="email"
                   placeholder="you@example.com"
-                  className="w-full bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-600"
-                />
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3">
-                <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                  {t("auth_password")}
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  autoComplete="new-password"
-                  placeholder="Min. 8 characters"
-                  className="w-full bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-600"
-                />
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3">
-                <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                  {t("auth_confirm_password")}
-                </label>
-                <input
-                  type="password"
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  required
-                  autoComplete="new-password"
-                  placeholder="Repeat password"
                   className="w-full bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-600"
                 />
               </div>
@@ -138,21 +96,21 @@ export default function SignUpPage() {
                 {state === "loading" ? (
                   <>
                     <Loader2 size={14} className="animate-spin" />
-                    {t("submitting")}
+                    Sending...
                   </>
                 ) : (
-                  t("sign_up")
+                  "Send Reset Link"
                 )}
               </button>
             </form>
 
             <p className="mt-5 text-center text-xs text-zinc-600">
-              {t("auth_have_account")}{" "}
+              Remember your password?{" "}
               <Link
                 href="/auth/signin"
                 className="text-zinc-400 transition-colors hover:text-zinc-200"
               >
-                {t("sign_in")}
+                Sign in
               </Link>
             </p>
           </div>

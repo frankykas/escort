@@ -22,6 +22,7 @@ type ListingCard = {
   duration_minutes: number | null;
   service_type: string | null;
   created_at: string;
+  expires_at: string | null;
   cover_url: string | null;
   provider: {
     id: string;
@@ -131,7 +132,7 @@ export function ListingsClient() {
     let query = supabase
       .from("listings")
       .select(`
-        id, title, rate, duration_minutes, service_type, created_at,
+        id, title, rate, duration_minutes, service_type, created_at, expires_at,
         provider:profiles!listings_provider_id_fkey(
           id, username, avatar_url, city, age,
           verification_status, available_until, incall, outcall
@@ -379,7 +380,10 @@ export function ListingsClient() {
       {loading ? (
         viewMode === "list" ? <SkeletonList /> : <SkeletonGrid />
       ) : listings.length === 0 ? (
-        <EmptyState />
+        <EmptyState onClear={() => {
+          setSearch("");
+          setFilters(DEFAULT_FILTERS);
+        }} />
       ) : (
         <div className="space-y-6 pt-4 pb-4">
 
@@ -724,7 +728,7 @@ function ListingGridCard({ listing }: { listing: ListingCard }) {
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
-function EmptyState() {
+function EmptyState({ onClear }: { onClear?: () => void }) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center gap-3 px-6 pt-20 text-center">
@@ -733,6 +737,14 @@ function EmptyState() {
       </div>
       <p className="text-[15px] font-semibold text-zinc-300">{t("listings_empty")}</p>
       <p className="text-[13px] leading-relaxed text-zinc-600">{t("listings_empty_body")}</p>
+      {onClear && (
+        <button
+          onClick={onClear}
+          className="mt-2 rounded-full border border-white/10 px-5 py-2 text-[13px] font-medium text-zinc-300 transition hover:bg-zinc-800"
+        >
+          Clear filters
+        </button>
+      )}
     </div>
   );
 }

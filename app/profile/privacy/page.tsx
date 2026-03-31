@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Eye, EyeOff, Shield, UserX, Bell, Loader2 } from "lucide-react";
+import { ChevronLeft, Eye, EyeOff, UserX, Bell, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
@@ -157,20 +157,6 @@ export default function PrivacyPage() {
             />
           </div>
 
-          {/* Safety */}
-          <p className="px-1 pb-1 pt-4 text-[11px] font-medium uppercase tracking-widest text-zinc-600">Safety</p>
-          <div className="overflow-hidden rounded-2xl bg-zinc-900 border border-white/5">
-            <div className="flex items-center gap-4 px-4 py-4">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-zinc-800 text-red-400">
-                <Shield size={18} />
-              </div>
-              <div className="flex-1">
-                <p className="text-[14px] font-medium text-white">Blocked users</p>
-                <p className="text-[12px] text-zinc-500">Manage who can't contact or view your profile</p>
-              </div>
-              <span className="text-[12px] text-zinc-600">Coming soon</span>
-            </div>
-          </div>
 
           <p className="px-1 pt-4 text-[12px] leading-relaxed text-zinc-600">
             Private mode does not affect existing followers or subscribers. Your profile remains accessible to anyone with a direct link.

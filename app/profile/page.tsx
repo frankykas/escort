@@ -249,8 +249,7 @@ export default function ProfilePage() {
         {USE_BOOKINGS && (
           <Row icon={CalendarCheck} label={t("bookings_title")}     href="/bookings"             iconClassName="text-amber-400" />
         )}
-        <Row icon={Heart}         label={t("profile_favorites")}    href="/?tab=favorites"       iconClassName="text-rose-400" />
-        <Row icon={Bookmark}      label={t("profile_liked_posts")}  href="/profile/liked"        iconClassName="text-sky-400" />
+        <Row icon={Bookmark}      label="Saved Listings"              href="/profile/liked"        iconClassName="text-rose-400" />
         <Row icon={Crown}         label={t("profile_subscriptions")}href="/profile/subscriptions"iconClassName="text-amber-400" />
         <Row icon={MessageCircle} label={t("profile_messages")}     href="/messages"             iconClassName="text-emerald-400" />
       </ListCard>

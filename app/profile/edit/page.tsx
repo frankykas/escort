@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
+import { useProfile } from "@/contexts/ProfileContext";
 import { supabase } from "@/lib/supabase/client";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -53,6 +54,9 @@ type ProfileForm = {
   hourly_rate: string;
   service_categories: string[];
   avatar_url: string | null;
+  contact_whatsapp: string;
+  contact_telegram: string;
+  contact_phone: string;
 };
 
 const EMPTY_FORM: ProfileForm = {
@@ -60,6 +64,7 @@ const EMPTY_FORM: ProfileForm = {
   languages: [], height_cm: "", build: "", hair_color: "", eye_color: "",
   city: "", country_code: "CA", is_provider: false, incall: true,
   outcall: true, hourly_rate: "", service_categories: [], avatar_url: null,
+  contact_whatsapp: "", contact_telegram: "", contact_phone: "",
 };
 
 // ─── Page ────────────────────────────────────────────────────────────────────
@@ -67,6 +72,7 @@ const EMPTY_FORM: ProfileForm = {
 export default function EditProfilePage() {
   const router = useRouter();
   const { user, loading: sessionLoading } = useSession();
+  const { refetch } = useProfile();
   const [form, setForm]         = useState<ProfileForm>(EMPTY_FORM);
   const [loading, setLoading]   = useState(true);
   const [saving, setSaving]     = useState(false);
@@ -87,7 +93,7 @@ export default function EditProfilePage() {
 
     supabase
       .from("profiles")
-      .select("username, bio, bio_long, age, nationality, languages, height_cm, build, hair_color, eye_color, city, country_code, is_provider, incall, outcall, hourly_rate, service_categories, avatar_url")
+      .select("username, bio, bio_long, age, nationality, languages, height_cm, build, hair_color, eye_color, city, country_code, is_provider, incall, outcall, hourly_rate, service_categories, avatar_url, contact_whatsapp, contact_telegram, contact_phone")
       .eq("id", user.id)
       .single()
       .then(({ data }) => {
@@ -111,6 +117,9 @@ export default function EditProfilePage() {
             hourly_rate:        data.hourly_rate ? String(Math.round(data.hourly_rate / 100)) : "",
             service_categories: data.service_categories ?? [],
             avatar_url:         data.avatar_url ?? null,
+            contact_whatsapp:   data.contact_whatsapp ?? "",
+            contact_telegram:   data.contact_telegram ?? "",
+            contact_phone:      data.contact_phone ?? "",
           });
         }
         setLoading(false);
@@ -161,16 +170,29 @@ export default function EditProfilePage() {
 
   async function handleSave() {
     if (!user) return;
+
+    // Validate age and height ranges
+    const parsedAge = form.age ? parseInt(form.age, 10) : null;
+    if (parsedAge !== null && (parsedAge < 18 || parsedAge > 99)) {
+      showToast("error", "Age must be between 18 and 99.");
+      return;
+    }
+    const parsedHeight = form.height_cm ? parseInt(form.height_cm, 10) : null;
+    if (parsedHeight !== null && (parsedHeight < 140 || parsedHeight > 220)) {
+      showToast("error", "Height must be between 140 and 220 cm.");
+      return;
+    }
+
     setSaving(true);
 
     const payload: Record<string, unknown> = {
       username:           form.username.trim(),
       bio:                form.bio.trim() || null,
       bio_long:           form.bio_long.trim() || null,
-      age:                form.age ? parseInt(form.age, 10) : null,
+      age:                parsedAge,
       nationality:        form.nationality.trim() || null,
       languages:          form.languages,
-      height_cm:          form.height_cm ? parseInt(form.height_cm, 10) : null,
+      height_cm:          parsedHeight,
       build:              form.build || null,
       hair_color:         form.hair_color || null,
       eye_color:          form.eye_color || null,
@@ -181,6 +203,9 @@ export default function EditProfilePage() {
       outcall:            form.outcall,
       hourly_rate:        form.hourly_rate ? parseInt(form.hourly_rate, 10) * 100 : null,
       service_categories: form.service_categories,
+      contact_whatsapp:   form.contact_whatsapp.trim() || null,
+      contact_telegram:   form.contact_telegram.trim() || null,
+      contact_phone:      form.contact_phone.trim() || null,
     };
 
     if (form.avatar_url) payload.avatar_url = form.avatar_url;
@@ -191,6 +216,7 @@ export default function EditProfilePage() {
     if (error) {
       showToast("error", error.message.includes("profiles_username_key") ? "That username is taken." : error.message);
     } else {
+      refetch();
       showToast("success", "Profile saved!");
       setTimeout(() => router.push(`/profile`), 1200);
     }
@@ -444,6 +470,43 @@ export default function EditProfilePage() {
                   onToggle={(v) => toggleArray("service_categories", v)}
                 />
                 <Hint>These appear as filters in Explore.</Hint>
+              </Field>
+
+              {/* Contact methods */}
+              <Field label="WhatsApp number">
+                <input
+                  type="tel" inputMode="tel"
+                  value={form.contact_whatsapp}
+                  onChange={(e) => patch("contact_whatsapp", e.target.value)}
+                  placeholder="+1 555 123 4567"
+                  maxLength={20}
+                  className={inputCls}
+                />
+                <Hint>Full number with country code. Shown as a contact option on your profile.</Hint>
+              </Field>
+
+              <Field label="Telegram handle">
+                <input
+                  type="text"
+                  value={form.contact_telegram}
+                  onChange={(e) => patch("contact_telegram", e.target.value)}
+                  placeholder="@yourtelegram"
+                  maxLength={40}
+                  className={inputCls}
+                />
+                <Hint>Your Telegram username. Clients can message you directly.</Hint>
+              </Field>
+
+              <Field label="Phone number">
+                <input
+                  type="tel" inputMode="tel"
+                  value={form.contact_phone}
+                  onChange={(e) => patch("contact_phone", e.target.value)}
+                  placeholder="+1 555 123 4567"
+                  maxLength={20}
+                  className={inputCls}
+                />
+                <Hint>Optional. Shown as a call button on your profile. Only add if you want clients to call you.</Hint>
               </Field>
             </div>
           )}

@@ -57,15 +57,23 @@ export default function CommentModerationPage() {
   const [comments, setComments] = useState<PendingComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [actingOn, setActingOn] = useState<Set<string>>(new Set());
+  const [hasMore, setHasMore] = useState(true);
+  const PAGE_SIZE = 50;
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (offset = 0) => {
     if (!user) return;
     const { data } = await supabase.rpc("get_pending_comments", {
       p_provider_id: user.id,
-      p_limit: 50,
-      p_offset: 0,
+      p_limit: PAGE_SIZE,
+      p_offset: offset,
     });
-    setComments((data ?? []) as PendingComment[]);
+    const rows = (data ?? []) as PendingComment[];
+    setHasMore(rows.length === PAGE_SIZE);
+    if (offset === 0) {
+      setComments(rows);
+    } else {
+      setComments((prev) => [...prev, ...rows]);
+    }
     setLoading(false);
   }, [user]);
 
@@ -276,6 +284,16 @@ export default function CommentModerationPage() {
                 );
               })}
             </AnimatePresence>
+            {hasMore && (
+              <div className="flex justify-center py-6">
+                <button
+                  onClick={() => load(comments.length)}
+                  className="rounded-full border border-white/10 px-5 py-2 text-[13px] font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200"
+                >
+                  Load more
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

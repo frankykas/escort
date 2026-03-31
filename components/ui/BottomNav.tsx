@@ -1,20 +1,43 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Home, Compass, LayoutGrid, MessageCircle, User, Bell,
-  LayoutDashboard, CalendarCheck, ListOrdered,
+  Home, Compass, LayoutGrid, User, Bell,
+  LayoutDashboard, ListOrdered, PlusCircle, MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { useUnreadCount } from "@/hooks/useNotifications";
-import { USE_BOOKINGS } from "@/lib/features";
+import { supabase } from "@/lib/supabase/client";
 import type { TranslationKey } from "@/lib/i18n/en";
 
-const HIDDEN_ON = ["/auth/signin", "/auth/signup", "/messages/"];
+function useUnreadMessages(pollMs = 30_000) {
+  const { profile } = useProfile();
+  const [count, setCount] = useState(0);
+
+  const fetch = useCallback(async () => {
+    if (!profile) return;
+    const { count: c } = await supabase
+      .from("messages")
+      .select("*", { count: "exact", head: true })
+      .eq("recipient_id", profile.id)
+      .eq("is_read", false);
+    setCount(c ?? 0);
+  }, [profile]);
+
+  useEffect(() => {
+    fetch();
+    const id = setInterval(fetch, pollMs);
+    return () => clearInterval(id);
+  }, [fetch, pollMs]);
+
+  return count;
+}
+
+const HIDDEN_ON = ["/auth/signin", "/auth/signup", "/messages/", "/onboarding"];
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
@@ -30,37 +53,31 @@ type TabDef = {
 function useClientTabs(
   pathname: string,
   t: (k: TranslationKey) => string,
-  unreadCount: number
+  unreadNotifs: number,
+  unreadMsgs: number,
 ): TabDef[] {
   return [
-    { label: t("nav_home"),          icon: Home,    href: "/",              active: pathname === "/" },
-    { label: t("nav_explore"),       icon: Compass, href: "/explore",      active: pathname.startsWith("/explore") },
-    { label: t("nav_listings"),      icon: LayoutGrid, href: "/listings",  active: pathname.startsWith("/listings") },
-    { label: "Alerts",               icon: Bell,    href: "/notifications", active: pathname.startsWith("/notifications"), badge: unreadCount },
-    { label: t("nav_profile"),       icon: User,    href: "/profile",      active: pathname.startsWith("/profile") },
+    { label: t("nav_home"),          icon: Home,          href: "/",              active: pathname === "/" },
+    { label: t("nav_explore"),       icon: Compass,      href: "/explore",      active: pathname.startsWith("/explore") },
+    { label: "Messages",             icon: MessageSquare, href: "/messages",     active: pathname === "/messages", badge: unreadMsgs },
+    { label: "Alerts",               icon: Bell,          href: "/notifications", active: pathname.startsWith("/notifications"), badge: unreadNotifs },
+    { label: t("nav_profile"),       icon: User,          href: "/profile",      active: pathname.startsWith("/profile") },
   ];
 }
 
 function useProviderTabs(
   pathname: string,
   t: (k: TranslationKey) => string,
-  unreadCount: number
+  unreadNotifs: number,
+  unreadMsgs: number,
 ): TabDef[] {
-  const tabs: TabDef[] = [
+  return [
     { label: t("nav_dashboard"),     icon: LayoutDashboard, href: "/",                 active: pathname === "/" },
+    { label: "Create",               icon: PlusCircle,      href: "/profile/upload",   active: pathname === "/profile/upload" },
+    { label: "Messages",             icon: MessageSquare,   href: "/messages",         active: pathname === "/messages", badge: unreadMsgs },
+    { label: "Alerts",               icon: Bell,            href: "/notifications",    active: pathname.startsWith("/notifications"), badge: unreadNotifs },
+    { label: t("nav_profile"),       icon: User,            href: "/profile",          active: pathname.startsWith("/profile") && pathname !== "/profile/upload" },
   ];
-
-  if (USE_BOOKINGS) {
-    tabs.push({ label: t("nav_bookings"), icon: CalendarCheck, href: "/profile/bookings", active: pathname === "/profile/bookings" });
-  }
-
-  tabs.push(
-    { label: "Alerts",               icon: Bell,            href: "/notifications",    active: pathname.startsWith("/notifications"), badge: unreadCount },
-    { label: t("nav_listings"),      icon: ListOrdered,     href: "/profile/listings", active: pathname === "/profile/listings" || pathname === "/profile/upload" },
-    { label: t("nav_profile"),       icon: User,            href: "/profile",          active: pathname.startsWith("/profile") && pathname !== "/profile/bookings" && pathname !== "/profile/listings" && pathname !== "/profile/upload" },
-  );
-
-  return tabs;
 }
 
 // ─── Inner nav (needs useSearchParams → must be inside Suspense) ──────────────
@@ -69,10 +86,11 @@ function BottomNavInner() {
   const pathname = usePathname();
   const { profile, isProvider, loading } = useProfile();
   const { t } = useTranslation();
-  const { count: unreadCount } = useUnreadCount();
+  const { count: unreadNotifs } = useUnreadCount();
+  const unreadMsgs = useUnreadMessages();
 
-  const clientTabs = useClientTabs(pathname, t, unreadCount);
-  const providerTabs = useProviderTabs(pathname, t, unreadCount);
+  const clientTabs = useClientTabs(pathname, t, unreadNotifs, unreadMsgs);
+  const providerTabs = useProviderTabs(pathname, t, unreadNotifs, unreadMsgs);
 
   // Hide on auth and full-screen message threads
   if (HIDDEN_ON.some((p) => pathname.startsWith(p))) return null;

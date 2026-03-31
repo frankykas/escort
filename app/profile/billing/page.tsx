@@ -1,36 +1,60 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import Link from "next/link";
 import {
-  ChevronLeft, CreditCard, Crown, ArrowUpRight,
-  ShieldCheck, Zap, Clock, CheckCircle,
+  ChevronLeft, CreditCard, Coins,
+  ShieldCheck, CheckCircle, Package, Clock,
 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
+import { supabase } from "@/lib/supabase/client";
 
-const FEATURES = [
-  "Accept subscriptions from fans and clients",
-  "Pay-per-view premium content",
-  "Bump listings to the top of search",
-  "Instant payouts to your bank account",
-  "Detailed earnings analytics",
-];
-
-const PAYOUT_INFO = [
-  { label: "Payout schedule",   value: "Weekly (every Monday)" },
-  { label: "Minimum payout",    value: "CA$25" },
-  { label: "Platform fee",      value: "15% of earnings" },
-  { label: "Payment processor", value: "Stripe" },
-  { label: "Currencies",        value: "CAD, USD" },
-];
+type Purchase = {
+  id: string;
+  credits_purchased: number;
+  credits_remaining: number;
+  purchased_at: string;
+  expires_at: string | null;
+  posting_packages: { name: string } | null;
+};
 
 export default function BillingPage() {
   const router = useRouter();
   const { user, checked } = useSession();
+  const [creditBalance, setCreditBalance] = useState(0);
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    if (!user) return;
+
+    const [profileRes, purchasesRes] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("post_credits_balance")
+        .eq("id", user.id)
+        .single(),
+      supabase
+        .from("posting_package_purchases")
+        .select("id, credits_purchased, credits_remaining, purchased_at, expires_at, posting_packages:package_id(name)")
+        .eq("provider_id", user.id)
+        .order("purchased_at", { ascending: false })
+        .limit(20),
+    ]);
+
+    setCreditBalance(profileRes.data?.post_credits_balance ?? 0);
+    setPurchases((purchasesRes.data ?? []) as unknown as Purchase[]);
+    setLoading(false);
+  }, [user]);
 
   useEffect(() => {
     if (checked && !user) router.replace("/auth/signin");
-  }, [user, checked]);
+    else load();
+  }, [user, checked, load, router]);
+
+  const totalSpent = purchases.reduce((sum, p) => sum + p.credits_purchased, 0);
+  const totalUsed = purchases.reduce((sum, p) => sum + (p.credits_purchased - p.credits_remaining), 0);
 
   return (
     <div className="min-h-screen bg-zinc-950 pb-24">
@@ -41,82 +65,133 @@ export default function BillingPage() {
         >
           <ChevronLeft size={20} />
         </button>
-        <span className="text-[15px] font-semibold text-white">Billing &amp; Payments</span>
+        <span className="text-[15px] font-semibold text-white">Billing &amp; Credits</span>
       </header>
 
-      <div className="mx-auto max-w-lg px-4 pt-8 space-y-8">
-        {/* Hero */}
-        <div className="flex flex-col items-center text-center gap-4">
-          <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-emerald-500/20 to-emerald-400/5 border border-emerald-400/20">
-            <CreditCard size={36} className="text-emerald-400" />
+      <div className="mx-auto max-w-lg px-4 pt-6 space-y-6">
+
+        {/* Credit balance hero */}
+        <div className="rounded-2xl border border-amber-400/15 bg-gradient-to-br from-amber-400/5 to-transparent p-6 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-400/10">
+            <Coins size={28} className="text-amber-400" />
           </div>
-          <div>
-            <h1 className="text-[22px] font-bold text-white">Payments</h1>
-            <p className="mt-1.5 text-[14px] text-zinc-400 leading-relaxed">
-              Earn from subscriptions, premium content, and bumped listings — all paid out securely via Stripe.
-            </p>
-          </div>
+          <p className="mt-4 text-[36px] font-bold text-white leading-none">
+            {loading ? "—" : creditBalance}
+          </p>
+          <p className="mt-1 text-[14px] text-zinc-400">Credits Available</p>
+          <Link
+            href="/profile/packages"
+            className="mt-4 inline-flex items-center gap-2 rounded-full bg-amber-400 px-6 py-3 text-[14px] font-bold text-zinc-950 transition hover:bg-amber-300 active:scale-[0.98]"
+          >
+            <Package size={16} />
+            Buy Credits
+          </Link>
         </div>
 
-        {/* Earnings summary placeholder */}
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { label: "This month",    value: "CA$0",  icon: Crown,  color: "text-amber-400" },
-            { label: "All time",      value: "CA$0",  icon: Zap,    color: "text-emerald-400" },
-            { label: "Pending payout",value: "CA$0",  icon: Clock,  color: "text-sky-400" },
-            { label: "Subscribers",   value: "0",     icon: Crown,  color: "text-violet-400" },
-          ].map(({ label, value, icon: Icon, color }) => (
-            <div key={label} className="rounded-2xl border border-white/5 bg-zinc-900 px-4 py-4">
-              <Icon size={16} className={color} />
-              <p className="mt-2 text-[22px] font-bold text-white">{value}</p>
-              <p className="text-[11px] text-zinc-500">{label}</p>
+        {/* Stats */}
+        {!loading && (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-white/5 bg-zinc-900 px-4 py-4">
+              <CreditCard size={14} className="text-sky-400" />
+              <p className="mt-2 text-[22px] font-bold text-white">{totalSpent}</p>
+              <p className="text-[11px] text-zinc-500">Credits purchased</p>
             </div>
-          ))}
-        </div>
+            <div className="rounded-2xl border border-white/5 bg-zinc-900 px-4 py-4">
+              <CheckCircle size={14} className="text-emerald-400" />
+              <p className="mt-2 text-[22px] font-bold text-white">{totalUsed}</p>
+              <p className="text-[11px] text-zinc-500">Credits used</p>
+            </div>
+          </div>
+        )}
 
-        {/* Features */}
+        {/* What credits are used for */}
         <div>
-          <p className="mb-4 px-1 text-[11px] font-medium uppercase tracking-widest text-zinc-600">What you can earn</p>
+          <p className="mb-3 px-1 text-[11px] font-medium uppercase tracking-widest text-zinc-600">Credits are used for</p>
           <div className="rounded-2xl border border-white/5 bg-zinc-900 divide-y divide-white/5">
-            {FEATURES.map((f) => (
+            {[
+              "Creating feed posts (1 credit each)",
+              "Publishing service listings (1 credit, live for 24h)",
+              "Bumping listings to the top of search",
+            ].map((f) => (
               <div key={f} className="flex items-center gap-3 px-4 py-3.5">
-                <CheckCircle size={15} className="flex-shrink-0 text-emerald-400 fill-emerald-400/20" />
+                <CheckCircle size={14} className="flex-shrink-0 text-emerald-400 fill-emerald-400/20" />
                 <span className="text-[13px] text-zinc-300">{f}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Payout info */}
+        {/* Purchase history */}
         <div>
-          <p className="mb-4 px-1 text-[11px] font-medium uppercase tracking-widest text-zinc-600">Payout details</p>
-          <div className="rounded-2xl border border-white/5 bg-zinc-900 divide-y divide-white/5">
-            {PAYOUT_INFO.map(({ label, value }) => (
-              <div key={label} className="flex items-center justify-between px-4 py-3.5">
-                <span className="text-[13px] text-zinc-400">{label}</span>
-                <span className="text-[13px] font-medium text-white">{value}</span>
-              </div>
-            ))}
-          </div>
+          <p className="mb-3 px-1 text-[11px] font-medium uppercase tracking-widest text-zinc-600">
+            Purchase History
+          </p>
+          {loading ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-16 animate-pulse rounded-2xl bg-zinc-900" />
+              ))}
+            </div>
+          ) : purchases.length === 0 ? (
+            <div className="rounded-2xl border border-white/5 bg-zinc-900/50 px-4 py-6 text-center">
+              <Package size={20} className="mx-auto mb-2 text-zinc-700" />
+              <p className="text-[13px] text-zinc-500">No purchases yet</p>
+              <Link
+                href="/profile/packages"
+                className="mt-2 inline-block text-[13px] font-medium text-amber-400 hover:text-amber-300"
+              >
+                Browse packages
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {purchases.map((p) => {
+                const isExpired = p.expires_at && new Date(p.expires_at) < new Date();
+                const packageName = (p.posting_packages as { name: string } | null)?.name ?? "Credits";
+                return (
+                  <div
+                    key={p.id}
+                    className="flex items-center gap-3 rounded-2xl border border-white/5 bg-zinc-900 px-4 py-3"
+                  >
+                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-amber-400/10">
+                      <Package size={15} className="text-amber-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold text-white truncate">{packageName}</p>
+                      <p className="text-[11px] text-zinc-500">
+                        {new Date(p.purchased_at).toLocaleDateString("en-CA", {
+                          month: "short", day: "numeric", year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[13px] font-semibold text-white">
+                        {p.credits_remaining}/{p.credits_purchased}
+                      </p>
+                      <p className="text-[10px] text-zinc-500">
+                        {isExpired ? (
+                          <span className="text-red-400">Expired</span>
+                        ) : p.expires_at ? (
+                          <span className="flex items-center gap-0.5 justify-end">
+                            <Clock size={8} /> Active
+                          </span>
+                        ) : (
+                          "No expiry"
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Stripe connect */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-zinc-900/50 px-4 py-4">
-            <ShieldCheck size={16} className="flex-shrink-0 text-zinc-500" />
-            <p className="text-[12px] text-zinc-500 leading-relaxed">
-              All payments are processed by Stripe. Cleopatra never stores card details. Payouts go directly to your connected bank account.
-            </p>
-          </div>
-          <button
-            disabled
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zinc-800 py-4 text-[15px] font-semibold text-zinc-500 cursor-not-allowed"
-          >
-            <ArrowUpRight size={18} />
-            Connect Stripe Account — Coming Soon
-          </button>
-          <p className="text-center text-[12px] text-zinc-600">
-            Stripe Connect integration is being configured. You'll be notified when it's ready.
+        {/* Stripe connect info */}
+        <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-zinc-900/50 px-4 py-4">
+          <ShieldCheck size={16} className="flex-shrink-0 text-zinc-500" />
+          <p className="text-[12px] text-zinc-500 leading-relaxed">
+            All payments are processed securely by Stripe. Cleopatra never stores card details.
           </p>
         </div>
       </div>

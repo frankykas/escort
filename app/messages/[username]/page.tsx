@@ -5,11 +5,12 @@ import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ChevronLeft, CheckCircle, Send, Loader2, MoreVertical,
+  ChevronLeft, CheckCircle, Send, Loader2, MoreVertical, Flag, Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { ReportButton } from "@/components/ui/ReportButton";
 
 type Profile = {
   id: string;
@@ -55,6 +56,7 @@ export default function ThreadPage() {
   const [loading, setLoading]     = useState(true);
   const [input, setInput]         = useState("");
   const [sending, setSending]     = useState(false);
+  const [menuOpen, setMenuOpen]   = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLTextAreaElement>(null);
@@ -218,9 +220,38 @@ export default function ThreadPage() {
           <div className="flex-1 h-4 w-24 animate-pulse rounded bg-zinc-800" />
         )}
 
-        <button className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-white">
-          <MoreVertical size={18} />
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+          >
+            <MoreVertical size={18} />
+          </button>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
+              <div className="absolute right-0 top-10 z-40 w-48 overflow-hidden rounded-xl border border-white/10 bg-zinc-900 shadow-xl">
+                <Link
+                  href={`/u/${partner?.username}`}
+                  className="flex items-center gap-3 px-4 py-3 text-[13px] text-zinc-300 transition hover:bg-zinc-800"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <CheckCircle size={14} className="text-zinc-500" />
+                  View profile
+                </Link>
+                {partner && (
+                  <div className="border-t border-white/5">
+                    <ReportButton
+                      targetType="profile"
+                      targetId={partner.id}
+                      className="w-full justify-start gap-3 px-4 py-3 text-[13px] text-red-400 hover:bg-zinc-800"
+                    />
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </header>
 
       {/* Messages */}

@@ -631,6 +631,7 @@ function PostFeedCard({
   const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [commentSent, setCommentSent] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const localComments = post.latest_comments ?? [];
 
   const { isLiked: liked, likesCount, toggle: toggleLike } = useLike({
@@ -657,9 +658,15 @@ function PostFeedCard({
     await share();
     if (navigator.share) {
       try { await navigator.share({ title: post.provider_username, url }); }
-      catch { await navigator.clipboard.writeText(url); }
+      catch {
+        await navigator.clipboard.writeText(url);
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 2000);
+      }
     } else {
       await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
     }
   }
 
@@ -747,9 +754,9 @@ function PostFeedCard({
             className={cn("transition-all duration-150", liked ? "fill-red-500 text-red-500 scale-110" : "text-zinc-300")}
           />
         </button>
-        <button className="flex items-center gap-1.5 rounded-full p-2 transition-all hover:bg-white/5">
+        <Link href={`/post/${post.post_id}`} className="flex items-center gap-1.5 rounded-full p-2 transition-all hover:bg-white/5">
           <MessageCircle size={22} className="text-zinc-300" />
-        </button>
+        </Link>
         <button
           onClick={handleShare}
           disabled={isSharing || !userId}
@@ -759,6 +766,13 @@ function PostFeedCard({
         </button>
       </div>
 
+      {/* ── Link copied toast ── */}
+      {linkCopied && (
+        <div className="mx-4 mt-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 text-center text-[12px] font-medium text-emerald-400">
+          Link copied to clipboard
+        </div>
+      )}
+
       {/* ── Stats ── */}
       <div className="flex items-center gap-3 px-4 pb-2 pt-0.5">
         {likesCount > 0 && (
@@ -767,9 +781,9 @@ function PostFeedCard({
           </p>
         )}
         {post.comments_count > 0 && (
-          <p className="text-[13px] text-zinc-500">
+          <Link href={`/post/${post.post_id}`} className="text-[13px] text-zinc-500 hover:text-zinc-300 transition-colors">
             {formatCount(post.comments_count)} {post.comments_count === 1 ? "comment" : "comments"}
-          </p>
+          </Link>
         )}
         {sharesCount > 0 && (
           <p className="text-[13px] text-zinc-500">

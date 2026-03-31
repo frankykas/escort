@@ -161,7 +161,7 @@ export default function AccountSettingsPage() {
               className={cn(
                 "mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-[14px] font-semibold transition",
                 newEmail.trim() && !emailLoading
-                  ? "bg-white text-zinc-950 hover:bg-zinc-200"
+                  ? "bg-amber-400 text-zinc-950 hover:bg-amber-300"
                   : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
               )}
             >
@@ -208,7 +208,7 @@ export default function AccountSettingsPage() {
               className={cn(
                 "flex w-full items-center justify-center gap-2 rounded-xl py-3 text-[14px] font-semibold transition",
                 newPw && confirmPw && !pwLoading
-                  ? "bg-white text-zinc-950 hover:bg-zinc-200"
+                  ? "bg-amber-400 text-zinc-950 hover:bg-amber-300"
                   : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
               )}
             >

@@ -92,7 +92,7 @@ export async function createStory(params: CreateStoryParams): Promise<CreateStor
       media_type: mediaType,
       post_type: "story",
       country_code: countryCode,
-      // expires_at defaults to now() + 24h in the DB
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     })
     .select("id")
     .single();

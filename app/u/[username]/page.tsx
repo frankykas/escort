@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { CheckCircle, MapPin, Star } from "lucide-react";
 import { createServerClient } from "@/lib/supabase/server";
 import { BackButton } from "@/components/ui/BackButton";
+import { ReportButton } from "@/components/ui/ReportButton";
 import { ProfileActions } from "./ProfileActions";
 import { ProfileTabs } from "./ProfileTabs";
 import { HeroCarousel } from "./HeroCarousel";
@@ -42,7 +43,9 @@ export default async function ProfilePage({ params }: Props) {
       `id, username, avatar_url, bio, bio_long, verification_status, is_provider,
        city, country_code, incall, outcall, age, available_until,
        height_cm, build, hair_color, eye_color, nationality, languages,
-       review_count, average_rating, completed_bookings_count`
+       review_count, average_rating, completed_bookings_count,
+       service_categories, hourly_rate,
+       contact_whatsapp, contact_telegram, contact_phone`
     )
     .eq("username", username)
     .single();
@@ -128,6 +131,8 @@ export default async function ProfilePage({ params }: Props) {
     incall: profile.incall as boolean,
     outcall: profile.outcall as boolean,
     age: profile.age as number | null,
+    service_categories: (profile.service_categories as string[]) ?? [],
+    hourly_rate: profile.hourly_rate as number | null,
   };
 
   return (
@@ -238,10 +243,17 @@ export default async function ProfilePage({ params }: Props) {
         <div className="mb-5 mt-4">
           <ProfileActions
             profileId={profile.id as string}
+            username={profile.username as string}
             initialIsFollowing={initialIsFollowing}
             userId={currentUserId}
             isOwnProfile={isOwnProfile}
+            isProvider={profile.is_provider as boolean}
           />
+          {!isOwnProfile && (
+            <div className="mt-3 flex justify-center">
+              <ReportButton targetType="profile" targetId={profile.id as string} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -253,10 +265,20 @@ export default async function ProfilePage({ params }: Props) {
         reviews={reviews}
         avgRating={avgRating}
         isOwnProfile={isOwnProfile}
+        isProvider={profile.is_provider as boolean}
       />
 
-      {/* ── Sticky enquire bar ── */}
-      <EnquireBar username={profile.username as string} providerId={profile.id as string} isOwnProfile={isOwnProfile} />
+      {/* ── Sticky enquire bar (providers only) ── */}
+      {(profile.is_provider as boolean) && (
+        <EnquireBar
+          username={profile.username as string}
+          providerId={profile.id as string}
+          isOwnProfile={isOwnProfile}
+          contactWhatsapp={(profile as Record<string, unknown>).contact_whatsapp as string | null}
+          contactTelegram={(profile as Record<string, unknown>).contact_telegram as string | null}
+          contactPhone={(profile as Record<string, unknown>).contact_phone as string | null}
+        />
+      )}
     </main>
   );
 }

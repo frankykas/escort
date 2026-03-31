@@ -1,19 +1,15 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
-import { useTranslation } from "@/lib/i18n/useTranslation";
 
-type State = "idle" | "loading" | "success";
+type State = "idle" | "loading" | "done";
 
-export default function SignUpPage() {
+export default function UpdatePasswordPage() {
   const router = useRouter();
-  const { t } = useTranslation();
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -33,19 +29,16 @@ export default function SignUpPage() {
     }
 
     setState("loading");
-    const { data, error: authError } = await supabase.auth.signUp({ email, password });
 
-    if (authError) {
-      setError(authError.message);
+    const { error: updateErr } = await supabase.auth.updateUser({ password });
+
+    if (updateErr) {
+      setError(updateErr.message);
       setState("idle");
       return;
     }
 
-    if (data.session) {
-      router.push("/onboarding");
-    } else {
-      setState("success");
-    }
+    setState("done");
   }
 
   return (
@@ -60,47 +53,33 @@ export default function SignUpPage() {
           Cleopatra
         </p>
 
-        {state === "success" ? (
+        {state === "done" ? (
           <div className="rounded-2xl border border-white/10 bg-zinc-900/80 p-8 text-center backdrop-blur-xl">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-400/10">
               <CheckCircle size={24} className="text-amber-400" />
             </div>
-            <h2 className="text-base font-semibold text-zinc-100">{t("auth_account_created")}</h2>
+            <h2 className="text-base font-semibold text-zinc-100">Password updated</h2>
             <p className="mt-2 text-sm text-zinc-400">
-              {t("auth_confirm_sent")}{" "}
-              <span className="text-zinc-200">{email}</span>.
+              Your password has been changed successfully.
             </p>
-            <Link
-              href="/"
+            <button
+              onClick={() => router.push("/")}
               className="mt-6 flex w-full items-center justify-center rounded-xl bg-white py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
             >
-              {t("nav_home")}
-            </Link>
+              Continue
+            </button>
           </div>
         ) : (
           <div className="rounded-2xl border border-white/10 bg-zinc-900/80 p-8 backdrop-blur-xl">
-            <h1 className="mb-1 text-base font-semibold text-zinc-100">{t("auth_signup_title")}</h1>
-            <p className="mb-6 text-xs text-zinc-500">{t("auth_signup_subtitle")}</p>
+            <h1 className="mb-1 text-base font-semibold text-zinc-100">Set new password</h1>
+            <p className="mb-6 text-xs text-zinc-500">
+              Choose a strong password for your account.
+            </p>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
               <div className="rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3">
                 <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                  {t("auth_email")}
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  placeholder="you@example.com"
-                  className="w-full bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-600"
-                />
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3">
-                <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                  {t("auth_password")}
+                  New Password
                 </label>
                 <input
                   type="password"
@@ -115,7 +94,7 @@ export default function SignUpPage() {
 
               <div className="rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3">
                 <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                  {t("auth_confirm_password")}
+                  Confirm Password
                 </label>
                 <input
                   type="password"
@@ -138,23 +117,13 @@ export default function SignUpPage() {
                 {state === "loading" ? (
                   <>
                     <Loader2 size={14} className="animate-spin" />
-                    {t("submitting")}
+                    Updating...
                   </>
                 ) : (
-                  t("sign_up")
+                  "Update Password"
                 )}
               </button>
             </form>
-
-            <p className="mt-5 text-center text-xs text-zinc-600">
-              {t("auth_have_account")}{" "}
-              <Link
-                href="/auth/signin"
-                className="text-zinc-400 transition-colors hover:text-zinc-200"
-              >
-                {t("sign_in")}
-              </Link>
-            </p>
           </div>
         )}
       </motion.div>
