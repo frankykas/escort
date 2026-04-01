@@ -5,8 +5,9 @@ import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ChevronLeft, CheckCircle, Send, Loader2, MoreVertical, Clock, ShieldBan,
+  ChevronLeft, CheckCircle, Send, Loader2, MoreVertical, Clock, ShieldBan, X,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
@@ -85,8 +86,10 @@ export default function ThreadPage() {
   const [channel, setChannel] = useState<StreamChannel | null>(null);
   const [noChannel, setNoChannel] = useState(false);
   const [requestPending, setRequestPending] = useState(false);
-  const [isBlocked, setIsBlocked] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);       // I blocked them
+  const [blockedByThem, setBlockedByThem] = useState(false); // They blocked me
   const [blocking, setBlocking] = useState(false);
+  const [blockConfirmOpen, setBlockConfirmOpen] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -109,18 +112,36 @@ export default function ThreadPage() {
       });
   }, [user, username, router]);
 
-  // Check block status (providers only)
+  // Check block status in both directions
   useEffect(() => {
-    if (!user || !partner || !isProvider) return;
-    fetch(`/api/block?blockerId=${user.id}&blockedId=${partner.id}`)
+    if (!user || !partner) return;
+    // Did I block them? (providers only)
+    if (isProvider) {
+      fetch(`/api/block?blockerId=${user.id}&blockedId=${partner.id}`)
+        .then((r) => r.json())
+        .then((d) => setIsBlocked(d.blocked ?? false))
+        .catch(() => {});
+    }
+    // Did they block me?
+    fetch(`/api/block?blockerId=${partner.id}&blockedId=${user.id}`)
       .then((r) => r.json())
-      .then((d) => setIsBlocked(d.blocked ?? false))
+      .then((d) => setBlockedByThem(d.blocked ?? false))
       .catch(() => {});
   }, [user, partner, isProvider]);
 
-  async function toggleBlock() {
+  function handleBlockClick() {
+    if (isBlocked) {
+      // Unblock immediately, no confirmation needed
+      confirmBlock();
+    } else {
+      setBlockConfirmOpen(true);
+    }
+  }
+
+  async function confirmBlock() {
     if (!user || !partner || blocking) return;
     setBlocking(true);
+    setBlockConfirmOpen(false);
     const method = isBlocked ? "DELETE" : "POST";
     await fetch("/api/block", {
       method,
@@ -306,7 +327,7 @@ export default function ThreadPage() {
                 </Link>
                 {partner && isProvider && (
                   <button
-                    onClick={() => { toggleBlock(); setMenuOpen(false); }}
+                    onClick={() => { handleBlockClick(); setMenuOpen(false); }}
                     disabled={blocking}
                     className="flex w-full items-center gap-3 border-t border-white/5 px-4 py-3 text-[13px] text-red-400 transition hover:bg-zinc-800 disabled:opacity-50"
                   >
@@ -330,7 +351,7 @@ export default function ThreadPage() {
       </header>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 pb-2 space-y-1">
+      <div className={cn("flex-1 overflow-y-auto px-4 py-4 pb-2 space-y-1", isBlocked && "opacity-40 pointer-events-none")}>
         {loading ? (
           <div className="flex items-center justify-center pt-16">
             <Loader2 size={24} className="animate-spin text-zinc-600" />
@@ -400,36 +421,100 @@ export default function ThreadPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input — only show when channel exists */}
+      {/* Input — only show when channel exists and not blocked */}
       {!noChannel && !loading && (
-        <div className="sticky bottom-0 border-t border-white/5 bg-zinc-950/95 px-4 py-3 backdrop-blur-xl">
-          <div className="flex items-end gap-3">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Message..."
-              rows={1}
-              maxLength={2000}
-              className="flex-1 resize-none rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-[14px] text-white placeholder-zinc-600 outline-none focus:border-amber-400/30 max-h-32 overflow-y-auto"
-              style={{ minHeight: "44px" }}
-            />
-            <button
-              onClick={sendMessage}
-              disabled={!input.trim() || sending}
-              className={cn(
-                "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full transition",
-                input.trim() && !sending
-                  ? "bg-amber-400 text-zinc-950 hover:bg-amber-300"
-                  : "bg-zinc-800 text-zinc-600 cursor-not-allowed"
-              )}
-            >
-              {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-            </button>
+        blockedByThem ? (
+          <div className="sticky bottom-0 border-t border-white/5 bg-zinc-950/95 px-4 py-4 backdrop-blur-xl">
+            <div className="flex items-center justify-center gap-2 text-[13px] text-zinc-500">
+              <ShieldBan size={14} />
+              <span>You can no longer message this user.</span>
+            </div>
           </div>
-          <p className="mt-1 text-right text-[10px] text-zinc-700">{input.length}/2000</p>
-        </div>
+        ) : isBlocked ? (
+          <div className="sticky bottom-0 border-t border-white/5 bg-zinc-950/95 px-4 py-4 backdrop-blur-xl">
+            <div className="flex items-center justify-center gap-2 text-[13px] text-zinc-500">
+              <ShieldBan size={14} />
+              <span>You blocked this user.</span>
+              <button
+                onClick={handleBlockClick}
+                className="font-semibold text-amber-400 hover:text-amber-300"
+              >
+                Unblock
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="sticky bottom-0 border-t border-white/5 bg-zinc-950/95 px-4 py-3 backdrop-blur-xl">
+            <div className="flex items-end gap-3">
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Message..."
+                rows={1}
+                maxLength={2000}
+                className="flex-1 resize-none rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-[14px] text-white placeholder-zinc-600 outline-none focus:border-amber-400/30 max-h-32 overflow-y-auto"
+                style={{ minHeight: "44px" }}
+              />
+              <button
+                onClick={sendMessage}
+                disabled={!input.trim() || sending}
+                className={cn(
+                  "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full transition",
+                  input.trim() && !sending
+                    ? "bg-amber-400 text-zinc-950 hover:bg-amber-300"
+                    : "bg-zinc-800 text-zinc-600 cursor-not-allowed"
+                )}
+              >
+                {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+              </button>
+            </div>
+            <p className="mt-1 text-right text-[10px] text-zinc-700">{input.length}/2000</p>
+          </div>
+        )
       )}
+
+      {/* Block confirmation modal */}
+      <AnimatePresence>
+        {blockConfirmOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+              onClick={() => setBlockConfirmOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed left-1/2 top-1/2 z-50 w-[min(85vw,320px)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-white/10 bg-zinc-900 p-6 shadow-2xl"
+            >
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
+                  <ShieldBan size={24} className="text-red-400" />
+                </div>
+                <p className="text-[15px] font-semibold text-white">Block @{partner?.username}?</p>
+                <p className="text-[13px] leading-relaxed text-zinc-400">
+                  They won&apos;t be able to send you message requests. You can unblock them later from Settings.
+                </p>
+                <div className="mt-2 flex w-full gap-3">
+                  <button
+                    onClick={() => setBlockConfirmOpen(false)}
+                    className="flex-1 rounded-xl border border-white/10 py-2.5 text-[13px] font-semibold text-zinc-300 transition hover:bg-zinc-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmBlock}
+                    disabled={blocking}
+                    className="flex-1 rounded-xl bg-red-500 py-2.5 text-[13px] font-semibold text-white transition hover:bg-red-400 disabled:opacity-50"
+                  >
+                    {blocking ? "Blocking..." : "Block"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

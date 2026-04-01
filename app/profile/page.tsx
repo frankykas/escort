@@ -24,6 +24,7 @@ import {
   Pencil,
   ImagePlus,
   CalendarCheck,
+  ShieldBan,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
@@ -269,6 +270,9 @@ export default function ProfilePage() {
         <Row icon={Bell}       label={t("profile_notifications")}    href="/profile/notifications" />
         {profile.is_provider && (
           <Row icon={CreditCard} label={t("profile_billing")}        href="/profile/billing" />
+        )}
+        {profile.is_provider && (
+          <Row icon={ShieldBan}  label="Blocked Users"                href="/profile/blocked" />
         )}
         <Row icon={Settings}   label={t("profile_account_settings")} href="/profile/settings" />
       </ListCard>

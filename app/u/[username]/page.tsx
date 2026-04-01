@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { CheckCircle, MapPin, Clock } from "lucide-react";
+import { CheckCircle, MapPin, Clock, ShieldBan } from "lucide-react";
 import { createServerClient } from "@/lib/supabase/server";
 import { BackButton } from "@/components/ui/BackButton";
 import { ReportButton } from "@/components/ui/ReportButton";
@@ -86,6 +86,38 @@ export default async function ProfilePage({ params }: Props) {
   const currentUserId = sessionResult.data.user?.id ?? null;
   const completedBookings = (profile.completed_bookings_count as number) ?? 0;
   const isOwnProfile = currentUserId === profile.id;
+
+  // Check if profile owner has blocked the viewer
+  let isBlockedByProfile = false;
+  if (currentUserId && !isOwnProfile) {
+    const { data: blockData } = await supabase
+      .from("blocked_users")
+      .select("id")
+      .eq("blocker_id", profile.id)
+      .eq("blocked_id", currentUserId)
+      .maybeSingle();
+    isBlockedByProfile = !!blockData;
+  }
+
+  if (isBlockedByProfile) {
+    return (
+      <main className="min-h-screen bg-zinc-950 pb-24">
+        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/5 bg-zinc-950/70 px-4 py-3 backdrop-blur-xl backdrop-saturate-150">
+          <BackButton />
+          <span className="text-sm font-semibold text-white">{profile.username}</span>
+        </header>
+        <div className="flex flex-col items-center justify-center gap-4 px-8 pt-32 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-800">
+            <ShieldBan size={28} className="text-zinc-500" />
+          </div>
+          <p className="text-[16px] font-semibold text-zinc-300">Profile unavailable</p>
+          <p className="text-[13px] text-zinc-600 leading-relaxed">
+            This profile is not available to you.
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   // Check follow state
   let initialIsFollowing = false;
