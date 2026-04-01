@@ -351,7 +351,7 @@ export default function ThreadPage() {
       </header>
 
       {/* Messages */}
-      <div className={cn("flex-1 overflow-y-auto px-4 py-4 pb-2 space-y-1", isBlocked && "opacity-40 pointer-events-none")}>
+      <div className={cn("flex-1 overflow-y-auto px-4 py-4 pb-2 space-y-1", (isBlocked || blockedByThem) && "opacity-40 pointer-events-none")}>
         {loading ? (
           <div className="flex items-center justify-center pt-16">
             <Loader2 size={24} className="animate-spin text-zinc-600" />
