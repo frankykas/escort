@@ -82,6 +82,7 @@ export default function ThreadPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [channel, setChannel] = useState<StreamChannel | null>(null);
   const [noChannel, setNoChannel] = useState(false);
+  const [requestPending, setRequestPending] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -104,28 +105,51 @@ export default function ThreadPage() {
       });
   }, [user, username, router]);
 
-  // Connect to Stream channel once partner + client ready
+  // Check request status from Supabase, then connect to Stream channel
   const connectChannel = useCallback(async () => {
     if (!client || !ready || !user || !partner) return;
 
-    const [a, b] = [user.id.replace(/-/g, ""), partner.id.replace(/-/g, "")].sort();
-    const channelId = a + b;
+    // First check request status — the channel may have just been created
+    const statusRes = await fetch(
+      `/api/chat/requests?userId=${user.id}&recipientId=${partner.id}`
+    );
+    const statusData = statusRes.ok ? await statusRes.json() : null;
+
+    // If no accepted request exists between these users, show pending state
+    if (!statusData || statusData.status === "none") {
+      setNoChannel(true);
+      setRequestPending(false);
+      setLoading(false);
+      return;
+    }
+
+    if (statusData.status === "pending") {
+      setNoChannel(true);
+      setRequestPending(true);
+      setLoading(false);
+      return;
+    }
+
+    // Status is "accepted" — connect to the Stream channel
+    // Use the channel ID from the request if available, otherwise compute it
+    const cId = statusData.channelId
+      ?? (() => { const [a, b] = [user.id.replace(/-/g, ""), partner.id.replace(/-/g, "")].sort(); return a + b; })();
 
     try {
-      const ch = client.channel("messaging", channelId);
+      const ch = client.channel("messaging", cId);
       const state = await ch.watch();
 
-      // Load existing messages
       const msgs = (state.messages ?? []).map(toChat);
       setMessages(msgs);
       setChannel(ch);
       setNoChannel(false);
 
-      // Mark as read
       await ch.markRead();
-    } catch {
-      // Channel doesn't exist yet (request not accepted)
+    } catch (e) {
+      console.error("[thread] Stream channel watch failed:", e);
+      // Channel accepted in DB but Stream channel not found — may be timing issue
       setNoChannel(true);
+      setRequestPending(false);
     }
 
     setLoading(false);
@@ -276,17 +300,28 @@ export default function ThreadPage() {
             <Loader2 size={24} className="animate-spin text-zinc-600" />
           </div>
         ) : noChannel ? (
-          /* No channel — request not yet accepted */
+          /* No channel — request pending or not yet sent */
           <div className="flex flex-col items-center justify-center gap-4 pt-20 text-center px-6">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-400/10">
               <Clock size={28} className="text-amber-400" />
             </div>
             <div>
-              <p className="text-[15px] font-semibold text-white">Waiting for approval</p>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500">
-                Your message request to @{partner?.username} is pending.
-                You&apos;ll be able to chat once they accept.
-              </p>
+              {requestPending ? (
+                <>
+                  <p className="text-[15px] font-semibold text-white">Request pending</p>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500">
+                    Your message request to @{partner?.username} is pending.
+                    You&apos;ll be able to chat once they accept.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-[15px] font-semibold text-white">No conversation yet</p>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500">
+                    Send a message request to start chatting with @{partner?.username}.
+                  </p>
+                </>
+              )}
             </div>
             <button
               onClick={() => router.push(`/u/${partner?.username}`)}
