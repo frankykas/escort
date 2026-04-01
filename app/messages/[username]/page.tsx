@@ -108,7 +108,8 @@ export default function ThreadPage() {
   const connectChannel = useCallback(async () => {
     if (!client || !ready || !user || !partner) return;
 
-    const channelId = [user.id, partner.id].sort().join("--");
+    const [a, b] = [user.id.replace(/-/g, ""), partner.id.replace(/-/g, "")].sort();
+    const channelId = a + b;
 
     try {
       const ch = client.channel("messaging", channelId);

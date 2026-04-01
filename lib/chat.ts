@@ -25,7 +25,9 @@ type ActionResult = { success: boolean; error?: string; data?: Record<string, un
 // ---------------------------------------------------------------------------
 
 function channelId(id1: string, id2: string): string {
-  return [id1, id2].sort().join("--");
+  // Stream max channel ID is 64 chars. Two UUIDs without hyphens = 32+32 = 64.
+  const [a, b] = [id1.replace(/-/g, ""), id2.replace(/-/g, "")].sort();
+  return a + b;
 }
 
 // ---------------------------------------------------------------------------
