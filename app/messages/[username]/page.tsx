@@ -5,12 +5,13 @@ import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ChevronLeft, CheckCircle, Send, Loader2, MoreVertical, Clock,
+  ChevronLeft, CheckCircle, Send, Loader2, MoreVertical, Clock, ShieldBan,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
 import { useStreamChat } from "@/contexts/StreamChatContext";
+import { useProfile } from "@/contexts/ProfileContext";
 import { ReportButton } from "@/components/ui/ReportButton";
 import type { Channel as StreamChannel, MessageResponse, Event } from "stream-chat";
 
@@ -73,6 +74,7 @@ export default function ThreadPage() {
   const username = params.username as string;
   const { user, checked } = useSession();
   const { client, ready } = useStreamChat();
+  const { isProvider } = useProfile();
 
   const [partner, setPartner] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -83,6 +85,8 @@ export default function ThreadPage() {
   const [channel, setChannel] = useState<StreamChannel | null>(null);
   const [noChannel, setNoChannel] = useState(false);
   const [requestPending, setRequestPending] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [blocking, setBlocking] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -104,6 +108,28 @@ export default function ThreadPage() {
         setPartner(data);
       });
   }, [user, username, router]);
+
+  // Check block status (providers only)
+  useEffect(() => {
+    if (!user || !partner || !isProvider) return;
+    fetch(`/api/block?blockerId=${user.id}&blockedId=${partner.id}`)
+      .then((r) => r.json())
+      .then((d) => setIsBlocked(d.blocked ?? false))
+      .catch(() => {});
+  }, [user, partner, isProvider]);
+
+  async function toggleBlock() {
+    if (!user || !partner || blocking) return;
+    setBlocking(true);
+    const method = isBlocked ? "DELETE" : "POST";
+    await fetch("/api/block", {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ blockerId: user.id, blockedId: partner.id }),
+    });
+    setIsBlocked(!isBlocked);
+    setBlocking(false);
+  }
 
   // Check request status from Supabase, then connect to Stream channel
   const connectChannel = useCallback(async () => {
@@ -278,6 +304,16 @@ export default function ThreadPage() {
                   <CheckCircle size={14} className="text-zinc-500" />
                   View profile
                 </Link>
+                {partner && isProvider && (
+                  <button
+                    onClick={() => { toggleBlock(); setMenuOpen(false); }}
+                    disabled={blocking}
+                    className="flex w-full items-center gap-3 border-t border-white/5 px-4 py-3 text-[13px] text-red-400 transition hover:bg-zinc-800 disabled:opacity-50"
+                  >
+                    <ShieldBan size={14} />
+                    {isBlocked ? "Unblock user" : "Block user"}
+                  </button>
+                )}
                 {partner && (
                   <div className="border-t border-white/5">
                     <ReportButton

@@ -42,6 +42,16 @@ export async function createMessageRequest(
   const supabase = createServerClient();
   if (!supabase) return { success: false, error: "Database unavailable" };
 
+  // Check if sender is blocked by recipient
+  const { data: blocked } = await supabase
+    .from("blocked_users")
+    .select("id")
+    .eq("blocker_id", recipientId)
+    .eq("blocked_id", senderId)
+    .maybeSingle();
+
+  if (blocked) return { success: false, error: "Unable to send request" };
+
   // Check if a request already exists
   const { data: existing } = await supabase
     .from("message_requests")

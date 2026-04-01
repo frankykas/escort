@@ -14,7 +14,7 @@ import { useUnreadCount } from "@/hooks/useNotifications";
 import { useStreamUnread } from "@/hooks/useStreamUnread";
 import type { TranslationKey } from "@/lib/i18n/en";
 
-const HIDDEN_ON = ["/auth/signin", "/auth/signup", "/messages/", "/onboarding"];
+const HIDDEN_ON = ["/auth/signin", "/auth/signup", "/onboarding"];
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
