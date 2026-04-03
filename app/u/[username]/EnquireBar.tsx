@@ -53,7 +53,8 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
   const [message, setMessage] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  if (isOwnProfile) return null;
+  // Check ownership client-side (server-side prop may be wrong due to auth)
+  if (isOwnProfile || (user && user.id === providerId)) return null;
 
   const hasWhatsapp = !!contactWhatsapp;
   const hasTelegram = !!contactTelegram;
@@ -145,12 +146,12 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
 
   // Button label based on request status
   const ctaLabel = statusLoading
-    ? "Message"
+    ? "Send Message Request"
     : requestStatus === "accepted"
       ? "Open Chat"
       : requestStatus === "pending"
         ? "Request Pending"
-        : "Message";
+        : "Send Message Request";
 
   const contactOptions = [
     ...(hasWhatsapp ? [{

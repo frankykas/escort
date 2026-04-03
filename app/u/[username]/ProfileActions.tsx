@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Crown, Clock } from "lucide-react";
+import { Crown, Clock, Pencil, BarChart3, Share2, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFollow } from "@/hooks/useFollow";
 import { useRequestStatus } from "@/hooks/useMessageRequests";
+import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
 
 type Props = {
@@ -21,6 +22,7 @@ export function ProfileActions({
   profileId, username, initialIsFollowing, userId, isOwnProfile, isProvider,
 }: Props) {
   const router = useRouter();
+  const { user } = useSession();
   const { isFollowing, toggle } = useFollow({
     profileId,
     initialIsFollowing,
@@ -35,10 +37,14 @@ export function ProfileActions({
   const [hasSubscriptionTier, setHasSubscriptionTier] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subLoading, setSubLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Client-side ownership check (server-side isOwnProfile may be wrong)
+  const isOwn = isOwnProfile || (user?.id === profileId);
 
   // Check if provider has a subscription tier and if current user is subscribed
   useEffect(() => {
-    if (!isProvider || isOwnProfile) return;
+    if (!isProvider || isOwn) return;
 
     supabase
       .from("subscription_tiers")
@@ -64,21 +70,66 @@ export function ProfileActions({
           if (data) setIsSubscribed(true);
         });
     }
-  }, [profileId, userId, isProvider, isOwnProfile]);
+  }, [profileId, userId, isProvider, isOwn]);
 
-  if (isOwnProfile) {
+  // ── Own profile: Edit + Analytics + Share ──
+  if (isOwn) {
+    async function handleShare() {
+      const url = `${window.location.origin}/u/${username}`;
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: `@${username}`, url });
+        } else {
+          await navigator.clipboard.writeText(url);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }
+      } catch {
+        // User cancelled share sheet
+      }
+    }
+
     return (
-      <div className="flex gap-2">
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <button
+            onClick={() => router.push("/profile/edit")}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-zinc-700 py-2 text-sm font-semibold text-white transition-colors hover:bg-zinc-800"
+          >
+            <Pencil size={14} />
+            Edit Profile
+          </button>
+          {isProvider && (
+            <button
+              onClick={() => router.push("/profile/analytics")}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-zinc-700 py-2 text-sm font-semibold text-white transition-colors hover:bg-zinc-800"
+            >
+              <BarChart3 size={14} />
+              Analytics
+            </button>
+          )}
+        </div>
         <button
-          onClick={() => router.push("/profile/edit")}
-          className="flex-1 rounded-lg border border-zinc-700 py-2 text-sm font-semibold text-white transition-colors hover:bg-zinc-800"
+          onClick={handleShare}
+          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-zinc-700 py-2 text-sm font-semibold text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white"
         >
-          Edit Profile
+          {copied ? (
+            <>
+              <Check size={14} className="text-emerald-400" />
+              <span className="text-emerald-400">Link copied!</span>
+            </>
+          ) : (
+            <>
+              <Share2 size={14} />
+              Share Profile
+            </>
+          )}
         </button>
       </div>
     );
   }
 
+  // ── Other user's profile ──
   function handleFollow() {
     if (!userId) { router.push("/auth/signin"); return; }
     toggle();
@@ -89,9 +140,10 @@ export function ProfileActions({
 
     if (requestStatus === "accepted") {
       router.push(`/messages/${username}`);
-    } else {
-      // For pending or no request — scroll to EnquireBar CTA which handles the flow
-      router.push(`/messages/${username}`);
+    }
+    // For pending or no request — the EnquireBar at the bottom handles the flow.
+    if (requestStatus === "none" || requestStatus === "pending") {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     }
   }
 
@@ -110,12 +162,12 @@ export function ProfileActions({
   }
 
   const messageLabel = statusLoading
-    ? "Message"
+    ? "Request"
     : requestStatus === "accepted"
       ? "Chat"
       : requestStatus === "pending"
         ? "Pending"
-        : "Message";
+        : "Request";
 
   const isPending = requestStatus === "pending";
 

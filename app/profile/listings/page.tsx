@@ -111,6 +111,7 @@ export default function ListingsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [formError, setFormError]       = useState<string | null>(null);
   const [creditBalance, setCreditBalance] = useState<number>(0);
+  const [creditConfirm, setCreditConfirm] = useState<{ action: "create" | "relist"; listingId?: string } | null>(null);
 
   const fetchListings = useCallback(async (userId: string) => {
     const [listingsResult, balanceResult] = await Promise.all([
@@ -163,12 +164,26 @@ export default function ListingsPage() {
     setDrawerOpen(false); setEditingId(null); setFormData(EMPTY_FORM); setFormError(null);
   }
 
-  async function handleSave() {
+  function handleSave() {
     if (!user) return;
     const title = formData.title.trim();
     const rate  = parseInt(formData.rate_pounds, 10);
     if (title.length < 2) { setFormError("Title must be at least 2 characters."); return; }
     if (!formData.rate_pounds || isNaN(rate) || rate <= 0) { setFormError("Please enter a valid rate."); return; }
+
+    if (editingId) {
+      // Editing — no credit cost, save directly
+      doSave();
+    } else {
+      // Creating — ask for credit confirmation first
+      setCreditConfirm({ action: "create" });
+    }
+  }
+
+  async function doSave() {
+    if (!user) return;
+    const title = formData.title.trim();
+    const rate  = parseInt(formData.rate_pounds, 10);
 
     setSaving(true); setFormError(null);
 
@@ -178,7 +193,6 @@ export default function ListingsPage() {
       .filter(Boolean);
 
     if (editingId) {
-      // Editing — direct update (no credit cost)
       const payload = {
         title,
         description:      formData.description.trim() || null,
@@ -190,7 +204,6 @@ export default function ListingsPage() {
       const { error } = await supabase.from("listings").update(payload).eq("id", editingId);
       if (error) { setFormError(error.message); setSaving(false); return; }
     } else {
-      // Creating — costs 1 credit, goes through API
       const res = await fetch("/api/listings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -229,8 +242,13 @@ export default function ListingsPage() {
     setListings((prev) => prev.map((l) => l.id === listing.id ? { ...l, is_active: !l.is_active } : l));
   }
 
-  async function handleRelist(listingId: string) {
+  function handleRelist(listingId: string) {
     if (!user || creditBalance < 1) return;
+    setCreditConfirm({ action: "relist", listingId });
+  }
+
+  async function doRelist(listingId: string) {
+    if (!user) return;
     const res = await fetch("/api/listings/relist", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -242,6 +260,16 @@ export default function ListingsPage() {
       return;
     }
     await fetchListings(user.id);
+  }
+
+  function onCreditConfirm() {
+    if (!creditConfirm) return;
+    setCreditConfirm(null);
+    if (creditConfirm.action === "create") {
+      doSave();
+    } else if (creditConfirm.action === "relist" && creditConfirm.listingId) {
+      doRelist(creditConfirm.listingId);
+    }
   }
 
   if (sessionLoading || loading) return <PageSkeleton />;
@@ -392,6 +420,51 @@ export default function ListingsPage() {
             saving={saving}
             error={formError}
           />
+        )}
+      </AnimatePresence>
+
+      {/* ── Credit confirmation popup ── */}
+      <AnimatePresence>
+        {creditConfirm && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
+              onClick={() => setCreditConfirm(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-x-4 top-1/2 z-[61] -translate-y-1/2 rounded-3xl border border-white/10 bg-zinc-900 p-6 shadow-2xl sm:inset-x-auto sm:left-1/2 sm:w-[340px] sm:-translate-x-1/2"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-400/10">
+                  <Coins size={22} className="text-amber-400" />
+                </div>
+                <h3 className="text-[16px] font-semibold text-white">
+                  {creditConfirm.action === "create" ? "Create Listing" : "Relist"}
+                </h3>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-400">
+                  This will use <span className="font-semibold text-amber-400">1 credit</span> from your balance.
+                  You currently have <span className="font-semibold text-white">{creditBalance} credit{creditBalance !== 1 ? "s" : ""}</span>.
+                </p>
+                <div className="mt-5 flex w-full gap-3">
+                  <button
+                    onClick={() => setCreditConfirm(null)}
+                    className="flex-1 rounded-xl border border-white/10 py-2.5 text-[13px] font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={onCreditConfirm}
+                    className="flex-1 rounded-xl bg-amber-400 py-2.5 text-[13px] font-bold text-zinc-950 transition hover:bg-amber-300"
+                  >
+                    Spend 1 Credit
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>

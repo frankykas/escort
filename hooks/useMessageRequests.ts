@@ -8,7 +8,7 @@ type MessageRequest = {
   recipient_id: string;
   intro_message: string | null;
   status: "pending" | "accepted" | "rejected";
-  stream_channel_id: string | null;
+  channel_id: string | null;
   created_at: string;
   sender?: { username: string; avatar_url: string | null; verification_status: string };
   recipient?: { username: string; avatar_url: string | null; verification_status: string };

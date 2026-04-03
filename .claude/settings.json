@@ -77,7 +77,12 @@
       "Bash(grep -rn \"average_rating\\\\|review_count\" /c/dev/cleopatre --include=*.ts --include=*.tsx)",
       "Bash(grep -rn \"\\\\.select.*review\\\\|\\\\.select.*rating\" /c/dev/cleopatre --include=*.ts --include=*.tsx)",
       "Bash(grep -r \"FROM reviews\\\\|from.*reviews\\\\|TABLE.*reviews\\\\|table.*reviews\" /c/dev/cleopatre --include=*.ts --include=*.tsx --include=*.sql)",
-      "Bash(grep -E \"\\\\.sql$\")"
+      "Bash(grep -E \"\\\\.sql$\")",
+      "Bash(find /c/dev/cleopatre -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) -exec grep -l \"GetStream\\\\|stream-chat\\\\|Channel\\\\|StreamChat\" {} \\\\;)",
+      "Bash(npm uninstall:*)",
+      "Read(//c/Users/Cheet/.claude/projects/c--dev-cleopatre/**)",
+      "Bash(grep -a -o 'email.*sophia[^\\\\\\\\]*\\\\|sophia.*@[^\\\\\\\\,\"]*\\\\|bella.*@[^\\\\\\\\,\"]*\\\\|escort.*test[^\\\\\\\\,\"]*@[^\\\\\\\\,\"]*' \"C:\\\\Users\\\\Cheet\\\\.claude\\\\projects\\\\c--dev-cleopatre\\\\e1fd85a7-acf2-499d-84fe-c5ff097405cb.jsonl\")",
+      "Bash(grep -E \"\\\\.ts$\")"
     ],
     "additionalDirectories": [
       "c:\\dev\\cleopatre\\app\\listings",

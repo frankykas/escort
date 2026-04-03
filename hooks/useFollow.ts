@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
 
 type Args = {
@@ -12,6 +12,11 @@ type Args = {
 export function useFollow({ profileId, initialIsFollowing, userId }: Args) {
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
 
+  // Sync with prop when parent updates (e.g. batch query finishes)
+  useEffect(() => {
+    setIsFollowing(initialIsFollowing);
+  }, [initialIsFollowing]);
+
   const toggle = useCallback(async () => {
     if (!userId) return;
 
@@ -21,7 +26,10 @@ export function useFollow({ profileId, initialIsFollowing, userId }: Args) {
     const { error } = next
       ? await supabase
           .from("follows")
-          .insert({ follower_id: userId, following_id: profileId })
+          .upsert(
+            { follower_id: userId, following_id: profileId },
+            { onConflict: "follower_id,following_id" }
+          )
       : await supabase
           .from("follows")
           .delete()
@@ -29,7 +37,7 @@ export function useFollow({ profileId, initialIsFollowing, userId }: Args) {
           .eq("following_id", profileId);
 
     if (error) {
-      setIsFollowing(isFollowing);
+      setIsFollowing(!next);
     }
   }, [isFollowing, profileId, userId]);
 

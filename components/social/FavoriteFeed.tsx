@@ -125,7 +125,7 @@ export function FavoriteFeed() {
            profiles!status_updates_provider_id_fkey(id, username, avatar_url, verification_status)`
         )
         .in("provider_id", followedIds)
-        .gt("expires_at", new Date().toISOString())
+        .eq("post_type", "post")
         .order("created_at", { ascending: false })
         .limit(20);
 

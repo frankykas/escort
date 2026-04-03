@@ -7,6 +7,7 @@ import { BackButton } from "@/components/ui/BackButton";
 import { ReportButton } from "@/components/ui/ReportButton";
 import { PostActions } from "./PostActions";
 import { CommentSection } from "./CommentSection";
+import { PostMenu } from "./PostMenu";
 import type { CommentRow } from "@/hooks/useComment";
 
 type PostProfile = {
@@ -94,14 +95,16 @@ export default async function PostPage({ params }: Props) {
 
   const { username, avatar_url, verification_status, id: profileId } = post.profiles;
   const isVerified = verification_status === "verified";
-
   return (
     <main className="min-h-screen bg-black">
       <div className="mx-auto max-w-lg">
         {/* ── Header ── */}
-        <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-zinc-800 bg-black/80 px-4 py-3 backdrop-blur-md">
-          <BackButton />
-          <span className="text-sm font-semibold text-white">Post</span>
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-800 bg-black/80 px-4 py-3 backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            <BackButton />
+            <span className="text-sm font-semibold text-white">Post</span>
+          </div>
+          <PostMenu postId={post.id} ownerId={profileId} />
         </header>
 
         {/* ── Post author row ── */}

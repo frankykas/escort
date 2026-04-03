@@ -1,6 +1,20 @@
 import { createServerClient } from "@/lib/supabase/server";
 
 // ---------------------------------------------------------------------------
+// Admin auth
+// ---------------------------------------------------------------------------
+
+const ADMIN_IDS = (process.env.ADMIN_USER_IDS ?? "")
+  .split(",")
+  .map((id) => id.trim())
+  .filter(Boolean);
+
+export function isAdmin(userId: string | null): boolean {
+  if (!userId) return false;
+  return ADMIN_IDS.includes(userId);
+}
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -282,4 +296,173 @@ export async function getAdminAuditLog(
     .range(offset, offset + limit - 1);
 
   return (data ?? []) as AdminAction[];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Dashboard data fetchers
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type DashboardStats = {
+  totalUsers: number;
+  totalProviders: number;
+  totalClients: number;
+  verifiedProviders: number;
+  totalPosts: number;
+  totalStories: number;
+  totalListings: number;
+  activeChats: number;
+  pendingRequests: number;
+  pendingReports: number;
+  totalLikes: number;
+  totalComments: number;
+  totalFollows: number;
+  signupsToday: number;
+  signupsThisWeek: number;
+};
+
+export async function getDashboardStats(): Promise<DashboardStats | null> {
+  const supabase = createServerClient();
+  if (!supabase) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayISO = today.toISOString();
+
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  const weekAgoISO = weekAgo.toISOString();
+
+  const [
+    usersRes, providersRes, verifiedRes,
+    postsRes, storiesRes, listingsRes,
+    chatsRes, requestsRes, reportsRes,
+    likesRes, commentsRes, followsRes,
+    signupsTodayRes, signupsWeekRes,
+  ] = await Promise.all([
+    supabase.from("profiles").select("id", { count: "exact", head: true }),
+    supabase.from("profiles").select("id", { count: "exact", head: true }).eq("is_provider", true),
+    supabase.from("profiles").select("id", { count: "exact", head: true }).eq("verification_status", "verified"),
+    supabase.from("status_updates").select("id", { count: "exact", head: true }).eq("post_type", "post"),
+    supabase.from("status_updates").select("id", { count: "exact", head: true }).eq("post_type", "story"),
+    supabase.from("listings").select("id", { count: "exact", head: true }).eq("is_active", true),
+    supabase.from("chat_channels").select("id", { count: "exact", head: true }),
+    supabase.from("message_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    supabase.from("reports").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    supabase.from("likes").select("user_id", { count: "exact", head: true }),
+    supabase.from("comments").select("id", { count: "exact", head: true }),
+    supabase.from("follows").select("follower_id", { count: "exact", head: true }),
+    supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", todayISO),
+    supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", weekAgoISO),
+  ]);
+
+  return {
+    totalUsers: usersRes.count ?? 0,
+    totalProviders: providersRes.count ?? 0,
+    totalClients: (usersRes.count ?? 0) - (providersRes.count ?? 0),
+    verifiedProviders: verifiedRes.count ?? 0,
+    totalPosts: postsRes.count ?? 0,
+    totalStories: storiesRes.count ?? 0,
+    totalListings: listingsRes.count ?? 0,
+    activeChats: chatsRes.count ?? 0,
+    pendingRequests: requestsRes.count ?? 0,
+    pendingReports: reportsRes.count ?? 0,
+    totalLikes: likesRes.count ?? 0,
+    totalComments: commentsRes.count ?? 0,
+    totalFollows: followsRes.count ?? 0,
+    signupsToday: signupsTodayRes.count ?? 0,
+    signupsThisWeek: signupsWeekRes.count ?? 0,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Recent signups
+// ---------------------------------------------------------------------------
+
+export type RecentUser = {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+  is_provider: boolean;
+  verification_status: string;
+  created_at: string;
+};
+
+export async function getRecentSignups(limit = 15): Promise<RecentUser[]> {
+  const supabase = createServerClient();
+  if (!supabase) return [];
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, username, avatar_url, is_provider, verification_status, created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return (data ?? []) as RecentUser[];
+}
+
+// ---------------------------------------------------------------------------
+// Pending reports
+// ---------------------------------------------------------------------------
+
+export type ReportRow = {
+  id: string;
+  target_type: string;
+  target_id: string;
+  reason: string;
+  details: string | null;
+  status: string;
+  created_at: string;
+  reporter: { username: string } | null;
+};
+
+export async function getPendingReports(limit = 20): Promise<ReportRow[]> {
+  const supabase = createServerClient();
+  if (!supabase) return [];
+
+  const { data } = await supabase
+    .from("reports")
+    .select(`
+      id, target_type, target_id, reason, details, status, created_at,
+      reporter:reporter_id (username)
+    `)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return (data ?? []).map((r) => ({
+    ...r,
+    reporter: r.reporter as unknown as { username: string } | null,
+  })) as ReportRow[];
+}
+
+// ---------------------------------------------------------------------------
+// Resolve a report
+// ---------------------------------------------------------------------------
+
+export async function resolveReport(
+  adminId: string,
+  reportId: string,
+  resolution: "actioned" | "dismissed"
+): Promise<AdminActionResult> {
+  const supabase = createServerClient();
+  if (!supabase) return { success: false, error: "Database unavailable" };
+
+  const { error } = await supabase
+    .from("reports")
+    .update({
+      status: resolution,
+      reviewed_by: adminId,
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq("id", reportId);
+
+  if (error) return { success: false, error: error.message };
+
+  await supabase.from("admin_actions").insert({
+    admin_id: adminId,
+    action_type: `report_${resolution}`,
+    target_id: reportId,
+  });
+
+  return { success: true };
 }

@@ -16,6 +16,7 @@ import { useSession } from "@/hooks/useSession";
 import { useLike } from "@/hooks/useLike";
 import { useFollow } from "@/hooks/useFollow";
 import { useShare } from "@/hooks/useShare";
+import { PostModal } from "@/components/social/PostModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,11 +73,17 @@ const CATEGORY_CHIPS = [
   { id: "available",     label: "Available Now" },
   { id: "Companionship", label: "Companionship" },
   { id: "GFE",           label: "GFE" },
+  { id: "Massage",       label: "Massage" },
+  { id: "BDSM",          label: "BDSM" },
+  { id: "Domination",    label: "Domination" },
+  { id: "Couples",       label: "Couples" },
   { id: "Dinner Date",   label: "Dinner Date" },
   { id: "Travel",        label: "Travel" },
-  { id: "Massage",       label: "Massage" },
-  { id: "Couples",       label: "Couples" },
-  { id: "Domination",    label: "Domination" },
+  { id: "420-Friendly",  label: "420-Friendly" },
+  { id: "Mature",        label: "Mature" },
+  { id: "Fetish",        label: "Fetish" },
+  { id: "Tantric",       label: "Tantric" },
+  { id: "PSE",           label: "PSE" },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -648,6 +655,7 @@ function PostFeedCard({
   const [linkCopied, setLinkCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const localComments = post.latest_comments ?? [];
 
   const { isLiked: liked, likesCount, toggle: toggleLike } = useLike({
@@ -806,9 +814,9 @@ function PostFeedCard({
             className={cn("transition-all duration-150", liked ? "fill-red-500 text-red-500 scale-110" : "text-zinc-300")}
           />
         </button>
-        <Link href={`/post/${post.post_id}`} className="flex items-center gap-1.5 rounded-full p-2 transition-all hover:bg-white/5">
+        <button onClick={() => setModalOpen(true)} className="flex items-center gap-1.5 rounded-full p-2 transition-all hover:bg-white/5">
           <MessageCircle size={22} className="text-zinc-300" />
-        </Link>
+        </button>
         <button
           onClick={handleShare}
           disabled={isSharing || !userId}
@@ -833,9 +841,9 @@ function PostFeedCard({
           </p>
         )}
         {post.comments_count > 0 && (
-          <Link href={`/post/${post.post_id}`} className="text-[13px] text-zinc-500 hover:text-zinc-300 transition-colors">
+          <button onClick={() => setModalOpen(true)} className="text-[13px] text-zinc-500 hover:text-zinc-300 transition-colors">
             {formatCount(post.comments_count)} {post.comments_count === 1 ? "comment" : "comments"}
-          </Link>
+          </button>
         )}
         {sharesCount > 0 && (
           <p className="text-[13px] text-zinc-500">
@@ -899,6 +907,14 @@ function PostFeedCard({
           )}
         </div>
       )}
+      <AnimatePresence>
+        {modalOpen && (
+          <PostModal
+            postId={post.post_id}
+            onClose={() => setModalOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </article>
   );
 }

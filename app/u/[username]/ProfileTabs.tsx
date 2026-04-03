@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { AnimatePresence } from "framer-motion";
 import {
   Grid3X3,
   ListOrdered,
@@ -13,8 +14,11 @@ import {
   MapPin,
   Phone,
   ChevronRight,
+  Calendar,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PostModal } from "@/components/social/PostModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,6 +38,16 @@ export type ListingItem = {
   sort_order: number;
 };
 
+export type AvailabilitySchedule = {
+  monday?: string;
+  tuesday?: string;
+  wednesday?: string;
+  thursday?: string;
+  friday?: string;
+  saturday?: string;
+  sunday?: string;
+};
+
 export type ProfileAttributes = {
   bio: string | null;
   bio_long: string | null;
@@ -50,6 +64,10 @@ export type ProfileAttributes = {
   age: number | null;
   service_categories: string[];
   hourly_rate: number | null;
+  gender: string | null;
+  pronouns: string | null;
+  caters_to: string[];
+  availability_schedule: AvailabilitySchedule | null;
 };
 
 type Tab = "posts" | "listings" | "about";
@@ -152,6 +170,8 @@ export function ProfileTabs({ posts, listings, attributes, isOwnProfile, isProvi
 // ─── Posts grid ───────────────────────────────────────────────────────────────
 
 function PostsGrid({ posts }: { posts: PostItem[] }) {
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+
   if (posts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
@@ -161,39 +181,50 @@ function PostsGrid({ posts }: { posts: PostItem[] }) {
   }
 
   return (
-    <div className="grid grid-cols-3 gap-[1px] bg-zinc-800/50">
-      {posts.map((post) => (
-        <Link
-          key={post.id}
-          href={`/post/${post.id}`}
-          className="group relative aspect-square overflow-hidden bg-zinc-900"
-        >
-          {post.media_url ? (
-            <Image
-              src={post.media_url}
-              alt=""
-              fill
-              className="object-cover transition-transform duration-200 group-hover:scale-105"
-              sizes="(max-width: 768px) 33vw, 200px"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-zinc-900">
-              <span className="text-[10px] text-zinc-700">No image</span>
+    <>
+      <div className="grid grid-cols-3 gap-[1px] bg-zinc-800/50">
+        {posts.map((post) => (
+          <button
+            key={post.id}
+            onClick={() => setSelectedPostId(post.id)}
+            className="group relative aspect-square overflow-hidden bg-zinc-900"
+          >
+            {post.media_url ? (
+              <Image
+                src={post.media_url}
+                alt=""
+                fill
+                className="object-cover transition-transform duration-200 group-hover:scale-105"
+                sizes="(max-width: 768px) 33vw, 200px"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-zinc-900">
+                <span className="text-[10px] text-zinc-700">No image</span>
+              </div>
+            )}
+            <div className="absolute inset-0 flex items-center justify-center gap-4 bg-black/50 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+              <span className="flex items-center gap-1 text-xs font-semibold text-white">
+                <Heart size={13} className="fill-white" />
+                {formatCount(post.likes_count)}
+              </span>
+              <span className="flex items-center gap-1 text-xs font-semibold text-white">
+                <MessageCircle size={13} className="fill-white" />
+                {formatCount(post.comments_count)}
+              </span>
             </div>
-          )}
-          <div className="absolute inset-0 flex items-center justify-center gap-4 bg-black/50 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-            <span className="flex items-center gap-1 text-xs font-semibold text-white">
-              <Heart size={13} className="fill-white" />
-              {formatCount(post.likes_count)}
-            </span>
-            <span className="flex items-center gap-1 text-xs font-semibold text-white">
-              <MessageCircle size={13} className="fill-white" />
-              {formatCount(post.comments_count)}
-            </span>
-          </div>
-        </Link>
-      ))}
-    </div>
+          </button>
+        ))}
+      </div>
+
+      <AnimatePresence>
+        {selectedPostId && (
+          <PostModal
+            postId={selectedPostId}
+            onClose={() => setSelectedPostId(null)}
+          />
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -277,6 +308,7 @@ function ListingCard({ listing }: { listing: ListingItem }) {
 
 function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
   const attrs: { label: string; value: string }[] = [
+    attributes.gender ? { label: "Gender", value: `${attributes.gender}${attributes.pronouns ? ` (${attributes.pronouns})` : ""}` } : null,
     attributes.age ? { label: "Age", value: `${attributes.age}` } : null,
     attributes.height_cm ? { label: "Height", value: heightDisplay(attributes.height_cm) } : null,
     attributes.build ? { label: "Build", value: capitalize(attributes.build) } : null,
@@ -292,7 +324,9 @@ function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
   const hasBio = !!(attributes.bio_long || attributes.bio);
   const hasLocation = !!(attributes.city || attributes.incall || attributes.outcall);
   const hasServices = attributes.service_categories.length > 0 || attributes.hourly_rate !== null;
-  const isEmpty = !hasAttrs && !hasBio && !hasLocation && !hasServices;
+  const hasCatersTo = attributes.caters_to.length > 0;
+  const hasSchedule = attributes.availability_schedule && Object.values(attributes.availability_schedule).some(Boolean);
+  const isEmpty = !hasAttrs && !hasBio && !hasLocation && !hasServices && !hasCatersTo && !hasSchedule;
 
   if (isEmpty) {
     return (
@@ -302,6 +336,16 @@ function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
       </div>
     );
   }
+
+  const DAYS: { key: keyof NonNullable<typeof attributes.availability_schedule>; label: string }[] = [
+    { key: "monday", label: "Monday" },
+    { key: "tuesday", label: "Tuesday" },
+    { key: "wednesday", label: "Wednesday" },
+    { key: "thursday", label: "Thursday" },
+    { key: "friday", label: "Friday" },
+    { key: "saturday", label: "Saturday" },
+    { key: "sunday", label: "Sunday" },
+  ];
 
   return (
     <div className="space-y-4 px-4 py-4 pb-8">
@@ -316,6 +360,21 @@ function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
                 <span className="text-[13px] font-medium text-zinc-100">{value}</span>
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Caters to */}
+      {hasCatersTo && (
+        <section>
+          <SectionLabel>Caters to</SectionLabel>
+          <div className="mt-2 rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 px-4 py-4 shadow-md">
+            <div className="flex items-center gap-2.5">
+              <Users size={15} className="flex-shrink-0 text-zinc-500" />
+              <span className="text-[13px] text-zinc-100">
+                {attributes.caters_to.join(", ")}
+              </span>
+            </div>
           </div>
         </section>
       )}
@@ -355,6 +414,34 @@ function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
                 ))}
               </div>
             )}
+          </div>
+        </section>
+      )}
+
+      {/* Weekly availability schedule */}
+      {hasSchedule && attributes.availability_schedule && (
+        <section>
+          <SectionLabel>Availability</SectionLabel>
+          <div className="mt-2 overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 divide-y divide-white/5 shadow-md">
+            {DAYS.map(({ key, label }) => {
+              const val = attributes.availability_schedule![key];
+              if (!val) return null;
+              const isUnavailable = val.toLowerCase() === "unavailable";
+              return (
+                <div key={key} className="flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center gap-2.5">
+                    <Calendar size={13} className="flex-shrink-0 text-zinc-600" />
+                    <span className="text-[13px] font-medium text-zinc-300">{label}</span>
+                  </div>
+                  <span className={cn(
+                    "text-[13px]",
+                    isUnavailable ? "text-zinc-600" : "text-zinc-100 font-medium"
+                  )}>
+                    {val}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
