@@ -428,10 +428,12 @@ function PostModalLikeBar({
   return (
     <div className="px-4 pt-3 pb-2">
       <div className="flex items-center gap-3">
-        <button
+        <motion.button
           onClick={toggle}
           disabled={!userId}
-          className="transition-transform active:scale-90 disabled:opacity-40"
+          whileTap={{ scale: 1.3 }}
+          transition={{ type: "spring", stiffness: 500, damping: 15 }}
+          className="disabled:opacity-40"
         >
           <Heart
             size={24}
@@ -440,7 +442,7 @@ function PostModalLikeBar({
               isLiked ? "fill-red-500 text-red-500" : "text-zinc-100"
             )}
           />
-        </button>
+        </motion.button>
         <span className="text-[13px] font-semibold text-white">
           {likesCount.toLocaleString()} {likesCount === 1 ? "like" : "likes"}
         </span>

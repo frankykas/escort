@@ -10,6 +10,13 @@ import { HeroCarousel } from "./HeroCarousel";
 import { EnquireBar } from "./EnquireBar";
 import { SimilarProfiles } from "./SimilarProfiles";
 import { EditProfileLink } from "./EditProfileLink";
+import {
+  TrustSignals,
+  SocialProofStrip,
+  AvailabilitySpotlight,
+  ShareStrip,
+} from "./ProfileSections";
+import { ProfileCategoryStrip } from "./ProfileCategoryStrip";
 import { USE_BOOKINGS } from "@/lib/features";
 import { cn, formatLastSeen } from "@/lib/utils";
 import type { ProfileAttributes } from "./ProfileTabs";
@@ -49,7 +56,8 @@ export default async function ProfilePage({ params }: Props) {
        completed_bookings_count,
        service_categories, hourly_rate,
        contact_whatsapp, contact_telegram, contact_phone,
-       gender, pronouns, caters_to, availability_schedule, tagline`
+       gender, pronouns, caters_to, availability_schedule, tagline,
+       created_at, last_seen_at`
     )
     .eq("username", username)
     .single();
@@ -310,13 +318,45 @@ export default async function ProfilePage({ params }: Props) {
         isProvider={profile.is_provider as boolean}
       />
 
-      {/* ── Similar profiles (only on other provider profiles) ── */}
+      {/* ── Profile sections (other providers only) ── */}
       {!isOwnProfile && (profile.is_provider as boolean) && (
-        <SimilarProfiles
-          profileId={profile.id as string}
-          city={profile.city as string | null}
-          serviceCategories={(profile.service_categories as string[]) ?? []}
-        />
+        <>
+          {/* Availability spotlight — today's hours */}
+          <AvailabilitySpotlight
+            schedule={profile.availability_schedule as Record<string, string> | null}
+            availableUntil={profile.available_until as string | null}
+          />
+
+          {/* Trust & Safety signals */}
+          <TrustSignals
+            isVerified={(profile.verification_status as string) === "verified"}
+            memberSince={profile.created_at as string | null}
+            lastSeenAt={(profile as Record<string, unknown>).last_seen_at as string | null}
+          />
+
+          {/* Social proof strip */}
+          <SocialProofStrip
+            followersCount={followersCount}
+            postsCount={posts.length}
+            memberSince={profile.created_at as string | null}
+            lastSeenAt={(profile as Record<string, unknown>).last_seen_at as string | null}
+          />
+
+          {/* Similar profiles */}
+          <SimilarProfiles
+            profileId={profile.id as string}
+            city={profile.city as string | null}
+            serviceCategories={(profile.service_categories as string[]) ?? []}
+          />
+
+          {/* Share strip */}
+          <ShareStrip username={profile.username as string} />
+
+          {/* Browse by category */}
+          <ProfileCategoryStrip
+            serviceCategories={(profile.service_categories as string[]) ?? []}
+          />
+        </>
       )}
 
       {/* ── Sticky enquire bar (other providers only — never on own profile) ── */}

@@ -5,8 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  MessageCircle, CheckCircle, Loader2, Search,
-  Check, X, Clock, Inbox, Pin, CheckCheck,
+  CheckCircle, Loader2, Search,
+  Check, X, Clock, Pin, CheckCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
@@ -14,6 +14,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { useMessageRequests } from "@/hooks/useMessageRequests";
 import { supabase } from "@/lib/supabase/client";
 import { BottomNav } from "@/components/ui/BottomNav";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -356,23 +357,24 @@ function MessagesPageInner() {
           )}
 
           {loading ? (
-            <div className="flex items-center justify-center pt-24">
-              <Loader2 size={24} className="animate-spin text-zinc-600" />
+            <div className="divide-y divide-white/5">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3.5 px-4 py-3.5">
+                  <div className="h-12 w-12 flex-shrink-0 rounded-full bg-zinc-800 shimmer" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3.5 w-28 rounded-full bg-zinc-800 shimmer" />
+                    <div className="h-3 w-48 rounded-full bg-zinc-800/60 shimmer" />
+                  </div>
+                  <div className="h-3 w-8 rounded-full bg-zinc-800 shimmer" />
+                </div>
+              ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-4 pt-24 px-8 text-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-zinc-800/60">
-                <MessageCircle size={32} className="text-zinc-600" />
-              </div>
-              <p className="text-[16px] font-semibold text-white">
-                {search ? "No results" : "No conversations yet"}
-              </p>
-              <p className="text-[13px] text-zinc-500">
-                {search
-                  ? "Try a different name."
-                  : "When a message request is accepted, your conversation will appear here."}
-              </p>
-            </div>
+            search ? (
+              <EmptyState variant="no-results" />
+            ) : (
+              <EmptyState variant="no-conversations" />
+            )
           ) : (
             <div className="divide-y divide-white/5">
               {filtered.map((conv) => (
@@ -397,23 +399,26 @@ function MessagesPageInner() {
             </div>
           )}
           {requestsLoading ? (
-            <div className="flex items-center justify-center pt-24">
-              <Loader2 size={24} className="animate-spin text-zinc-600" />
+            <div className="divide-y divide-white/5">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="px-4 py-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-11 w-11 flex-shrink-0 rounded-full bg-zinc-800 shimmer" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3.5 w-24 rounded-full bg-zinc-800 shimmer" />
+                      <div className="h-2.5 w-16 rounded-full bg-zinc-800/60 shimmer" />
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="h-9 w-9 rounded-full bg-zinc-800 shimmer" />
+                      <div className="h-9 w-20 rounded-full bg-zinc-800 shimmer" />
+                    </div>
+                  </div>
+                  <div className="ml-14 h-3 w-3/4 rounded-full bg-zinc-800/40 shimmer" />
+                </div>
+              ))}
             </div>
           ) : pendingRequests.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-4 pt-24 px-8 text-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-zinc-800/60">
-                <Inbox size={32} className="text-zinc-600" />
-              </div>
-              <p className="text-[16px] font-semibold text-white">
-                {profile?.is_provider ? "No pending requests" : "No sent requests"}
-              </p>
-              <p className="text-[13px] text-zinc-500">
-                {profile?.is_provider
-                  ? "Message requests from clients will appear here."
-                  : "When you send a message request, it will appear here."}
-              </p>
-            </div>
+            <EmptyState variant="no-requests" />
           ) : (
             <div className="divide-y divide-white/5">
               {pendingRequests.map((req) => {

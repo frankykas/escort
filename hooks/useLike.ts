@@ -45,7 +45,7 @@ export function useLike({ postId, initialIsLiked, initialCount, userId }: Args) 
       setIsLiked(!next);
       setLikesCount((c) => (next ? Math.max(c - 1, 0) : c + 1));
     }
-  }, [postId, userId]);
+  }, [isLiked, postId, userId]);
 
   return { isLiked, likesCount, toggle };
 }

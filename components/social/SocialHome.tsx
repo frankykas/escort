@@ -5,6 +5,7 @@ import { FeedList } from "./FeedList";
 import { FeedTabs } from "./FeedTabs";
 import { FavoriteFeed } from "./FavoriteFeed";
 import { PublishButton } from "./PublishButton";
+import { CategoryStrip } from "@/components/ui/CategoryGrid";
 
 export type FeedPostData = {
   post_id: string;
@@ -70,6 +71,9 @@ export async function SocialHome({ searchParams }: Props) {
       <Suspense fallback={<div className="h-[45px] border-b border-zinc-800 bg-black" />}>
         <FeedTabs />
       </Suspense>
+
+      {/* Category browse strip — client accounts only (providers don't reach this component) */}
+      <CategoryStrip />
 
       {isFavorites ? (
         <FavoriteFeed />

@@ -1,6 +1,7 @@
 "use client";
 
 import { Bookmark, Heart, MessageCircle, Send } from "lucide-react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useLike } from "@/hooks/useLike";
 
@@ -29,10 +30,11 @@ export function PostActions({ postId, initialIsLiked, initialCount, userId }: Pr
     <div className="px-3 pt-3 pb-1">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <button
+          <motion.button
             onClick={toggle}
             aria-label={isLiked ? "Unlike" : "Like"}
-            className="transition-transform active:scale-90"
+            whileTap={{ scale: 1.3 }}
+            transition={{ type: "spring", stiffness: 500, damping: 15 }}
           >
             <Heart
               size={28}
@@ -41,7 +43,7 @@ export function PostActions({ postId, initialIsLiked, initialCount, userId }: Pr
                 isLiked ? "fill-red-500 text-red-500" : "text-zinc-100"
               )}
             />
-          </button>
+          </motion.button>
           <button aria-label="Comment" className="text-zinc-100 hover:text-zinc-400 transition-colors">
             <MessageCircle size={28} />
           </button>

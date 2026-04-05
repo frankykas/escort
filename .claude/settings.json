@@ -86,7 +86,8 @@
     ],
     "additionalDirectories": [
       "c:\\dev\\cleopatre\\app\\listings",
-      "C:\\dev\\cleopatre\\app\\messages"
+      "C:\\dev\\cleopatre\\app\\messages",
+      "c:\\dev\\cleopatre\\app\\category"
     ]
   }
 }

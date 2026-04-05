@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PostModal } from "@/components/social/PostModal";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { CATEGORIES } from "@/lib/categories";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -158,9 +160,9 @@ export function ProfileTabs({ posts, listings, attributes, isOwnProfile, isProvi
       </div>
 
       {/* Tab content */}
-      {activeTab === "posts" && <PostsGrid posts={posts} />}
+      {activeTab === "posts" && <PostsGrid posts={posts} isOwnProfile={isOwnProfile} />}
       {activeTab === "listings" && (
-        <ListingsTab listings={listings} isOwnProfile={isOwnProfile} />
+        <ListingsTab listings={listings} isOwnProfile={isOwnProfile} serviceCategories={attributes.service_categories} />
       )}
       {activeTab === "about" && <AboutTab attributes={attributes} />}
     </div>
@@ -169,15 +171,11 @@ export function ProfileTabs({ posts, listings, attributes, isOwnProfile, isProvi
 
 // ─── Posts grid ───────────────────────────────────────────────────────────────
 
-function PostsGrid({ posts }: { posts: PostItem[] }) {
+function PostsGrid({ posts, isOwnProfile }: { posts: PostItem[]; isOwnProfile: boolean }) {
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   if (posts.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-        <p className="text-sm text-zinc-600">No posts yet.</p>
-      </div>
-    );
+    return <EmptyState variant="no-posts" isOwnProfile={isOwnProfile} />;
   }
 
   return (
@@ -233,39 +231,34 @@ function PostsGrid({ posts }: { posts: PostItem[] }) {
 function ListingsTab({
   listings,
   isOwnProfile,
+  serviceCategories,
 }: {
   listings: ListingItem[];
   isOwnProfile: boolean;
+  serviceCategories: string[];
 }) {
   if (listings.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-2 py-16 px-4 text-center">
-        <ListOrdered size={28} className="text-zinc-700" />
-        <p className="text-[15px] font-medium text-zinc-400">
-          {isOwnProfile ? "You haven't added any listings yet." : "No listings yet."}
-        </p>
-        {isOwnProfile && (
-          <Link
-            href="/profile/listings"
-            className="mt-2 rounded-full bg-amber-400 px-5 py-2 text-[13px] font-semibold text-zinc-950 transition-all hover:bg-amber-300 active:scale-[0.98]"
-          >
-            Add your first listing
-          </Link>
-        )}
-      </div>
-    );
+    return <EmptyState variant="no-listings" isOwnProfile={isOwnProfile} />;
   }
+
+  // Match provider's service_categories to browsable category slugs
+  const matchedCategories = CATEGORIES.filter((cat) => {
+    if (cat.filter.type === "service" || cat.filter.type === "tag") {
+      return serviceCategories.includes(String(cat.filter.value));
+    }
+    return false;
+  });
 
   return (
     <div className="space-y-2.5 px-4 py-3">
       {listings.map((listing) => (
-        <ListingCard key={listing.id} listing={listing} />
+        <ListingCard key={listing.id} listing={listing} categories={matchedCategories} />
       ))}
     </div>
   );
 }
 
-function ListingCard({ listing }: { listing: ListingItem }) {
+function ListingCard({ listing, categories }: { listing: ListingItem; categories: import("@/lib/categories").Category[] }) {
   return (
     <Link href={`/listings/${listing.id}`} className="group block">
       <div className="overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-md transition-all group-hover:border-white/10 group-hover:shadow-lg">
@@ -291,6 +284,27 @@ function ListingCard({ listing }: { listing: ListingItem }) {
             <p className="mt-2 text-[13px] leading-relaxed text-zinc-400 line-clamp-2">
               {listing.description}
             </p>
+          )}
+
+          {/* Category tags */}
+          {categories.length > 0 && (
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {categories.slice(0, 3).map((cat) => (
+                <span
+                  key={cat.slug}
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-block"
+                >
+                  <Link
+                    href={`/category/${cat.slug}`}
+                    className="flex items-center gap-1 rounded-full border border-white/8 bg-zinc-800/60 px-2.5 py-0.5 text-[10px] font-medium text-zinc-400 transition-colors hover:border-amber-400/20 hover:text-amber-400"
+                  >
+                    <span className="text-[11px]">{cat.emoji}</span>
+                    {cat.shortLabel}
+                  </Link>
+                </span>
+              ))}
+            </div>
           )}
         </div>
 

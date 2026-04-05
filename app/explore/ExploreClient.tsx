@@ -17,6 +17,11 @@ import { useLike } from "@/hooks/useLike";
 import { useFollow } from "@/hooks/useFollow";
 import { useShare } from "@/hooks/useShare";
 import { PostModal } from "@/components/social/PostModal";
+import { StoryRingAvatar } from "@/components/ui/StoryRingAvatar";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { CategoryStrip } from "@/components/ui/CategoryGrid";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/ui/PullToRefresh";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -339,6 +344,12 @@ export function ExploreClient() {
   const [viewingStory, setViewingStory]   = useState<{ groups: StoryGroup[]; index: number } | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const { pulling, refreshing, pullDistance, progress } = usePullToRefresh({
+    onRefresh: async () => {
+      await Promise.all([fetchFeed(cityQuery), fetchStories()]);
+    },
+  });
+
   // Fetch feed posts via RPC
   const fetchFeed = useCallback(async (city: string) => {
     setLoading(true);
@@ -459,6 +470,9 @@ export function ExploreClient() {
         </div>
       </header>
 
+      {/* ── Pull to refresh ── */}
+      <PullToRefreshIndicator pulling={pulling} refreshing={refreshing} pullDistance={pullDistance} progress={progress} />
+
       {/* ── Stories bar ── */}
       {loading ? (
         <StoriesBarSkeleton />
@@ -469,7 +483,7 @@ export function ExploreClient() {
         />
       )}
 
-      {/* ── Control strip: Near Me | Search | Filters ── */}
+      {/* ── Control strip: Near Me | Search ── */}
       <div className="flex items-center gap-2 border-b border-white/5 bg-black px-4 py-3">
         <button
           onClick={handleNearMe}
@@ -537,6 +551,9 @@ export function ExploreClient() {
         </button>
       </div>
 
+      {/* ── Browse by category (collapsible) ── */}
+      <CategoryStrip />
+
       {/* ── Category chips ── */}
       <div
         className="flex gap-2 overflow-x-auto border-b border-white/5 py-3"
@@ -569,13 +586,7 @@ export function ExploreClient() {
       {loading ? (
         <FeedSkeleton />
       ) : displayPosts.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-3 px-8 pt-24">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-900">
-            <Search size={28} className="text-zinc-600" />
-          </div>
-          <p className="text-[15px] font-semibold text-zinc-300">{t("explore_no_results")}</p>
-          <p className="text-center text-[13px] leading-relaxed text-zinc-600">{t("explore_try_different")}</p>
-        </div>
+        <EmptyState variant="no-results" />
       ) : (
         <div>
           <p className="px-4 py-2.5 text-[12px] text-zinc-600">
@@ -598,6 +609,7 @@ export function ExploreClient() {
                 isLiked={likedPostIds.has(post.post_id)}
                 isFollowing={followedIds.has(post.provider_id)}
                 onDelete={(id) => setPosts((prev) => prev.filter((p) => p.post_id !== id))}
+                hasActiveStory={storyGroups.some((g) => g.provider_id === post.provider_id && g.has_unseen)}
               />
             </motion.div>
           ))}
@@ -640,12 +652,14 @@ function PostFeedCard({
   isLiked,
   isFollowing,
   onDelete,
+  hasActiveStory = false,
 }: {
   post: FeedPost;
   userId: string | null;
   isLiked: boolean;
   isFollowing: boolean;
   onDelete?: (postId: string) => void;
+  hasActiveStory?: boolean;
 }) {
   const isVerified = post.provider_verified === "verified";
   const isOwnProfile = userId === post.provider_id;
@@ -719,19 +733,13 @@ function PostFeedCard({
       {/* ── Post header ── */}
       <div className="flex items-center gap-3 px-4 py-3">
         <Link href={`/u/${post.provider_username}`} className="flex-shrink-0">
-          <div className="rounded-full p-[2px] bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300">
-            <div className="rounded-full p-[1.5px] bg-black">
-              {post.provider_avatar ? (
-                <div className="relative h-9 w-9 overflow-hidden rounded-full">
-                  <Image src={post.provider_avatar} alt={post.provider_username} fill className="object-cover" sizes="36px" />
-                </div>
-              ) : (
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-sm font-bold text-zinc-300">
-                  {post.provider_username[0].toUpperCase()}
-                </div>
-              )}
-            </div>
-          </div>
+          <StoryRingAvatar
+            src={post.provider_avatar}
+            alt={post.provider_username}
+            size={36}
+            hasStory={hasActiveStory}
+            storyViewed={!hasActiveStory}
+          />
         </Link>
 
         <div className="flex-1 min-w-0">
@@ -745,8 +753,10 @@ function PostFeedCard({
         </div>
 
         {!isOwnProfile ? (
-          <button
+          <motion.button
             onClick={toggleFollow}
+            whileTap={{ scale: 0.92 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
             className={cn(
               "flex-shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition-all",
               following
@@ -755,7 +765,7 @@ function PostFeedCard({
             )}
           >
             {following ? "Following" : "Follow"}
-          </button>
+          </motion.button>
         ) : (
           <div className="relative">
             <button
@@ -795,35 +805,62 @@ function PostFeedCard({
         )}
       </div>
 
-      {/* ── Cover image ── */}
+      {/* ── Cover image with gradient overlay + floating info ── */}
       {post.media_url && (
-        <Link href={`/u/${post.provider_username}`} className="block relative aspect-square w-full bg-zinc-900">
-          <Image src={post.media_url} alt={post.provider_username} fill className="object-cover" sizes="100vw" />
+        <Link href={`/u/${post.provider_username}`} className="group block relative aspect-[4/5] w-full bg-zinc-900 overflow-hidden">
+          <Image
+            src={post.media_url}
+            alt={post.provider_username}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+            sizes="100vw"
+          />
+          {/* Bottom gradient overlay */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+          {/* Floating stats */}
+          <div className="absolute bottom-3 left-3 flex items-center gap-3">
+            {isVerified && (
+              <span className="flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-semibold text-amber-400 backdrop-blur-md border border-amber-400/20">
+                <CheckCircle size={10} className="fill-amber-400/20" />
+                Verified
+              </span>
+            )}
+          </div>
         </Link>
       )}
 
-      {/* ── Action bar ── */}
+      {/* ── Action bar with micro-animations ── */}
       <div className="flex items-center gap-1 px-3 pt-3 pb-1">
-        <button
+        <motion.button
           onClick={toggleLike}
           disabled={!userId}
+          whileTap={{ scale: 1.3 }}
+          transition={{ type: "spring", stiffness: 500, damping: 15 }}
           className="flex items-center gap-1.5 rounded-full p-2 transition-all hover:bg-white/5 disabled:opacity-40"
         >
           <Heart
             size={22}
-            className={cn("transition-all duration-150", liked ? "fill-red-500 text-red-500 scale-110" : "text-zinc-300")}
+            className={cn("transition-all duration-150", liked ? "fill-red-500 text-red-500" : "text-zinc-300")}
           />
-        </button>
-        <button onClick={() => setModalOpen(true)} className="flex items-center gap-1.5 rounded-full p-2 transition-all hover:bg-white/5">
-          <MessageCircle size={22} className="text-zinc-300" />
-        </button>
-        <button
-          onClick={handleShare}
-          disabled={isSharing || !userId}
+        </motion.button>
+        <motion.button
+          onClick={() => setModalOpen(true)}
+          disabled={!userId}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
           className="flex items-center gap-1.5 rounded-full p-2 transition-all hover:bg-white/5 disabled:opacity-40"
         >
-          <Share2 size={22} className={cn("transition-all duration-150", isSharing ? "text-amber-400 scale-110" : "text-zinc-300")} />
-        </button>
+          <MessageCircle size={22} className="text-zinc-300" />
+        </motion.button>
+        <motion.button
+          onClick={handleShare}
+          disabled={isSharing || !userId}
+          whileTap={{ scale: 0.9, rotate: 15 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          className="flex items-center gap-1.5 rounded-full p-2 transition-all hover:bg-white/5 disabled:opacity-40"
+        >
+          <Share2 size={22} className={cn("transition-all duration-150", isSharing ? "text-amber-400" : "text-zinc-300")} />
+        </motion.button>
       </div>
 
       {/* ── Link copied toast ── */}
@@ -925,24 +962,24 @@ function FeedSkeleton() {
   return (
     <div>
       {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="animate-pulse border-b border-zinc-900/80">
+        <div key={i} className="border-b border-zinc-900/80">
           <div className="flex items-center gap-3 px-4 py-3">
-            <div className="h-9 w-9 flex-shrink-0 rounded-full bg-zinc-800" />
+            <div className="h-9 w-9 flex-shrink-0 rounded-full bg-zinc-800 shimmer" />
             <div className="flex-1 space-y-1.5">
-              <div className="h-3 w-28 rounded-full bg-zinc-800" />
-              <div className="h-2 w-20 rounded-full bg-zinc-800/60" />
+              <div className="h-3 w-28 rounded-full bg-zinc-800 shimmer" />
+              <div className="h-2 w-20 rounded-full bg-zinc-800/60 shimmer" />
             </div>
-            <div className="h-7 w-16 rounded-full bg-zinc-800" />
+            <div className="h-7 w-16 rounded-full bg-zinc-800 shimmer" />
           </div>
-          <div className="aspect-square w-full bg-zinc-800" />
+          <div className="aspect-[4/5] w-full bg-zinc-800 shimmer" />
           <div className="flex gap-3 px-4 py-3">
-            <div className="h-6 w-6 rounded-full bg-zinc-800" />
-            <div className="h-6 w-6 rounded-full bg-zinc-800" />
-            <div className="h-6 w-6 rounded-full bg-zinc-800" />
+            <div className="h-6 w-6 rounded-full bg-zinc-800 shimmer" />
+            <div className="h-6 w-6 rounded-full bg-zinc-800 shimmer" />
+            <div className="h-6 w-6 rounded-full bg-zinc-800 shimmer" />
           </div>
           <div className="px-4 pb-4 space-y-2">
-            <div className="h-3 w-3/4 rounded-full bg-zinc-800" />
-            <div className="h-3 w-1/2 rounded-full bg-zinc-800" />
+            <div className="h-3 w-3/4 rounded-full bg-zinc-800 shimmer" />
+            <div className="h-3 w-1/2 rounded-full bg-zinc-800 shimmer" />
           </div>
         </div>
       ))}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ZoomIn } from "lucide-react";
@@ -11,13 +11,27 @@ type Photo = { id: string; url: string };
 export function HeroCarousel({ photos, username }: { photos: Photo[]; username: string }) {
   const [current, setCurrent] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   function handleScroll() {
     if (!scrollRef.current) return;
-    const index = Math.round(scrollRef.current.scrollLeft / scrollRef.current.offsetWidth);
+    const { scrollLeft, offsetWidth, scrollWidth } = scrollRef.current;
+    const index = Math.round(scrollLeft / offsetWidth);
     if (index !== current) setCurrent(index);
+    // Track continuous scroll progress for parallax
+    setScrollProgress(scrollLeft / (scrollWidth - offsetWidth || 1));
   }
+
+  // Parallax on page scroll
+  const [pageScrollY, setPageScrollY] = useState(0);
+  useEffect(() => {
+    function onScroll() {
+      setPageScrollY(window.scrollY);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   function lightboxNav(dir: 1 | -1, e: React.MouseEvent) {
     e.stopPropagation();
@@ -36,24 +50,26 @@ export function HeroCarousel({ photos, username }: { photos: Photo[]; username: 
     <>
       <div className="relative w-full aspect-[3/4] overflow-hidden">
 
-        {/* ── Swipeable strip ── */}
+        {/* ── Swipeable strip with parallax ── */}
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="flex h-full w-full snap-x snap-mandatory overflow-x-auto"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          className="flex h-full w-full snap-x snap-mandatory overflow-x-auto scrollbar-hide"
         >
           {photos.map((photo, i) => (
             <div
               key={photo.id}
-              className="relative h-full w-full flex-shrink-0 snap-center cursor-zoom-in"
+              className="relative h-full w-full flex-shrink-0 snap-center cursor-zoom-in overflow-hidden"
               onClick={() => { setCurrent(i); setLightboxOpen(true); }}
             >
               <Image
                 src={photo.url}
                 alt={`${username} photo ${i + 1}`}
                 fill
-                className="object-cover"
+                className="object-cover transition-transform duration-100 will-change-transform"
+                style={{
+                  transform: `translateY(${pageScrollY * 0.15}px) scale(${1 + pageScrollY * 0.0003})`,
+                }}
                 sizes="100vw"
                 priority={i === 0}
               />
@@ -74,16 +90,19 @@ export function HeroCarousel({ photos, username }: { photos: Photo[]; username: 
           </div>
         )}
 
-        {/* Dot indicators */}
+        {/* Dot indicators with animated transitions */}
         {photos.length > 1 && photos.length <= 12 && (
           <div className="pointer-events-none absolute bottom-8 left-0 right-0 flex justify-center gap-1.5">
             {photos.map((_, i) => (
-              <div
+              <motion.div
                 key={i}
-                className={cn(
-                  "rounded-full bg-white transition-all duration-300",
-                  i === current ? "h-1.5 w-5 opacity-100" : "h-1.5 w-1.5 opacity-35"
-                )}
+                className="rounded-full bg-white"
+                animate={{
+                  width: i === current ? 20 : 6,
+                  opacity: i === current ? 1 : 0.35,
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                style={{ height: 6 }}
               />
             ))}
           </div>

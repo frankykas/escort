@@ -205,7 +205,7 @@ function BottomNavInner() {
       </AnimatePresence>
 
       {/* Nav bar */}
-      <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-zinc-800/80 bg-black/95 backdrop-blur-md">
+      <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-white/5 bg-black/60 backdrop-blur-xl backdrop-saturate-150">
         <div className="mx-auto flex max-w-lg items-center justify-around px-1 pb-[env(safe-area-inset-bottom,0px)]">
           {tabs.map((tab) => {
             const Icon = tab.icon;

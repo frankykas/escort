@@ -12,15 +12,23 @@ function FeedSkeleton() {
   return (
     <div className="flex flex-col gap-0">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="border-b border-zinc-800 animate-pulse">
+        <div key={i} className="border-b border-zinc-800">
           <div className="flex items-center gap-2.5 px-3 py-3">
-            <div className="h-8 w-8 rounded-full bg-zinc-800" />
-            <div className="h-3 w-24 rounded-full bg-zinc-800" />
+            <div className="h-9 w-9 rounded-full bg-zinc-800 shimmer" />
+            <div className="flex-1 space-y-1.5">
+              <div className="h-3 w-24 rounded-full bg-zinc-800 shimmer" />
+              <div className="h-2 w-16 rounded-full bg-zinc-800/60 shimmer" />
+            </div>
           </div>
-          <div className="aspect-square w-full bg-zinc-800" />
-          <div className="px-3 py-3 space-y-2">
-            <div className="h-3 w-16 rounded-full bg-zinc-800" />
-            <div className="h-3 w-48 rounded-full bg-zinc-800" />
+          <div className="aspect-[4/5] w-full bg-zinc-800 shimmer" />
+          <div className="flex gap-3 px-3 py-3">
+            <div className="h-6 w-6 rounded-full bg-zinc-800 shimmer" />
+            <div className="h-6 w-6 rounded-full bg-zinc-800 shimmer" />
+            <div className="h-6 w-6 rounded-full bg-zinc-800 shimmer" />
+          </div>
+          <div className="px-3 pb-3 space-y-2">
+            <div className="h-3 w-3/4 rounded-full bg-zinc-800 shimmer" />
+            <div className="h-3 w-1/2 rounded-full bg-zinc-800 shimmer" />
           </div>
         </div>
       ))}
