@@ -5,8 +5,10 @@ import { CheckCircle } from "lucide-react";
 import { createServerClient } from "@/lib/supabase/server";
 import { BackButton } from "@/components/ui/BackButton";
 import { ReportButton } from "@/components/ui/ReportButton";
+import { getServerT } from "@/lib/i18n";
 import { PostActions } from "./PostActions";
 import { CommentSection } from "./CommentSection";
+import { PostMenu } from "./PostMenu";
 import type { CommentRow } from "@/hooks/useComment";
 
 type PostProfile = {
@@ -27,21 +29,22 @@ type PostData = {
   profiles: PostProfile;
 };
 
-function formatTimestamp(isoString: string): string {
+function formatTimestamp(isoString: string, t: (k: import("@/lib/i18n/en").TranslationKey) => string): string {
   const diff = Date.now() - new Date(isoString).getTime();
   const minutes = Math.floor(diff / 60_000);
-  if (minutes < 1) return "Just now";
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return t("time_just_now");
+  if (minutes < 60) return `${minutes}${t("time_m_ago")}`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours}${t("time_h_ago")}`;
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return `${days}${t("time_d_ago")}`;
 }
 
 type Props = { params: Promise<{ id: string }> };
 
 export default async function PostPage({ params }: Props) {
   const { id } = await params;
+  const t = await getServerT();
   const supabase = createServerClient();
 
   if (!supabase) {
@@ -94,14 +97,16 @@ export default async function PostPage({ params }: Props) {
 
   const { username, avatar_url, verification_status, id: profileId } = post.profiles;
   const isVerified = verification_status === "verified";
-
   return (
     <main className="min-h-screen bg-black">
       <div className="mx-auto max-w-lg">
         {/* ── Header ── */}
-        <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-zinc-800 bg-black/80 px-4 py-3 backdrop-blur-md">
-          <BackButton />
-          <span className="text-sm font-semibold text-white">Post</span>
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-800 bg-black/80 px-4 py-3 backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            <BackButton />
+            <span className="text-sm font-semibold text-white">{t("post_label")}</span>
+          </div>
+          <PostMenu postId={post.id} ownerId={profileId} />
         </header>
 
         {/* ── Post author row ── */}
@@ -166,7 +171,7 @@ export default async function PostPage({ params }: Props) {
 
         {/* ── Timestamp ── */}
         <div className="flex items-center justify-between px-3 pb-3">
-          <p className="text-[11px] text-zinc-600">{formatTimestamp(post.created_at)}</p>
+          <p className="text-[11px] text-zinc-600">{formatTimestamp(post.created_at, t)}</p>
           <ReportButton targetType="post" targetId={post.id} />
         </div>
 

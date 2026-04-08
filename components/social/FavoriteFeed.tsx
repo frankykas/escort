@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Heart } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import { FeedList } from "./FeedList";
 import type { FeedPostData } from "./SocialHome";
 
@@ -12,15 +13,23 @@ function FeedSkeleton() {
   return (
     <div className="flex flex-col gap-0">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="border-b border-zinc-800 animate-pulse">
+        <div key={i} className="border-b border-zinc-800">
           <div className="flex items-center gap-2.5 px-3 py-3">
-            <div className="h-8 w-8 rounded-full bg-zinc-800" />
-            <div className="h-3 w-24 rounded-full bg-zinc-800" />
+            <div className="h-9 w-9 rounded-full bg-zinc-800 shimmer" />
+            <div className="flex-1 space-y-1.5">
+              <div className="h-3 w-24 rounded-full bg-zinc-800 shimmer" />
+              <div className="h-2 w-16 rounded-full bg-zinc-800/60 shimmer" />
+            </div>
           </div>
-          <div className="aspect-square w-full bg-zinc-800" />
-          <div className="px-3 py-3 space-y-2">
-            <div className="h-3 w-16 rounded-full bg-zinc-800" />
-            <div className="h-3 w-48 rounded-full bg-zinc-800" />
+          <div className="aspect-[4/5] w-full bg-zinc-800 shimmer" />
+          <div className="flex gap-3 px-3 py-3">
+            <div className="h-6 w-6 rounded-full bg-zinc-800 shimmer" />
+            <div className="h-6 w-6 rounded-full bg-zinc-800 shimmer" />
+            <div className="h-6 w-6 rounded-full bg-zinc-800 shimmer" />
+          </div>
+          <div className="px-3 pb-3 space-y-2">
+            <div className="h-3 w-3/4 rounded-full bg-zinc-800 shimmer" />
+            <div className="h-3 w-1/2 rounded-full bg-zinc-800 shimmer" />
           </div>
         </div>
       ))}
@@ -29,6 +38,7 @@ function FeedSkeleton() {
 }
 
 function EmptyFavorites({ hasFollows }: { hasFollows: boolean }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center">
       <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-zinc-900">
@@ -36,28 +46,28 @@ function EmptyFavorites({ hasFollows }: { hasFollows: boolean }) {
       </div>
       {hasFollows ? (
         <>
-          <h3 className="text-base font-semibold text-white">No recent posts</h3>
+          <h3 className="text-base font-semibold text-white">{t("home_no_recent")}</h3>
           <p className="mt-2 text-sm text-zinc-500 leading-relaxed">
-            The profiles you follow haven't posted in the last 24 hours. Check back soon.
+            {t("home_no_recent_body")}
           </p>
           <Link
             href="/"
             className="mt-6 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
           >
-            Browse all posts
+            {t("home_browse_all")}
           </Link>
         </>
       ) : (
         <>
-          <h3 className="text-base font-semibold text-white">No favorites yet</h3>
+          <h3 className="text-base font-semibold text-white">{t("home_no_favorites")}</h3>
           <p className="mt-2 text-sm text-zinc-500 leading-relaxed">
-            Follow profiles you love and their posts will appear here.
+            {t("home_no_fav_body")}
           </p>
           <Link
             href="/"
             className="mt-6 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
           >
-            Discover profiles
+            {t("home_discover")}
           </Link>
         </>
       )}
@@ -66,26 +76,27 @@ function EmptyFavorites({ hasFollows }: { hasFollows: boolean }) {
 }
 
 function SignInPrompt() {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center">
       <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-zinc-900">
         <Heart size={28} className="text-zinc-600" />
       </div>
-      <h3 className="text-base font-semibold text-white">Your Favorites</h3>
+      <h3 className="text-base font-semibold text-white">{t("home_your_favorites")}</h3>
       <p className="mt-2 text-sm text-zinc-500 leading-relaxed">
-        Sign in to see posts from profiles you follow.
+        {t("home_sign_in_fav")}
       </p>
       <Link
         href="/auth/signin"
         className="mt-6 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
       >
-        Sign In
+        {t("sign_in")}
       </Link>
       <Link
         href="/auth/signup"
         className="mt-3 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
       >
-        Create account
+        {t("home_create_account")}
       </Link>
     </div>
   );
@@ -125,7 +136,7 @@ export function FavoriteFeed() {
            profiles!status_updates_provider_id_fkey(id, username, avatar_url, verification_status)`
         )
         .in("provider_id", followedIds)
-        .gt("expires_at", new Date().toISOString())
+        .eq("post_type", "post")
         .order("created_at", { ascending: false })
         .limit(20);
 

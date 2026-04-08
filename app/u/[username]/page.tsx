@@ -8,8 +8,18 @@ import { ProfileActions } from "./ProfileActions";
 import { ProfileTabs } from "./ProfileTabs";
 import { HeroCarousel } from "./HeroCarousel";
 import { EnquireBar } from "./EnquireBar";
+import { SimilarProfiles } from "./SimilarProfiles";
+import { EditProfileLink } from "./EditProfileLink";
+import {
+  TrustSignals,
+  SocialProofStrip,
+  AvailabilitySpotlight,
+  ShareStrip,
+} from "./ProfileSections";
+import { ProfileCategoryStrip } from "./ProfileCategoryStrip";
 import { USE_BOOKINGS } from "@/lib/features";
 import { cn, formatLastSeen } from "@/lib/utils";
+import { getServerT } from "@/lib/i18n";
 import type { ProfileAttributes } from "./ProfileTabs";
 
 function formatCount(n: number): string {
@@ -27,6 +37,7 @@ type Props = { params: Promise<{ username: string }> };
 
 export default async function ProfilePage({ params }: Props) {
   const { username } = await params;
+  const t = await getServerT();
   const supabase = createServerClient();
 
   if (!supabase) {
@@ -46,7 +57,9 @@ export default async function ProfilePage({ params }: Props) {
        height_cm, build, hair_color, eye_color, nationality, languages,
        completed_bookings_count,
        service_categories, hourly_rate,
-       contact_whatsapp, contact_telegram, contact_phone`
+       contact_whatsapp, contact_telegram, contact_phone,
+       gender, pronouns, caters_to, availability_schedule, tagline,
+       created_at, last_seen_at`
     )
     .eq("username", username)
     .single();
@@ -60,6 +73,7 @@ export default async function ProfilePage({ params }: Props) {
         .from("status_updates")
         .select("id, media_url, likes_count, comments_count")
         .eq("provider_id", profile.id)
+        .eq("post_type", "post")
         .order("created_at", { ascending: false }),
       supabase
         .from("listings")
@@ -153,12 +167,16 @@ export default async function ProfilePage({ params }: Props) {
     age: profile.age as number | null,
     service_categories: (profile.service_categories as string[]) ?? [],
     hourly_rate: profile.hourly_rate as number | null,
+    gender: profile.gender as string | null,
+    pronouns: profile.pronouns as string | null,
+    caters_to: (profile.caters_to as string[]) ?? [],
+    availability_schedule: profile.availability_schedule as Record<string, string> | null,
   };
 
   const lastSeenStr = formatLastSeen((profile as Record<string, unknown>).last_seen_at as string | null ?? null);
 
   return (
-    <main className="min-h-screen bg-zinc-950 pb-44">
+    <main className={cn("min-h-screen bg-zinc-950", !isOwnProfile && profile.is_provider ? "pb-44" : "pb-24")}>
       {/* ── Sticky header ── */}
       <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/5 bg-zinc-950/70 px-4 py-3 backdrop-blur-xl backdrop-saturate-150">
         <BackButton />
@@ -166,13 +184,16 @@ export default async function ProfilePage({ params }: Props) {
         {isVerified && (
           <CheckCircle size={13} className="fill-amber-400/20 text-amber-400" />
         )}
+        <div className="ml-auto">
+          <EditProfileLink profileId={profile.id as string} />
+        </div>
       </header>
 
       {/* ── Hero photo carousel ── */}
       <HeroCarousel photos={photos} username={profile.username as string} />
 
       {/* ── Profile info ── */}
-      <div className="-mt-20 px-4 pb-0">
+      <div className="relative z-10 -mt-20 px-4 pb-0">
         {/* Avatar */}
         <div className="inline-block rounded-full bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 p-[3px] shadow-[0_0_20px_rgba(251,191,36,0.2)]">
           <div className="rounded-full bg-zinc-950 p-[2px]">
@@ -208,6 +229,13 @@ export default async function ProfilePage({ params }: Props) {
             </span>
           )}
         </div>
+
+        {/* Tagline */}
+        {profile.tagline && (
+          <p className="mt-1 text-[13px] italic text-zinc-400">
+            {profile.tagline as string}
+          </p>
+        )}
 
         {/* City + age + Last Seen */}
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-zinc-500">
@@ -252,15 +280,15 @@ export default async function ProfilePage({ params }: Props) {
 
         {/* Stats */}
         <div className="mt-4 flex items-center gap-6">
-          <StatItem value={formatCount(posts.length)} label="Posts" />
+          <StatItem value={formatCount(posts.length)} label={t("pub_posts")} />
           <div className="h-8 w-px bg-white/5" />
-          <StatItem value={formatCount(followersCount)} label="Followers" />
+          <StatItem value={formatCount(followersCount)} label={t("pub_followers")} />
           <div className="h-8 w-px bg-white/5" />
-          <StatItem value={formatCount(followingCount)} label="Following" />
+          <StatItem value={formatCount(followingCount)} label={t("profile_following")} />
           {listings.length > 0 && (
             <>
               <div className="h-8 w-px bg-white/5" />
-              <StatItem value={formatCount(listings.length)} label="Listings" />
+              <StatItem value={formatCount(listings.length)} label={t("pub_listings")} />
             </>
           )}
         </div>
@@ -292,12 +320,53 @@ export default async function ProfilePage({ params }: Props) {
         isProvider={profile.is_provider as boolean}
       />
 
-      {/* ── Sticky enquire bar (providers only) ── */}
-      {(profile.is_provider as boolean) && (
+      {/* ── Profile sections (other providers only) ── */}
+      {!isOwnProfile && (profile.is_provider as boolean) && (
+        <>
+          {/* Availability spotlight — today's hours */}
+          <AvailabilitySpotlight
+            schedule={profile.availability_schedule as Record<string, string> | null}
+            availableUntil={profile.available_until as string | null}
+          />
+
+          {/* Trust & Safety signals */}
+          <TrustSignals
+            isVerified={(profile.verification_status as string) === "verified"}
+            memberSince={profile.created_at as string | null}
+            lastSeenAt={(profile as Record<string, unknown>).last_seen_at as string | null}
+          />
+
+          {/* Social proof strip */}
+          <SocialProofStrip
+            followersCount={followersCount}
+            postsCount={posts.length}
+            memberSince={profile.created_at as string | null}
+            lastSeenAt={(profile as Record<string, unknown>).last_seen_at as string | null}
+          />
+
+          {/* Similar profiles */}
+          <SimilarProfiles
+            profileId={profile.id as string}
+            city={profile.city as string | null}
+            serviceCategories={(profile.service_categories as string[]) ?? []}
+          />
+
+          {/* Share strip */}
+          <ShareStrip username={profile.username as string} />
+
+          {/* Browse by category */}
+          <ProfileCategoryStrip
+            serviceCategories={(profile.service_categories as string[]) ?? []}
+          />
+        </>
+      )}
+
+      {/* ── Sticky enquire bar (other providers only — never on own profile) ── */}
+      {!isOwnProfile && (profile.is_provider as boolean) && (
         <EnquireBar
           username={profile.username as string}
           providerId={profile.id as string}
-          isOwnProfile={isOwnProfile}
+          isOwnProfile={false}
           contactWhatsapp={(profile as Record<string, unknown>).contact_whatsapp as string | null}
           contactTelegram={(profile as Record<string, unknown>).contact_telegram as string | null}
           contactPhone={(profile as Record<string, unknown>).contact_phone as string | null}

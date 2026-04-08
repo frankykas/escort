@@ -4,10 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle, Heart, MessageCircle } from "lucide-react";
+import { X, CheckCircle, Heart, MessageCircle, Trash2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { markStoryViewed } from "@/lib/stories";
+import { supabase } from "@/lib/supabase/client";
 
 type StoryItem = {
   id: string;
@@ -115,8 +116,36 @@ export function StoriesViewer({ stories, initialIndex, onClose }: Props) {
 
   if (!currentGroup || !currentStory) return null;
 
-  const { username, avatar_url, verification_status } = currentGroup;
+  const { username, avatar_url, verification_status, provider_id } = currentGroup;
   const isVerified = verification_status === "verified";
+  const isOwnStory = user?.id === provider_id;
+  const [deletingStory, setDeletingStory] = useState(false);
+
+  async function handleDeleteStory() {
+    if (!currentStory || deletingStory) return;
+    setDeletingStory(true);
+    const { error } = await supabase
+      .from("status_updates")
+      .delete()
+      .eq("id", currentStory.id);
+
+    if (!error) {
+      // Remove from local state and advance
+      currentGroup.stories.splice(currentStoryIndex, 1);
+      if (currentGroup.stories.length === 0) {
+        // No more stories in this group
+        if (currentIndex < stories.length - 1) {
+          setCurrentIndex((i) => i + 1);
+          setCurrentStoryIndex(0);
+        } else {
+          onClose();
+        }
+      } else if (currentStoryIndex >= currentGroup.stories.length) {
+        setCurrentStoryIndex(currentGroup.stories.length - 1);
+      }
+    }
+    setDeletingStory(false);
+  }
 
   const slideVariants = {
     enter: (d: number) => ({
@@ -218,13 +247,25 @@ export function StoriesViewer({ stories, initialIndex, onClose }: Props) {
             </div>
           </Link>
 
-          <button
-            onClick={onClose}
-            aria-label="Close story"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
-          >
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-2">
+            {isOwnStory && (
+              <button
+                onClick={handleDeleteStory}
+                disabled={deletingStory}
+                aria-label="Delete story"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-red-400 backdrop-blur-sm transition-colors hover:bg-red-500/20 disabled:opacity-50"
+              >
+                {deletingStory ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              aria-label="Close story"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* ── Story image (slides in/out) ── */}

@@ -398,4 +398,113 @@ export const fr: Record<TranslationKey, string> = {
   bookings_completed:   "Complétée",
   bookings_cancelled:   "Annulée",
   bookings_all:         "Toutes",
+
+  // ── Bottom nav / create menu ──────────────────────────────────────────────
+  nav_my_page:          "Ma Page",
+  create_story:         "Story",
+  create_story_desc:    "Disparaît après 24h",
+  create_post:          "Publication",
+  create_post_desc:     "Partager sur votre fil",
+  create_listing:       "Annonce",
+  create_listing_desc:  "Ajouter un service",
+
+  // ── Stories bar ───────────────────────────────────────────────────────────
+  stories_add:          "Ajouter Story",
+  stories_your:         "Votre story",
+  stories_new:          "Nouveau",
+
+  // ── Provider performance / nudge ──────────────────────────────────────────
+  perf_title:           "Vos performances",
+  perf_views:           "Vues",
+  perf_followers:       "Abonnés",
+  perf_posts:           "Publications",
+  nudge_no_posts_title: "Créez votre première publication",
+  nudge_no_posts_desc:  "Les publications aident les clients à vous découvrir. Partagez une photo pour commencer.",
+  nudge_no_posts_cta:   "Créer une publication",
+  nudge_stale_title:    "Vous n'avez pas publié récemment",
+  nudge_stale_desc:     "Les prestataires qui publient régulièrement obtiennent 3x plus de vues.",
+  nudge_stale_cta:      "Publier maintenant",
+  nudge_story_title:    "Votre story a expiré",
+  nudge_story_desc:     "Gardez votre profil actif avec une nouvelle story — elles disparaissent après 24h.",
+  nudge_story_cta:      "Ajouter une story",
+  feed_trending:        "Tendances près de chez vous",
+  feed_title:           "Fil",
+
+  // ── Category browsing ─────────────────────────────────────────────────────
+  cat_browse:           "Parcourir par catégorie",
+  cat_view_all:         "Voir tout",
+  cat_show_all:         "Afficher les",
+  cat_categories:       "catégories",
+  cat_browse_cta:       "Parcourir",
+
+  // ── Profile page extra rows ───────────────────────────────────────────────
+  profile_comment_mod:  "Modération des commentaires",
+  profile_saved:        "Annonces sauvegardées",
+  profile_blocked:      "Utilisateurs bloqués",
+  profile_language:     "Langue",
+
+  // ── Time ago ──────────────────────────────────────────────────────────────
+  time_just_now:        "à l'instant",
+  time_m_ago:           "min",
+  time_h_ago:           "h",
+  time_d_ago:           "j",
+
+  // ── Post / feed interactions ──────────────────────────────────────────────
+  post_follow:          "Suivre",
+  post_following:       "Abonné(e)",
+  post_like:            "j'aime",
+  post_likes:           "j'aime",
+  post_comment:         "commentaire",
+  post_comments:        "commentaires",
+  post_share:           "partage",
+  post_shares:          "partages",
+  post_more:            "plus",
+  post_add_comment:     "Ajouter un commentaire…",
+  post_sign_in_comment: "Connectez-vous pour commenter…",
+  post_send_comment:    "Publier",
+  post_comment_sent:    "Commentaire envoyé — visible après approbation.",
+  post_comment_sent_long: "Commentaire envoyé — visible après approbation du créateur.",
+  post_no_comments:     "Aucun commentaire.",
+  post_no_posts_now:    "Aucune publication active pour le moment. Revenez bientôt.",
+  post_verified:        "Vérifié(e)",
+  post_delete:          "Supprimer la publication",
+  post_delete_confirm:  "Supprimer cette publication ?",
+  post_deleting:        "Suppression...",
+  post_link_copied:     "Lien copié dans le presse-papiers",
+  post_label:           "Publication",
+
+  // ── Home / social feed ─────────────────────────────────────────────────────
+  home_for_you:         "Pour vous",
+  home_favorites:       "Favoris",
+  home_no_recent:       "Aucune publication récente",
+  home_no_recent_body:  "Les profils que vous suivez n'ont rien publié ces dernières 24 heures. Revenez bientôt.",
+  home_browse_all:      "Voir toutes les publications",
+  home_no_favorites:    "Aucun favori",
+  home_no_fav_body:     "Suivez les profils que vous aimez et leurs publications apparaîtront ici.",
+  home_discover:        "Découvrir des profils",
+  home_your_favorites:  "Vos Favoris",
+  home_sign_in_fav:     "Connectez-vous pour voir les publications des profils que vous suivez.",
+  home_create_account:  "Créer un compte",
+
+  // ── Classic home ──────────────────────────────────────────────────────────
+  classic_browse:         "Parcourir",
+  classic_badge:          "En ligne — Découvrez des compagnes premium près de chez vous",
+  classic_heading_1:      "Rencontrez.",
+  classic_heading_2:      "Connectez.",
+  classic_subtitle:       "L'annuaire premium de compagnes. Parcourez des profils vérifiés, explorez les services et connectez-vous en toute confiance.",
+  classic_cta_browse:     "Parcourir les profils",
+  classic_cta_join:       "Devenir prestataire",
+  classic_trust_id:       "Prestataires vérifiés",
+  classic_trust_city:     "Votre ville et au-delà",
+  classic_trust_discreet: "Discret et sécurisé",
+
+  // ── Time ago (uppercase, for FeedPost) ────────────────────────────────────
+  time_just_now_up:     "À L'INSTANT",
+  time_minute:          "MINUTE",
+  time_minutes:         "MINUTES",
+  time_hour:            "HEURE",
+  time_hours:           "HEURES",
+  time_day:             "JOUR",
+  time_days:            "JOURS",
+  time_ago:             "IL Y A",
 };

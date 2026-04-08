@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Send } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 type Props = {
   userId: string | null;
@@ -12,6 +13,7 @@ type Props = {
 };
 
 export function CommentInput({ userId, onSubmit, submitting }: Props) {
+  const { t } = useTranslation();
   const [value, setValue] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -29,7 +31,7 @@ export function CommentInput({ userId, onSubmit, submitting }: Props) {
           href="/auth/signin"
           className="text-[13px] text-zinc-500 hover:text-zinc-300 transition-colors"
         >
-          Sign in to comment…
+          {t("post_sign_in_comment")}
         </Link>
       </div>
     );
@@ -46,7 +48,7 @@ export function CommentInput({ userId, onSubmit, submitting }: Props) {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         maxLength={500}
-        placeholder="Add a comment…"
+        placeholder={t("post_add_comment")}
         className="flex-1 bg-transparent text-[13px] text-zinc-100 placeholder-zinc-600 outline-none"
       />
       <button

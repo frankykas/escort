@@ -13,6 +13,7 @@ import {
   CreditCard,
   Settings,
   ChevronRight,
+  ChevronDown,
   CheckCircle,
   Shield,
   Eye,
@@ -20,17 +21,21 @@ import {
   Lock,
   ListOrdered,
   User,
+  Users,
   Zap,
   Pencil,
   ImagePlus,
   CalendarCheck,
   ShieldBan,
+  Globe,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { USE_BOOKINGS } from "@/lib/features";
+import { ScrollReveal } from "@/components/ui/AmbientEffects";
 
 type ProfileData = {
   id: string;
@@ -64,7 +69,7 @@ function ListCard({ children }: { children: React.ReactNode }) {
     <div className="mx-4 overflow-hidden rounded-2xl
     bg-gradient-to-b from-zinc-900 to-zinc-950
     border border-white/5
-    divide-y divide-white/5 shadow-md">
+    divide-y divide-white/5 shadow-md glow-card">
       {children}
     </div>
   );
@@ -111,10 +116,96 @@ function Skeleton() {
   );
 }
 
+function formatCompact(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return n.toString();
+}
+
+function ProviderPerformanceStrip({ userId }: { userId: string | null }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [perfStats, setPerfStats] = useState<{
+    profileViews: number;
+    followers: number;
+    posts: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    Promise.all([
+      supabase
+        .from("status_updates")
+        .select("views_count")
+        .eq("provider_id", userId)
+        .eq("post_type", "post"),
+      supabase
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("following_id", userId),
+    ]).then(([postsRes, followersRes]) => {
+      const posts = postsRes.data ?? [];
+      const totalViews = posts.reduce((s: number, p: { views_count: number }) => s + (p.views_count ?? 0), 0);
+      setPerfStats({
+        profileViews: totalViews,
+        followers: followersRes.count ?? 0,
+        posts: posts.length,
+      });
+    });
+  }, [userId]);
+
+  if (!perfStats) return null;
+
+  const items = [
+    { icon: Eye, label: t("perf_views"), value: formatCompact(perfStats.profileViews), color: "text-sky-400" },
+    { icon: Users, label: t("perf_followers"), value: formatCompact(perfStats.followers), color: "text-violet-400" },
+    { icon: TrendingUp, label: t("perf_posts"), value: formatCompact(perfStats.posts), color: "text-emerald-400" },
+  ];
+
+  return (
+    <div className="mx-4 mt-4 overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-md glow-card">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between px-4 py-3"
+      >
+        <div className="flex items-center gap-2">
+          <div className="h-1 w-1 rounded-full bg-[#FCBA03]" />
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
+            {t("perf_title")}
+          </span>
+        </div>
+        <ChevronDown
+          size={14}
+          className={cn("text-zinc-600 transition-transform duration-200", open && "rotate-180")}
+        />
+      </button>
+
+      {open && (
+        <div className="grid grid-cols-3 gap-2 px-4 pb-4">
+          {items.map((item) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={item.label}
+                className="flex flex-col items-center gap-1 rounded-xl border border-white/[0.04] bg-black/40 py-3"
+              >
+                <Icon size={14} className={item.color} />
+                <span className="text-[16px] font-bold text-white leading-none">{item.value}</span>
+                <span className="text-[9px] font-medium text-zinc-600">{item.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const { user, loading: sessionLoading } = useSession();
-  const { t } = useTranslation();
+  const { t, locale, setLocale } = useTranslation();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [stats, setStats] = useState<Stats>({ following: 0, liked: 0, subscriptions: 0 });
   const [loading, setLoading] = useState(true);
@@ -174,7 +265,7 @@ export default function ProfilePage() {
       border-b border-white/5
       bg-zinc-950/70 px-5 py-[14px]
       backdrop-blur-xl backdrop-saturate-150">
-        <span className="text-[17px] font-semibold text-white">Profile</span>
+        <span className="text-[17px] font-semibold text-white">{t("nav_profile")}</span>
         <Link href="/profile/settings" aria-label="Settings" className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-200">
           <Settings size={18} />
         </Link>
@@ -212,7 +303,7 @@ export default function ProfilePage() {
         <div className="flex items-center justify-around rounded-2xl
         bg-gradient-to-b from-zinc-900 to-zinc-950
         border border-white/5
-        px-4 py-4 shadow-lg">
+        px-4 py-4 shadow-lg glow-card">
           {[
             { value: stats.following, label: t("profile_following") },
             { value: stats.liked, label: t("profile_liked") },
@@ -234,7 +325,11 @@ export default function ProfilePage() {
       </div>
 
       {profile.is_provider && (
-        <>
+        <ProviderPerformanceStrip userId={profile.id} />
+      )}
+
+      {profile.is_provider && (
+        <ScrollReveal>
           <SectionLabel>{t("profile_section_provider")}</SectionLabel>
           <ListCard>
             <Row icon={ListOrdered}   label={t("profile_my_listings")}      href="/profile/listings"        iconClassName="text-amber-400" />
@@ -244,24 +339,27 @@ export default function ProfilePage() {
             <Row icon={User}          label={t("profile_my_page")}          href={`/u/${profile.username}`} iconClassName="text-violet-400" />
             <Row icon={Zap}           label={t("profile_availability")}     href="/profile/availability"    iconClassName="text-emerald-400" />
             <Row icon={Crown}         label={t("profile_subscription_tier")}href="/profile/subscription"    iconClassName="text-amber-400" />
-            <Row icon={MessageCircle} label="Comment Moderation"            href="/profile/comments"        iconClassName="text-emerald-400" />
+            <Row icon={MessageCircle} label={t("profile_comment_mod")}       href="/profile/comments"        iconClassName="text-emerald-400" />
             <Row icon={ImagePlus}     label={t("profile_upload_post")}      href="/profile/upload"          iconClassName="text-sky-400" />
           </ListCard>
-        </>
+        </ScrollReveal>
       )}
 
-      <SectionLabel>{t("profile_section_activity")}</SectionLabel>
-      <ListCard>
-        {USE_BOOKINGS && (
-          <Row icon={CalendarCheck} label={t("bookings_title")}     href="/bookings"             iconClassName="text-amber-400" />
-        )}
-        <Row icon={Bookmark}      label="Saved Listings"              href="/profile/liked"        iconClassName="text-rose-400" />
-        <Row icon={Crown}         label={t("profile_subscriptions")}href="/profile/subscriptions"iconClassName="text-amber-400" />
-        <Row icon={MessageCircle} label={t("profile_messages")}     href="/messages"             iconClassName="text-emerald-400" />
-      </ListCard>
+      <ScrollReveal delay={100}>
+        <SectionLabel>{t("profile_section_activity")}</SectionLabel>
+        <ListCard>
+          {USE_BOOKINGS && (
+            <Row icon={CalendarCheck} label={t("bookings_title")}     href="/bookings"             iconClassName="text-amber-400" />
+          )}
+          <Row icon={Bookmark}      label={t("profile_saved")}          href="/profile/liked"        iconClassName="text-rose-400" />
+          <Row icon={Crown}         label={t("profile_subscriptions")}href="/profile/subscriptions"iconClassName="text-amber-400" />
+          <Row icon={MessageCircle} label={t("profile_messages")}     href="/messages"             iconClassName="text-emerald-400" />
+        </ListCard>
+      </ScrollReveal>
 
-      <SectionLabel>{t("profile_section_account")}</SectionLabel>
-      <ListCard>
+      <ScrollReveal delay={200}>
+        <SectionLabel>{t("profile_section_account")}</SectionLabel>
+        <ListCard>
         <Row icon={Pencil}     label={t("profile_edit")}             href="/profile/edit"          iconClassName="text-amber-400" />
         <Row icon={Eye}        label={t("profile_privacy")}          href="/profile/privacy"       value={profile.is_private ? t("profile_private") : t("profile_public")} />
         {profile.is_provider && (
@@ -272,24 +370,39 @@ export default function ProfilePage() {
           <Row icon={CreditCard} label={t("profile_billing")}        href="/profile/billing" />
         )}
         {profile.is_provider && (
-          <Row icon={ShieldBan}  label="Blocked Users"                href="/profile/blocked" />
+          <Row icon={ShieldBan}  label={t("profile_blocked")}         href="/profile/blocked" />
         )}
         <Row icon={Settings}   label={t("profile_account_settings")} href="/profile/settings" />
-      </ListCard>
-
-      <div className="mx-4 mt-8 overflow-hidden rounded-2xl
-      bg-gradient-to-b from-zinc-900 to-zinc-950
-      border border-red-500/10">
+        {/* Language toggle */}
         <button
-          onClick={handleSignOut}
-          className="flex w-full items-center gap-3.5 px-4 py-[14px]
-          transition-all duration-150
-          hover:bg-red-500/10 active:scale-[0.98]"
+          onClick={() => setLocale(locale === "en" ? "fr" : "en")}
+          className="flex w-full items-center gap-3.5 px-4 py-[14px] transition-all duration-150 hover:bg-white/5 active:scale-[0.98]"
         >
-          <LogOut size={18} className="flex-shrink-0 text-red-500" />
-          <span className="text-[15px] font-medium text-red-500">{t("sign_out")}</span>
+          <Globe size={18} className="flex-shrink-0 text-zinc-500" />
+          <span className="flex-1 text-left text-[15px] text-zinc-100">{t("profile_language")}</span>
+          <span className="text-[13px] text-zinc-500 mr-0.5">
+            {locale === "en" ? "English" : "Fran\u00e7ais"}
+          </span>
+          <ChevronRight size={15} className="flex-shrink-0 text-zinc-600" />
         </button>
-      </div>
+        </ListCard>
+      </ScrollReveal>
+
+      <ScrollReveal delay={300}>
+        <div className="mx-4 mt-8 overflow-hidden rounded-2xl
+        bg-gradient-to-b from-zinc-900 to-zinc-950
+        border border-red-500/10">
+          <button
+            onClick={handleSignOut}
+            className="flex w-full items-center gap-3.5 px-4 py-[14px]
+            transition-all duration-150
+            hover:bg-red-500/10 active:scale-[0.98]"
+          >
+            <LogOut size={18} className="flex-shrink-0 text-red-500" />
+            <span className="text-[15px] font-medium text-red-500">{t("sign_out")}</span>
+          </button>
+        </div>
+      </ScrollReveal>
     </div>
   );
 }

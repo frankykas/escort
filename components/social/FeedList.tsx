@@ -1,17 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
 import { FeedPost } from "./FeedPost";
 import { StoriesBar } from "./StoriesBar";
+import { ScrollReveal } from "@/components/ui/AmbientEffects";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { FeedPostData } from "./SocialHome";
 
 type Props = { posts: FeedPostData[] };
 
 export function FeedList({ posts }: Props) {
   const { user } = useSession();
+  const { t } = useTranslation();
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
   const [followedProfileIds, setFollowedProfileIds] = useState<Set<string>>(new Set());
   const [engagementLoaded, setEngagementLoaded] = useState(false);
@@ -52,7 +55,7 @@ export function FeedList({ posts }: Props) {
   if (posts.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center px-4">
-        <p className="text-sm text-zinc-500">No active posts right now. Check back soon.</p>
+        <p className="text-sm text-zinc-500">{t("post_no_posts_now")}</p>
       </div>
     );
   }
@@ -63,11 +66,9 @@ export function FeedList({ posts }: Props) {
 
       <div className="flex flex-col pt-1">
         {posts.map((post, index) => (
-          <motion.div
+          <ScrollReveal
             key={`${post.post_id}-${engagementLoaded}`}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: index * 0.06, ease: "easeOut" }}
+            delay={Math.min(index * 60, 300)}
           >
             <FeedPost
               post={post}
@@ -75,7 +76,7 @@ export function FeedList({ posts }: Props) {
               isFollowing={engagementLoaded ? followedProfileIds.has(post.provider_id) : false}
               userId={user?.id ?? null}
             />
-          </motion.div>
+          </ScrollReveal>
         ))}
       </div>
     </div>

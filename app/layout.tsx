@@ -4,6 +4,9 @@ import "./globals.css";
 import { BottomNav } from "@/components/ui/BottomNav";
 import { LocaleSwitcher } from "@/components/ui/LocaleSwitcher";
 import { ProfileProvider } from "@/contexts/ProfileContext";
+import { AmbientAura, Vignette } from "@/components/ui/AmbientEffects";
+import { OnboardingTour } from "@/components/ui/OnboardingTour";
+import { PushPermissionPrompt } from "@/components/ui/PushPermissionPrompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,8 +36,13 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-50 pb-[60px]">
         <ProfileProvider>
+          <AmbientAura />
+          <Vignette />
+          <div className="film-grain" aria-hidden="true" />
           {children}
           <BottomNav />
+          <OnboardingTour />
+          <PushPermissionPrompt />
           <LocaleSwitcher />
         </ProfileProvider>
       </body>

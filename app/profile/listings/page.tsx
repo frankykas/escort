@@ -7,7 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Plus, Pencil, Trash2, Clock, X, Check,
   ListOrdered, ExternalLink, Coins, ShoppingBag,
-  Timer, RefreshCw, Loader2,
+  Timer, RefreshCw, Loader2, Megaphone, Sparkles,
+  Zap, Eye, Users, Rss,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
@@ -111,9 +112,14 @@ export default function ListingsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [formError, setFormError]       = useState<string | null>(null);
   const [creditBalance, setCreditBalance] = useState<number>(0);
+  const [creditConfirm, setCreditConfirm] = useState<{ action: "create" | "relist"; listingId?: string } | null>(null);
+  const [bumpDrawer, setBumpDrawer] = useState<{ listingId: string; listingTitle: string } | null>(null);
+  const [bumpingTier, setBumpingTier] = useState<number | null>(null);
+  const [activeBumps, setActiveBumps] = useState<Record<string, { tier: number; expires_at: string }>>({});
+  const isFirstListing = listings.length === 0;
 
   const fetchListings = useCallback(async (userId: string) => {
-    const [listingsResult, balanceResult] = await Promise.all([
+    const [listingsResult, balanceResult, bumpsResult] = await Promise.all([
       supabase
         .from("listings")
         .select("id, title, description, duration_minutes, rate, is_active, sort_order, service_type, perks, expires_at")
@@ -124,9 +130,23 @@ export default function ListingsPage() {
         .select("post_credits_balance")
         .eq("id", userId)
         .single(),
+      supabase
+        .from("listing_bumps")
+        .select("listing_id, tier, expires_at")
+        .eq("provider_id", userId)
+        .eq("is_active", true)
+        .gt("expires_at", new Date().toISOString()),
     ]);
     setListings((listingsResult.data as Listing[]) ?? []);
     setCreditBalance(balanceResult.data?.post_credits_balance ?? 0);
+
+    // Build active bumps map
+    const bumps: Record<string, { tier: number; expires_at: string }> = {};
+    for (const b of (bumpsResult.data ?? []) as { listing_id: string; tier: number; expires_at: string }[]) {
+      bumps[b.listing_id] = { tier: b.tier, expires_at: b.expires_at };
+    }
+    setActiveBumps(bumps);
+
     setLoading(false);
   }, []);
 
@@ -163,12 +183,29 @@ export default function ListingsPage() {
     setDrawerOpen(false); setEditingId(null); setFormData(EMPTY_FORM); setFormError(null);
   }
 
-  async function handleSave() {
+  function handleSave() {
     if (!user) return;
     const title = formData.title.trim();
     const rate  = parseInt(formData.rate_pounds, 10);
     if (title.length < 2) { setFormError("Title must be at least 2 characters."); return; }
     if (!formData.rate_pounds || isNaN(rate) || rate <= 0) { setFormError("Please enter a valid rate."); return; }
+
+    if (editingId) {
+      // Editing — no credit cost, save directly
+      doSave();
+    } else if (isFirstListing) {
+      // First listing is free — save directly, no credit confirm
+      doSave();
+    } else {
+      // Creating additional listing — ask for credit confirmation
+      setCreditConfirm({ action: "create" });
+    }
+  }
+
+  async function doSave() {
+    if (!user) return;
+    const title = formData.title.trim();
+    const rate  = parseInt(formData.rate_pounds, 10);
 
     setSaving(true); setFormError(null);
 
@@ -178,7 +215,6 @@ export default function ListingsPage() {
       .filter(Boolean);
 
     if (editingId) {
-      // Editing — direct update (no credit cost)
       const payload = {
         title,
         description:      formData.description.trim() || null,
@@ -190,7 +226,6 @@ export default function ListingsPage() {
       const { error } = await supabase.from("listings").update(payload).eq("id", editingId);
       if (error) { setFormError(error.message); setSaving(false); return; }
     } else {
-      // Creating — costs 1 credit, goes through API
       const res = await fetch("/api/listings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -229,8 +264,13 @@ export default function ListingsPage() {
     setListings((prev) => prev.map((l) => l.id === listing.id ? { ...l, is_active: !l.is_active } : l));
   }
 
-  async function handleRelist(listingId: string) {
+  function handleRelist(listingId: string) {
     if (!user || creditBalance < 1) return;
+    setCreditConfirm({ action: "relist", listingId });
+  }
+
+  async function doRelist(listingId: string) {
+    if (!user) return;
     const res = await fetch("/api/listings/relist", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -241,6 +281,34 @@ export default function ListingsPage() {
       setFormError(json.error ?? "Failed to relist");
       return;
     }
+    await fetchListings(user.id);
+  }
+
+  function onCreditConfirm() {
+    if (!creditConfirm) return;
+    setCreditConfirm(null);
+    if (creditConfirm.action === "create") {
+      doSave();
+    } else if (creditConfirm.action === "relist" && creditConfirm.listingId) {
+      doRelist(creditConfirm.listingId);
+    }
+  }
+
+  async function doBump(listingId: string, tier: number) {
+    if (!user) return;
+    setBumpingTier(tier);
+    const res = await fetch("/api/listings/bump", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ providerId: user.id, listingId, tier }),
+    });
+    const json = await res.json();
+    setBumpingTier(null);
+    if (!res.ok) {
+      setFormError(json.error ?? "Failed to bump listing");
+      return;
+    }
+    setBumpDrawer(null);
     await fetchListings(user.id);
   }
 
@@ -263,10 +331,10 @@ export default function ListingsPage() {
         <span className="text-[15px] font-semibold text-white">My Listings</span>
         <button
           onClick={openAdd}
-          disabled={!hasCredits}
+          disabled={!hasCredits && !isFirstListing}
           className={cn(
             "flex h-8 w-8 items-center justify-center rounded-full transition-all active:scale-95",
-            hasCredits
+            hasCredits || isFirstListing
               ? "bg-amber-400 text-zinc-950 shadow-[0_0_15px_rgba(251,191,36,0.3)] hover:bg-amber-300"
               : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
           )}
@@ -283,12 +351,14 @@ export default function ListingsPage() {
           : "border-red-500/20 bg-red-500/5"
       )}>
         <div className="flex items-center gap-2.5">
-          <Coins size={16} className={hasCredits ? "text-amber-400" : "text-red-400"} />
+          <Coins size={16} className={hasCredits || isFirstListing ? "text-amber-400" : "text-red-400"} />
           <div>
             <span className="text-[13px] font-medium text-zinc-300">
               {creditBalance} credit{creditBalance !== 1 ? "s" : ""}
             </span>
-            <p className="text-[11px] text-zinc-500">1 credit = 1 listing (24h)</p>
+            <p className="text-[11px] text-zinc-500">
+              {isFirstListing ? "Your first listing is free!" : "1 credit = 1 listing (24h)"}
+            </p>
           </div>
         </div>
         <Link
@@ -330,26 +400,16 @@ export default function ListingsPage() {
           <div>
             <p className="text-[16px] font-semibold text-zinc-200">No listings yet</p>
             <p className="mt-1 text-[13px] leading-relaxed text-zinc-500">
-              Add your first service listing to start attracting clients.
-              Each listing costs 1 credit and stays live for 24 hours.
+              Your first listing is <span className="font-semibold text-amber-400">completely free</span>!
+              Additional listings cost 1 credit each and stay live for 24 hours.
             </p>
           </div>
-          {hasCredits ? (
-            <button
-              onClick={openAdd}
-              className="mt-2 rounded-full bg-amber-400 px-6 py-2.5 text-[13px] font-semibold text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.25)] transition-all hover:bg-amber-300 active:scale-[0.98]"
-            >
-              Add your first listing
-            </button>
-          ) : (
-            <Link
-              href="/profile/packages"
-              className="mt-2 flex items-center gap-2 rounded-full bg-amber-400 px-6 py-2.5 text-[13px] font-semibold text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.25)] transition-all hover:bg-amber-300"
-            >
-              <ShoppingBag size={14} />
-              Buy credits to get started
-            </Link>
-          )}
+          <button
+            onClick={openAdd}
+            className="mt-2 rounded-full bg-amber-400 px-6 py-2.5 text-[13px] font-semibold text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.25)] transition-all hover:bg-amber-300 active:scale-[0.98]"
+          >
+            Create your free listing
+          </button>
         </div>
       ) : (
         <div className="space-y-2.5 px-4 pt-4">
@@ -361,20 +421,22 @@ export default function ListingsPage() {
               onToggle={() => handleToggleActive(listing)}
               onDelete={() => setDeleteConfirm(listing.id)}
               onRelist={() => handleRelist(listing.id)}
+              onBump={() => setBumpDrawer({ listingId: listing.id, listingTitle: listing.title })}
               hasCredits={hasCredits}
+              activeBump={activeBumps[listing.id] ?? null}
               deleteConfirmOpen={deleteConfirm === listing.id}
               onDeleteConfirm={() => handleDelete(listing.id)}
               onDeleteCancel={() => setDeleteConfirm(null)}
             />
           ))}
 
-          {hasCredits && (
+          {(hasCredits || isFirstListing) && (
             <button
               onClick={openAdd}
               className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/10 py-4 text-[13px] font-medium text-zinc-500 transition-all hover:border-amber-400/30 hover:text-amber-400"
             >
               <Plus size={15} />
-              Add another listing (1 credit)
+              Add another listing {isFirstListing ? "(free)" : "(1 credit)"}
             </button>
           )}
         </div>
@@ -385,6 +447,7 @@ export default function ListingsPage() {
         {drawerOpen && (
           <ListingDrawer
             isEdit={!!editingId}
+            isFirstListing={isFirstListing}
             formData={formData}
             onChange={setFormData}
             onSave={handleSave}
@@ -394,22 +457,239 @@ export default function ListingsPage() {
           />
         )}
       </AnimatePresence>
+
+      {/* ── Credit confirmation popup ── */}
+      <AnimatePresence>
+        {creditConfirm && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
+              onClick={() => setCreditConfirm(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-x-4 top-1/2 z-[61] -translate-y-1/2 rounded-3xl border border-white/10 bg-zinc-900 p-6 shadow-2xl sm:inset-x-auto sm:left-1/2 sm:w-[340px] sm:-translate-x-1/2"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-400/10">
+                  <Coins size={22} className="text-amber-400" />
+                </div>
+                <h3 className="text-[16px] font-semibold text-white">
+                  {creditConfirm.action === "create" ? "Create Listing" : "Relist"}
+                </h3>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-400">
+                  This will use <span className="font-semibold text-amber-400">1 credit</span> from your balance.
+                  You currently have <span className="font-semibold text-white">{creditBalance} credit{creditBalance !== 1 ? "s" : ""}</span>.
+                </p>
+                <div className="mt-5 flex w-full gap-3">
+                  <button
+                    onClick={() => setCreditConfirm(null)}
+                    className="flex-1 rounded-xl border border-white/10 py-2.5 text-[13px] font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={onCreditConfirm}
+                    className="flex-1 rounded-xl bg-amber-400 py-2.5 text-[13px] font-bold text-zinc-950 transition hover:bg-amber-300"
+                  >
+                    Spend 1 Credit
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Bump tier selection drawer ── */}
+      <AnimatePresence>
+        {bumpDrawer && (
+          <BumpDrawer
+            listingTitle={bumpDrawer.listingTitle}
+            creditBalance={creditBalance}
+            bumpingTier={bumpingTier}
+            onSelect={(tier) => doBump(bumpDrawer.listingId, tier)}
+            onClose={() => setBumpDrawer(null)}
+            error={formError}
+          />
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+// ─── Bump Drawer ────────────────────────────────────────────────────────────
+
+const BUMP_TIERS = [
+  {
+    tier: 1,
+    credits: 1,
+    label: "Basic Bump",
+    description: "Your listing appears in the Explore page Stories bar for 24h.",
+    features: ["Explore Stories"],
+    icon: Eye,
+    color: "text-sky-400",
+    borderColor: "border-sky-400/30",
+    bgColor: "bg-sky-400/10",
+  },
+  {
+    tier: 2,
+    credits: 2,
+    label: "Premium Bump",
+    description: "Stories + appear in the \"Similar Profiles\" section when users browse other escorts.",
+    features: ["Explore Stories", "Similar Profiles"],
+    icon: Users,
+    color: "text-violet-400",
+    borderColor: "border-violet-400/30",
+    bgColor: "bg-violet-400/10",
+    popular: true,
+  },
+  {
+    tier: 3,
+    credits: 3,
+    label: "Maximum Exposure",
+    description: "Stories + Similar Profiles + your listing is pinned in the main Explore feed.",
+    features: ["Explore Stories", "Similar Profiles", "Explore Feed"],
+    icon: Zap,
+    color: "text-amber-400",
+    borderColor: "border-amber-400/30",
+    bgColor: "bg-amber-400/10",
+  },
+];
+
+function BumpDrawer({
+  listingTitle,
+  creditBalance,
+  bumpingTier,
+  onSelect,
+  onClose,
+  error,
+}: {
+  listingTitle: string;
+  creditBalance: number;
+  bumpingTier: number | null;
+  onSelect: (tier: number) => void;
+  onClose: () => void;
+  error: string | null;
+}) {
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+        className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-white/10 bg-zinc-950 shadow-2xl"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 16px)" }}
+      >
+        {/* Handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="h-1 w-10 rounded-full bg-zinc-700" />
+        </div>
+
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-white/5 px-5 py-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <Megaphone size={16} className="text-amber-400" />
+              <h2 className="text-[15px] font-semibold text-white">Bump Listing</h2>
+            </div>
+            <p className="mt-0.5 text-[12px] text-zinc-500 line-clamp-1">{listingTitle}</p>
+          </div>
+          <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="space-y-3 px-5 py-4">
+          <p className="text-[12px] text-zinc-400 leading-relaxed">
+            Promote your listing to reach more clients. Each bump lasts <span className="text-white font-medium">24 hours</span>.
+            You have <span className="font-semibold text-amber-400">{creditBalance} credit{creditBalance !== 1 ? "s" : ""}</span>.
+          </p>
+
+          {BUMP_TIERS.map((bt) => {
+            const TierIcon = bt.icon;
+            const canAfford = creditBalance >= bt.credits;
+            const isBumping = bumpingTier === bt.tier;
+            return (
+              <button
+                key={bt.tier}
+                onClick={() => canAfford && onSelect(bt.tier)}
+                disabled={!canAfford || bumpingTier !== null}
+                className={cn(
+                  "relative w-full rounded-2xl border p-4 text-left transition-all",
+                  canAfford
+                    ? `${bt.borderColor} hover:bg-white/5 active:scale-[0.99]`
+                    : "border-white/5 opacity-40 cursor-not-allowed",
+                  bt.popular && canAfford && "ring-1 ring-violet-400/30"
+                )}
+              >
+                {bt.popular && (
+                  <span className="absolute -top-2.5 right-3 rounded-full bg-violet-500 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                    Popular
+                  </span>
+                )}
+                <div className="flex items-start gap-3">
+                  <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl", bt.bgColor)}>
+                    <TierIcon size={18} className={bt.color} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[14px] font-semibold text-white">{bt.label}</span>
+                      <span className={cn("text-[13px] font-bold", bt.color)}>
+                        {bt.credits} credit{bt.credits !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-zinc-500">{bt.description}</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {bt.features.map((f) => (
+                        <span key={f} className="inline-flex items-center gap-1 rounded-full border border-white/8 bg-zinc-900 px-2 py-0.5 text-[9px] font-medium text-zinc-400">
+                          <Check size={8} className={bt.color} />
+                          {f}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                {isBumping && (
+                  <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-zinc-950/80">
+                    <Loader2 size={20} className="animate-spin text-amber-400" />
+                  </div>
+                )}
+              </button>
+            );
+          })}
+
+          {error && (
+            <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-[12px] text-red-400">
+              {error}
+            </p>
+          )}
+        </div>
+      </motion.div>
+    </>
   );
 }
 
 // ─── Listing Row ─────────────────────────────────────────────────────────────
 
 function ListingRow({
-  listing, onEdit, onToggle, onDelete, onRelist, hasCredits,
-  deleteConfirmOpen, onDeleteConfirm, onDeleteCancel,
+  listing, onEdit, onToggle, onDelete, onRelist, onBump, hasCredits,
+  activeBump, deleteConfirmOpen, onDeleteConfirm, onDeleteCancel,
 }: {
   listing: Listing;
   onEdit: () => void;
   onToggle: () => void;
   onDelete: () => void;
   onRelist: () => void;
+  onBump: () => void;
   hasCredits: boolean;
+  activeBump: { tier: number; expires_at: string } | null;
   deleteConfirmOpen: boolean;
   onDeleteConfirm: () => void;
   onDeleteCancel: () => void;
@@ -469,6 +749,35 @@ function ListingRow({
           </p>
         )}
       </div>
+
+      {/* Active bump indicator */}
+      {activeBump && !expired && (
+        <div className="flex items-center justify-between border-t border-amber-400/10 bg-amber-400/5 px-4 py-2">
+          <div className="flex items-center gap-2">
+            <Megaphone size={12} className="text-amber-400" />
+            <span className="text-[11px] font-semibold text-amber-400">
+              Tier {activeBump.tier} Bump Active
+            </span>
+            <span className="text-[10px] text-zinc-500">
+              · {timeRemaining(activeBump.expires_at)}
+            </span>
+          </div>
+          <span className="text-[9px] font-medium uppercase tracking-wider text-amber-400/60">
+            {activeBump.tier === 1 ? "Stories" : activeBump.tier === 2 ? "Stories + Profiles" : "Full Exposure"}
+          </span>
+        </div>
+      )}
+
+      {/* Bump CTA for live listings without active bump */}
+      {!expired && listing.is_active && !activeBump && (
+        <button
+          onClick={onBump}
+          className="flex w-full items-center justify-center gap-2 border-t border-white/5 py-2.5 text-[11px] font-semibold text-amber-400 transition-colors hover:bg-amber-400/5"
+        >
+          <Megaphone size={12} />
+          Promote this listing
+        </button>
+      )}
 
       {/* Relist banner for expired listings */}
       {expired && (
@@ -545,9 +854,10 @@ function ListingRow({
 // ─── Form Drawer ─────────────────────────────────────────────────────────────
 
 function ListingDrawer({
-  isEdit, formData, onChange, onSave, onClose, saving, error,
+  isEdit, isFirstListing, formData, onChange, onSave, onClose, saving, error,
 }: {
   isEdit: boolean;
+  isFirstListing: boolean;
   formData: FormData;
   onChange: (d: FormData) => void;
   onSave: () => void;
@@ -582,7 +892,9 @@ function ListingDrawer({
           <div>
             <h2 className="text-[15px] font-semibold text-white">{isEdit ? "Edit Listing" : "New Listing"}</h2>
             {!isEdit && (
-              <p className="text-[11px] text-zinc-500">Costs 1 credit · Live for 24 hours</p>
+              <p className="text-[11px] text-zinc-500">
+                {isFirstListing ? "Free · Live for 24 hours" : "Costs 1 credit · Live for 24 hours"}
+              </p>
             )}
           </div>
           <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200">
@@ -690,6 +1002,8 @@ function ListingDrawer({
               <span className="animate-pulse">Saving…</span>
             ) : isEdit ? (
               <><Check size={16} /> Save changes</>
+            ) : isFirstListing ? (
+              <><Plus size={16} /> Create listing (free)</>
             ) : (
               <><Plus size={16} /> Create listing (1 credit)</>
             )}

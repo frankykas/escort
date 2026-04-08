@@ -7,11 +7,13 @@ import {
   ArrowLeft, Camera, Check, Loader2,
   User, MapPin, Sparkles, Ruler, Globe,
   DollarSign, Phone, Shield, ChevronDown,
+  Heart, Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { useProfile } from "@/contexts/ProfileContext";
 import { supabase } from "@/lib/supabase/client";
+import { compressImage } from "@/lib/image";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -20,6 +22,10 @@ const HAIR_OPTIONS     = ["Blonde", "Brunette", "Black", "Red", "Auburn", "Silve
 const EYE_OPTIONS      = ["Brown", "Blue", "Green", "Hazel", "Grey", "Amber", "Other"];
 const SERVICE_CATS     = ["Companionship", "Dinner Date", "Travel", "GFE", "Couples", "Massage", "Domination"];
 const LANGUAGES        = ["English", "French", "Spanish", "Portuguese", "Italian", "Russian", "Arabic", "Mandarin", "Japanese", "German", "Hindi", "Korean"];
+const GENDER_OPTIONS   = ["Woman", "Man", "Trans Woman", "Trans Man", "Non-binary", "Other"];
+const PRONOUN_OPTIONS  = ["She/Her", "He/Him", "They/Them"];
+const CATERS_TO_OPTIONS = ["Men", "Women", "Couples", "Non-binary", "Everyone"];
+const DAYS_OF_WEEK     = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
 const COUNTRY_OPTIONS  = [
   { code: "CA", name: "Canada" },
   { code: "US", name: "United States" },
@@ -39,6 +45,7 @@ type ProfileForm = {
   username: string;
   bio: string;
   bio_long: string;
+  tagline: string;
   age: string;
   nationality: string;
   languages: string[];
@@ -57,14 +64,19 @@ type ProfileForm = {
   contact_whatsapp: string;
   contact_telegram: string;
   contact_phone: string;
+  gender: string;
+  pronouns: string;
+  caters_to: string[];
+  availability_schedule: Record<string, string>;
 };
 
 const EMPTY_FORM: ProfileForm = {
-  username: "", bio: "", bio_long: "", age: "", nationality: "",
+  username: "", bio: "", bio_long: "", tagline: "", age: "", nationality: "",
   languages: [], height_cm: "", build: "", hair_color: "", eye_color: "",
   city: "", country_code: "CA", is_provider: false, incall: true,
   outcall: true, hourly_rate: "", service_categories: [], avatar_url: null,
   contact_whatsapp: "", contact_telegram: "", contact_phone: "",
+  gender: "", pronouns: "", caters_to: [], availability_schedule: {},
 };
 
 // ─── Page ────────────────────────────────────────────────────────────────────
@@ -93,7 +105,7 @@ export default function EditProfilePage() {
 
     supabase
       .from("profiles")
-      .select("username, bio, bio_long, age, nationality, languages, height_cm, build, hair_color, eye_color, city, country_code, is_provider, incall, outcall, hourly_rate, service_categories, avatar_url, contact_whatsapp, contact_telegram, contact_phone")
+      .select("username, bio, bio_long, tagline, age, nationality, languages, height_cm, build, hair_color, eye_color, city, country_code, is_provider, incall, outcall, hourly_rate, service_categories, avatar_url, contact_whatsapp, contact_telegram, contact_phone, gender, pronouns, caters_to, availability_schedule")
       .eq("id", user.id)
       .single()
       .then(({ data }) => {
@@ -102,6 +114,7 @@ export default function EditProfilePage() {
             username:           data.username ?? "",
             bio:                data.bio ?? "",
             bio_long:           data.bio_long ?? "",
+            tagline:            data.tagline ?? "",
             age:                data.age?.toString() ?? "",
             nationality:        data.nationality ?? "",
             languages:          data.languages ?? [],
@@ -120,6 +133,10 @@ export default function EditProfilePage() {
             contact_whatsapp:   data.contact_whatsapp ?? "",
             contact_telegram:   data.contact_telegram ?? "",
             contact_phone:      data.contact_phone ?? "",
+            gender:             data.gender ?? "",
+            pronouns:           data.pronouns ?? "",
+            caters_to:          data.caters_to ?? [],
+            availability_schedule: data.availability_schedule ?? {},
           });
         }
         setLoading(false);
@@ -130,7 +147,7 @@ export default function EditProfilePage() {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  function toggleArray(key: "languages" | "service_categories", value: string) {
+  function toggleArray(key: "languages" | "service_categories" | "caters_to", value: string) {
     setForm((f) => {
       const arr = f[key] as string[];
       return {
@@ -149,12 +166,14 @@ export default function EditProfilePage() {
     const objectUrl = URL.createObjectURL(file);
     setAvatarPreview(objectUrl);
 
-    const ext  = file.name.split(".").pop() ?? "jpg";
+    // Avatars are smaller — 800px is plenty
+    const compressed = await compressImage(file, { maxDimension: 800, quality: 0.85 });
+    const ext  = compressed.name.split(".").pop() ?? "jpg";
     const path = `${user.id}/avatar.${ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from("avatars")
-      .upload(path, file, { upsert: true, contentType: file.type });
+      .upload(path, compressed, { upsert: true, contentType: compressed.type });
 
     if (uploadError) {
       showToast("error", "Photo upload failed. Try again.");
@@ -206,6 +225,11 @@ export default function EditProfilePage() {
       contact_whatsapp:   form.contact_whatsapp.trim() || null,
       contact_telegram:   form.contact_telegram.trim() || null,
       contact_phone:      form.contact_phone.trim() || null,
+      gender:             form.gender || null,
+      pronouns:           form.pronouns || null,
+      caters_to:          form.caters_to,
+      tagline:            form.tagline.trim() || null,
+      availability_schedule: Object.keys(form.availability_schedule).length > 0 ? form.availability_schedule : null,
     };
 
     if (form.avatar_url) payload.avatar_url = form.avatar_url;
@@ -308,6 +332,21 @@ export default function EditProfilePage() {
               />
             </div>
             <Hint>3–30 characters. Letters, numbers and underscores only.</Hint>
+          </Field>
+
+          <Field label="Tagline">
+            <input
+              type="text"
+              value={form.tagline}
+              onChange={(e) => patch("tagline", e.target.value)}
+              maxLength={80}
+              placeholder="Your catchy headline…"
+              className={inputCls}
+            />
+            <div className="flex justify-between">
+              <Hint>A short headline shown on your profile card.</Hint>
+              <Counter val={form.tagline.length} max={80} />
+            </div>
           </Field>
 
           <Field label="Short bio">
@@ -416,6 +455,63 @@ export default function EditProfilePage() {
               <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500" />
             </div>
           </Field>
+        </Section>
+
+        {/* ── Identity & preferences (providers) ── */}
+        <Section icon={Heart} title="Identity & preferences">
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Gender">
+              <ChipGroup
+                options={GENDER_OPTIONS}
+                selected={form.gender ? [form.gender] : []}
+                onToggle={(v) => patch("gender", form.gender === v ? "" : v)}
+                single
+              />
+            </Field>
+            <Field label="Pronouns">
+              <ChipGroup
+                options={PRONOUN_OPTIONS}
+                selected={form.pronouns ? [form.pronouns] : []}
+                onToggle={(v) => patch("pronouns", form.pronouns === v ? "" : v)}
+                single
+              />
+            </Field>
+          </div>
+
+          <Field label="Caters to">
+            <ChipGroup
+              options={CATERS_TO_OPTIONS}
+              selected={form.caters_to}
+              onToggle={(v) => toggleArray("caters_to", v)}
+            />
+            <Hint>Select the client types you see.</Hint>
+          </Field>
+        </Section>
+
+        {/* ── Weekly availability ── */}
+        <Section icon={Calendar} title="Weekly availability">
+          <Hint>Set your typical hours for each day. Leave blank for days you&apos;re unavailable.</Hint>
+          <div className="mt-2 space-y-2">
+            {DAYS_OF_WEEK.map((day) => (
+              <div key={day} className="flex items-center gap-3">
+                <span className="w-16 text-[12px] font-medium capitalize text-zinc-400">{day}</span>
+                <input
+                  type="text"
+                  value={form.availability_schedule[day] ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      availability_schedule: { ...f.availability_schedule, [day]: e.target.value },
+                    }))
+                  }
+                  placeholder="e.g. 10am – 8pm"
+                  maxLength={30}
+                  className={cn(inputCls, "flex-1 py-2.5 text-[13px]")}
+                />
+              </div>
+            ))}
+          </div>
+          <Hint>Examples: &quot;All day&quot;, &quot;10am – 8pm&quot;, &quot;Evenings only&quot;, or leave blank</Hint>
         </Section>
 
         {/* ── Provider settings ── */}

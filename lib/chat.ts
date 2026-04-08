@@ -1,5 +1,4 @@
 import { createServerClient } from "@/lib/supabase/server";
-import { getStreamServerClient } from "@/lib/stream";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -11,7 +10,7 @@ export type MessageRequest = {
   recipient_id: string;
   intro_message: string | null;
   status: "pending" | "accepted" | "rejected";
-  stream_channel_id: string | null;
+  channel_id: string | null;
   created_at: string;
   updated_at: string;
   sender?: { username: string; avatar_url: string | null; verification_status: string };
@@ -24,8 +23,8 @@ type ActionResult = { success: boolean; error?: string; data?: Record<string, un
 // Helpers
 // ---------------------------------------------------------------------------
 
-function channelId(id1: string, id2: string): string {
-  // Stream max channel ID is 64 chars. Two UUIDs without hyphens = 32+32 = 64.
+export function channelId(id1: string, id2: string): string {
+  // Two UUIDs without hyphens, sorted and concatenated = 32+32 = 64 chars.
   const [a, b] = [id1.replace(/-/g, ""), id2.replace(/-/g, "")].sort();
   return a + b;
 }
@@ -119,7 +118,7 @@ export async function getMessageRequests(
     .from("message_requests")
     .select(`
       id, sender_id, recipient_id, intro_message, status,
-      stream_channel_id, created_at, updated_at,
+      channel_id, created_at, updated_at,
       sender:sender_id (username, avatar_url, verification_status),
       recipient:recipient_id (username, avatar_url, verification_status)
     `)
@@ -128,7 +127,7 @@ export async function getMessageRequests(
   if (view === "pending") {
     query = query.eq("recipient_id", userId).eq("status", "pending");
   } else if (view === "sent") {
-    query = query.eq("sender_id", userId);
+    query = query.eq("sender_id", userId).eq("status", "pending");
   } else {
     query = query.or(`sender_id.eq.${userId},recipient_id.eq.${userId}`);
   }
@@ -157,7 +156,7 @@ export async function getRequestStatus(
   // Check both directions
   const { data } = await supabase
     .from("message_requests")
-    .select("status, stream_channel_id")
+    .select("status, channel_id")
     .or(
       `and(sender_id.eq.${senderId},recipient_id.eq.${recipientId}),` +
       `and(sender_id.eq.${recipientId},recipient_id.eq.${senderId})`
@@ -170,7 +169,7 @@ export async function getRequestStatus(
 
   return {
     status: data.status as "pending" | "accepted",
-    channelId: data.stream_channel_id ?? undefined,
+    channelId: data.channel_id ?? undefined,
   };
 }
 
@@ -183,9 +182,7 @@ export async function acceptMessageRequest(
   userId: string
 ): Promise<ActionResult> {
   const supabase = createServerClient();
-  const stream = getStreamServerClient();
   if (!supabase) return { success: false, error: "Database unavailable" };
-  if (!stream) return { success: false, error: "Chat service unavailable" };
 
   // Fetch the request and validate
   const { data: request, error: fetchError } = await supabase
@@ -198,48 +195,49 @@ export async function acceptMessageRequest(
   if (request.recipient_id !== userId) return { success: false, error: "Not authorized" };
   if (request.status !== "pending") return { success: false, error: "Request already processed" };
 
-  // Fetch both profiles for Stream user upsert
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, username, avatar_url, is_provider")
-    .in("id", [request.sender_id, request.recipient_id]);
-
-  if (!profiles || profiles.length < 2) return { success: false, error: "Profiles not found" };
-
-  // Upsert both users in Stream
-  try {
-    for (const p of profiles) {
-      await stream.upsertUser({
-        id: p.id,
-        name: p.username,
-        image: p.avatar_url ?? undefined,
-      });
-    }
-  } catch (e) {
-    console.error("[chat] Stream upsertUser failed:", e);
-    return { success: false, error: "Failed to set up chat users" };
-  }
-
-  // Create Stream channel
+  // Build channel ID
   const cId = channelId(request.sender_id, request.recipient_id);
+
+  // Create chat channel + members + optional intro message in Supabase
   try {
-    const channel = stream.channel("messaging", cId, {
-      created_by_id: request.recipient_id,
-    });
-    await channel.create();
+    // 1. Create the channel
+    const { error: chError } = await supabase
+      .from("chat_channels")
+      .insert({ id: cId, created_by: userId });
 
-    // Add both users as members
-    await channel.addMembers([request.sender_id, request.recipient_id]);
+    if (chError) {
+      // If channel already exists (e.g. re-accept race), that's fine
+      if (!chError.message.includes("duplicate")) {
+        throw new Error(chError.message);
+      }
+    }
 
-    // Send intro message as first message in the channel
+    // 2. Add both users as members
+    const { error: memError } = await supabase
+      .from("chat_channel_members")
+      .upsert([
+        { channel_id: cId, user_id: request.sender_id },
+        { channel_id: cId, user_id: request.recipient_id },
+      ]);
+
+    if (memError) throw new Error(memError.message);
+
+    // 3. Insert intro message as first message in the channel
     if (request.intro_message) {
-      await channel.sendMessage({
-        text: request.intro_message,
-        user_id: request.sender_id,
-      });
+      const { error: msgError } = await supabase
+        .from("chat_messages")
+        .insert({
+          channel_id: cId,
+          sender_id: request.sender_id,
+          text: request.intro_message,
+        });
+
+      if (msgError) {
+        console.error("[chat] Failed to insert intro message:", msgError);
+      }
     }
   } catch (e) {
-    console.error("[chat] Stream channel creation failed:", e);
+    console.error("[chat] Channel creation failed:", e);
     const errMsg = e instanceof Error ? e.message : String(e);
     return { success: false, error: `Failed to create chat channel: ${errMsg}` };
   }
@@ -249,7 +247,7 @@ export async function acceptMessageRequest(
     .from("message_requests")
     .update({
       status: "accepted",
-      stream_channel_id: cId,
+      channel_id: cId,
       updated_at: new Date().toISOString(),
     })
     .eq("id", requestId);
@@ -257,7 +255,12 @@ export async function acceptMessageRequest(
   if (updateError) return { success: false, error: updateError.message };
 
   // Notify sender that their request was accepted
-  const recipientProfile = profiles.find((p) => p.id === userId);
+  const { data: recipientProfile } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", userId)
+    .single();
+
   await supabase.from("notifications").insert({
     recipient_id: request.sender_id,
     actor_id: userId,

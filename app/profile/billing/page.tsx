@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ChevronLeft, CreditCard, Coins,
-  ShieldCheck, CheckCircle, Package, Clock,
+  ShieldCheck, CheckCircle, Package, Clock, Megaphone,
 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
@@ -109,13 +109,34 @@ export default function BillingPage() {
           <p className="mb-3 px-1 text-[11px] font-medium uppercase tracking-widest text-zinc-600">Credits are used for</p>
           <div className="rounded-2xl border border-white/5 bg-zinc-900 divide-y divide-white/5">
             {[
-              "Creating feed posts (1 credit each)",
-              "Publishing service listings (1 credit, live for 24h)",
-              "Relisting expired listings (1 credit)",
-            ].map((f) => (
-              <div key={f} className="flex items-center gap-3 px-4 py-3.5">
-                <CheckCircle size={14} className="flex-shrink-0 text-emerald-400 fill-emerald-400/20" />
-                <span className="text-[13px] text-zinc-300">{f}</span>
+              { text: "Your first listing is always free", highlight: true },
+              { text: "Additional service listings (1 credit, live for 24h)" },
+              { text: "Relisting expired listings (1 credit)" },
+              { text: "Creating feed posts (1 credit each)" },
+            ].map(({ text, highlight }) => (
+              <div key={text} className="flex items-center gap-3 px-4 py-3.5">
+                <CheckCircle size={14} className={`flex-shrink-0 ${highlight ? "text-amber-400 fill-amber-400/20" : "text-emerald-400 fill-emerald-400/20"}`} />
+                <span className={`text-[13px] ${highlight ? "text-amber-400 font-medium" : "text-zinc-300"}`}>{text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bump tiers */}
+        <div>
+          <p className="mb-3 px-1 text-[11px] font-medium uppercase tracking-widest text-zinc-600">Promote your listings</p>
+          <div className="rounded-2xl border border-white/5 bg-zinc-900 divide-y divide-white/5">
+            {[
+              { tier: "Tier 1", credits: "1 credit", desc: "Explore Stories (24h)", color: "text-sky-400" },
+              { tier: "Tier 2", credits: "2 credits", desc: "Stories + Similar Profiles (24h)", color: "text-violet-400" },
+              { tier: "Tier 3", credits: "3 credits", desc: "Stories + Similar Profiles + Feed (24h)", color: "text-amber-400" },
+            ].map(({ tier, credits, desc, color }) => (
+              <div key={tier} className="flex items-center gap-3 px-4 py-3.5">
+                <Megaphone size={14} className={`flex-shrink-0 ${color}`} />
+                <div className="flex-1">
+                  <span className="text-[13px] text-zinc-300">{tier} — {desc}</span>
+                </div>
+                <span className={`text-[12px] font-semibold ${color}`}>{credits}</span>
               </div>
             ))}
           </div>

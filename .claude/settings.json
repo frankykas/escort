@@ -77,11 +77,26 @@
       "Bash(grep -rn \"average_rating\\\\|review_count\" /c/dev/cleopatre --include=*.ts --include=*.tsx)",
       "Bash(grep -rn \"\\\\.select.*review\\\\|\\\\.select.*rating\" /c/dev/cleopatre --include=*.ts --include=*.tsx)",
       "Bash(grep -r \"FROM reviews\\\\|from.*reviews\\\\|TABLE.*reviews\\\\|table.*reviews\" /c/dev/cleopatre --include=*.ts --include=*.tsx --include=*.sql)",
-      "Bash(grep -E \"\\\\.sql$\")"
+      "Bash(grep -E \"\\\\.sql$\")",
+      "Bash(find /c/dev/cleopatre -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) -exec grep -l \"GetStream\\\\|stream-chat\\\\|Channel\\\\|StreamChat\" {} \\\\;)",
+      "Bash(npm uninstall:*)",
+      "Read(//c/Users/Cheet/.claude/projects/c--dev-cleopatre/**)",
+      "Bash(grep -a -o 'email.*sophia[^\\\\\\\\]*\\\\|sophia.*@[^\\\\\\\\,\"]*\\\\|bella.*@[^\\\\\\\\,\"]*\\\\|escort.*test[^\\\\\\\\,\"]*@[^\\\\\\\\,\"]*' \"C:\\\\Users\\\\Cheet\\\\.claude\\\\projects\\\\c--dev-cleopatre\\\\e1fd85a7-acf2-499d-84fe-c5ff097405cb.jsonl\")",
+      "Bash(grep -E \"\\\\.ts$\")",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(grep -n \"ALTER TABLE profiles\\\\|ALTER TABLE status_updates\\\\|ALTER TABLE listings\" /c/dev/cleopatre/supabase/migrations/*.sql)",
+      "Bash(grep -n \"ADD COLUMN\" /c/dev/cleopatre/supabase/migrations/*.sql)",
+      "Bash(grep -h \"ADD COLUMN IF NOT EXISTS\" /c/dev/cleopatre/supabase/migrations/*.sql)",
+      "Bash(cat /c/dev/cleopatre/supabase/migrations/*.sql)",
+      "Bash(echo \"exit: $?\")",
+      "Read(//tmp/**)",
+      "Bash(node -e \"const wp = require\\('web-push'\\); const k = wp.generateVAPIDKeys\\(\\); console.log\\('NEXT_PUBLIC_VAPID_PUBLIC_KEY=' + k.publicKey\\); console.log\\('VAPID_PRIVATE_KEY=' + k.privateKey\\);\")"
     ],
     "additionalDirectories": [
       "c:\\dev\\cleopatre\\app\\listings",
-      "C:\\dev\\cleopatre\\app\\messages"
+      "C:\\dev\\cleopatre\\app\\messages",
+      "c:\\dev\\cleopatre\\app\\category",
+      "c:\\dev\\cleopatre\\app\\u\\[username]"
     ]
   }
 }
