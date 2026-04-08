@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase/client";
 import { useSession } from "@/hooks/useSession";
 import { useLike } from "@/hooks/useLike";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -44,15 +45,15 @@ type Props = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, t?: (k: import("@/lib/i18n/en").TranslationKey) => string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t ? t("time_just_now") : "Just now";
+  if (mins < 60) return `${mins}${t ? t("time_m_ago") : "m ago"}`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours}${t ? t("time_h_ago") : "h ago"}`;
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return `${days}${t ? t("time_d_ago") : "d ago"}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -61,6 +62,7 @@ function timeAgo(iso: string): string {
 
 export function PostModal({ postId, onClose }: Props) {
   const { user } = useSession();
+  const { t } = useTranslation();
   const [post, setPost] = useState<PostData | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -223,13 +225,13 @@ export function PostModal({ postId, onClose }: Props) {
                   <div className="absolute right-0 top-10 z-20 w-44 overflow-hidden rounded-xl border border-white/10 bg-zinc-900 shadow-xl">
                     {deleteConfirm ? (
                       <div className="p-3 space-y-2">
-                        <p className="text-[12px] text-zinc-300 text-center">Delete this post?</p>
+                        <p className="text-[12px] text-zinc-300 text-center">{t("post_delete_confirm")}</p>
                         <div className="flex gap-2">
                           <button
                             onClick={() => setDeleteConfirm(false)}
                             className="flex-1 rounded-lg border border-white/10 py-1.5 text-[12px] font-medium text-zinc-400 hover:bg-zinc-800"
                           >
-                            Cancel
+                            {t("cancel")}
                           </button>
                           <button
                             onClick={handleDelete}
@@ -237,7 +239,7 @@ export function PostModal({ postId, onClose }: Props) {
                             className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-red-500 py-1.5 text-[12px] font-semibold text-white hover:bg-red-400 disabled:opacity-50"
                           >
                             {deleting ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
-                            Delete
+                            {t("delete")}
                           </button>
                         </div>
                       </div>
@@ -247,7 +249,7 @@ export function PostModal({ postId, onClose }: Props) {
                         className="flex w-full items-center gap-3 px-4 py-3 text-[13px] text-red-400 transition hover:bg-zinc-800"
                       >
                         <Trash2 size={14} />
-                        Delete post
+                        {t("post_delete")}
                       </button>
                     )}
                   </div>
@@ -292,7 +294,7 @@ export function PostModal({ postId, onClose }: Props) {
                       <CheckCircle size={11} className="text-amber-400 fill-amber-400/20" />
                     )}
                   </div>
-                  <span className="text-[10px] text-zinc-500">{timeAgo(post.created_at)}</span>
+                  <span className="text-[10px] text-zinc-500">{timeAgo(post.created_at, t)}</span>
                 </div>
               </Link>
             </div>
@@ -337,7 +339,7 @@ export function PostModal({ postId, onClose }: Props) {
               <div className="border-t border-white/5">
                 {comments.length === 0 ? (
                   <div className="px-4 py-6 text-center">
-                    <p className="text-[13px] text-zinc-600">No comments yet.</p>
+                    <p className="text-[13px] text-zinc-600">{t("post_no_comments")}</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-white/5">
@@ -361,7 +363,7 @@ export function PostModal({ postId, onClose }: Props) {
                             </Link>
                             {c.body}
                           </p>
-                          <p className="mt-0.5 text-[11px] text-zinc-600">{timeAgo(c.created_at)}</p>
+                          <p className="mt-0.5 text-[11px] text-zinc-600">{timeAgo(c.created_at, t)}</p>
                         </div>
                       </div>
                     ))}
@@ -374,7 +376,7 @@ export function PostModal({ postId, onClose }: Props) {
             {user && (
               <div className="border-t border-white/5 px-4 py-3">
                 {commentSent && (
-                  <p className="mb-2 text-[12px] text-emerald-400/80">Comment sent — visible once approved.</p>
+                  <p className="mb-2 text-[12px] text-emerald-400/80">{t("post_comment_sent")}</p>
                 )}
                 <div className="flex items-center gap-2">
                   <input
@@ -382,7 +384,7 @@ export function PostModal({ postId, onClose }: Props) {
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleComment()}
-                    placeholder="Add a comment..."
+                    placeholder={t("post_add_comment")}
                     maxLength={500}
                     className="flex-1 bg-transparent text-[14px] text-white placeholder-zinc-600 outline-none"
                   />
@@ -391,7 +393,7 @@ export function PostModal({ postId, onClose }: Props) {
                     disabled={!commentText.trim() || submitting}
                     className="text-[13px] font-semibold text-amber-400 transition hover:text-amber-300 disabled:opacity-40"
                   >
-                    {submitting ? "..." : "Post"}
+                    {submitting ? "..." : t("post_send_comment")}
                   </button>
                 </div>
               </div>
@@ -418,6 +420,7 @@ function PostModalLikeBar({
   initialCount: number;
   userId: string | null;
 }) {
+  const { t } = useTranslation();
   const { isLiked, likesCount, toggle } = useLike({
     postId,
     initialIsLiked: initialLiked,
@@ -444,7 +447,7 @@ function PostModalLikeBar({
           />
         </motion.button>
         <span className="text-[13px] font-semibold text-white">
-          {likesCount.toLocaleString()} {likesCount === 1 ? "like" : "likes"}
+          {likesCount.toLocaleString()} {likesCount === 1 ? t("post_like") : t("post_likes")}
         </span>
       </div>
     </div>

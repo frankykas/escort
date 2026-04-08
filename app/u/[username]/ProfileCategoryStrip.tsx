@@ -5,6 +5,7 @@ import { Grid3X3, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CATEGORIES } from "@/lib/categories";
 import type { Category } from "@/lib/categories";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 type Props = {
   serviceCategories: string[];
@@ -24,6 +25,8 @@ export function ProfileCategoryStrip({ serviceCategories }: Props) {
   const others = CATEGORIES.filter((c) => !matchedSlugs.has(c.slug));
   const display: Category[] = [...matched, ...others];
 
+  const { t } = useTranslation();
+
   return (
     <section className="border-t border-white/5 bg-zinc-950 py-4">
       {/* Header */}
@@ -31,14 +34,14 @@ export function ProfileCategoryStrip({ serviceCategories }: Props) {
         <div className="flex items-center gap-2">
           <Grid3X3 size={13} className="text-amber-400" />
           <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-            Browse by category
+            {t("cat_browse")}
           </span>
         </div>
         <Link
           href="/categories"
           className="flex items-center gap-0.5 text-[11px] font-medium text-amber-400 transition-colors hover:text-amber-300"
         >
-          View all
+          {t("cat_view_all")}
           <ChevronRight size={12} />
         </Link>
       </div>

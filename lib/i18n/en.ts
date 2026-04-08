@@ -396,6 +396,115 @@ export const en = {
   bookings_completed:   "Completed",
   bookings_cancelled:   "Cancelled",
   bookings_all:         "All",
+
+  // ── Bottom nav / create menu ──────────────────────────────────────────────
+  nav_my_page:          "My Page",
+  create_story:         "Story",
+  create_story_desc:    "Disappears after 24h",
+  create_post:          "Post",
+  create_post_desc:     "Share to your feed",
+  create_listing:       "Listing",
+  create_listing_desc:  "Add a service",
+
+  // ── Stories bar ───────────────────────────────────────────────────────────
+  stories_add:          "Add Story",
+  stories_your:         "Your story",
+  stories_new:          "New",
+
+  // ── Provider performance / nudge ──────────────────────────────────────────
+  perf_title:           "Your performance",
+  perf_views:           "Views",
+  perf_followers:       "Followers",
+  perf_posts:           "Posts",
+  nudge_no_posts_title: "Create your first post",
+  nudge_no_posts_desc:  "Posts help clients discover you. Share a photo to get started.",
+  nudge_no_posts_cta:   "Create Post",
+  nudge_stale_title:    "You haven't posted recently",
+  nudge_stale_desc:     "Providers who post regularly get 3x more profile views.",
+  nudge_stale_cta:      "Post Now",
+  nudge_story_title:    "Your story has expired",
+  nudge_story_desc:     "Keep your profile active with a new story — they disappear after 24h.",
+  nudge_story_cta:      "Add Story",
+  feed_trending:        "Trending in your area",
+  feed_title:           "Feed",
+
+  // ── Category browsing ─────────────────────────────────────────────────────
+  cat_browse:           "Browse by category",
+  cat_view_all:         "View all",
+  cat_show_all:         "Show all",
+  cat_categories:       "categories",
+  cat_browse_cta:       "Browse",
+
+  // ── Profile page extra rows ───────────────────────────────────────────────
+  profile_comment_mod:  "Comment Moderation",
+  profile_saved:        "Saved Listings",
+  profile_blocked:      "Blocked Users",
+  profile_language:     "Language",
+
+  // ── Time ago ──────────────────────────────────────────────────────────────
+  time_just_now:        "just now",
+  time_m_ago:           "m ago",
+  time_h_ago:           "h ago",
+  time_d_ago:           "d ago",
+
+  // ── Post / feed interactions ──────────────────────────────────────────────
+  post_follow:          "Follow",
+  post_following:       "Following",
+  post_like:            "like",
+  post_likes:           "likes",
+  post_comment:         "comment",
+  post_comments:        "comments",
+  post_share:           "share",
+  post_shares:          "shares",
+  post_more:            "more",
+  post_add_comment:     "Add a comment…",
+  post_sign_in_comment: "Sign in to comment…",
+  post_send_comment:    "Post",
+  post_comment_sent:    "Comment sent — visible once approved.",
+  post_comment_sent_long: "Comment sent — visible once approved by the creator.",
+  post_no_comments:     "No comments yet.",
+  post_no_posts_now:    "No active posts right now. Check back soon.",
+  post_verified:        "Verified",
+  post_delete:          "Delete post",
+  post_delete_confirm:  "Delete this post?",
+  post_deleting:        "Deleting...",
+  post_link_copied:     "Link copied to clipboard",
+  post_label:           "Post",
+
+  // ── Home / social feed ─────────────────────────────────────────────────────
+  home_for_you:         "For You",
+  home_favorites:       "Favorites",
+  home_no_recent:       "No recent posts",
+  home_no_recent_body:  "The profiles you follow haven't posted in the last 24 hours. Check back soon.",
+  home_browse_all:      "Browse all posts",
+  home_no_favorites:    "No favorites yet",
+  home_no_fav_body:     "Follow profiles you love and their posts will appear here.",
+  home_discover:        "Discover profiles",
+  home_your_favorites:  "Your Favorites",
+  home_sign_in_fav:     "Sign in to see posts from profiles you follow.",
+  home_create_account:  "Create account",
+
+  // ── Classic home ──────────────────────────────────────────────────────────
+  classic_browse:         "Browse",
+  classic_badge:          "Now Live — Discover premium companions near you",
+  classic_heading_1:      "Meet.",
+  classic_heading_2:      "Connect.",
+  classic_subtitle:       "The premium companion directory. Browse verified profiles, explore services, and connect with confidence.",
+  classic_cta_browse:     "Browse Profiles",
+  classic_cta_join:       "Join as a Provider",
+  classic_trust_id:       "ID-verified providers",
+  classic_trust_city:     "Your city & beyond",
+  classic_trust_discreet: "Discreet & secure",
+
+  // ── Time ago (uppercase, for FeedPost) ────────────────────────────────────
+  time_just_now_up:     "JUST NOW",
+  time_minute:          "MINUTE",
+  time_minutes:         "MINUTES",
+  time_hour:            "HOUR",
+  time_hours:           "HOURS",
+  time_day:             "DAY",
+  time_days:            "DAYS",
+  time_ago:             "AGO",
 } as const;
 
 export type TranslationKey = keyof typeof en;

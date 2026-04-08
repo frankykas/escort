@@ -298,6 +298,98 @@ export async function getAdminAuditLog(
   return (data ?? []) as AdminAction[];
 }
 
+// ---------------------------------------------------------------------------
+// Approve a pending verification
+// ---------------------------------------------------------------------------
+
+export async function approveVerification(
+  adminId: string,
+  userId: string
+): Promise<AdminActionResult> {
+  const supabase = createServerClient();
+  if (!supabase) return { success: false, error: "Database unavailable" };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      verification_status: "verified",
+      verified_at: new Date().toISOString(),
+    })
+    .eq("id", userId)
+    .eq("verification_status", "pending");
+
+  if (error) return { success: false, error: error.message };
+
+  await supabase.from("admin_actions").insert({
+    admin_id: adminId,
+    action_type: "approve_verification",
+    target_id: userId,
+  });
+
+  return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// Reject a pending verification
+// ---------------------------------------------------------------------------
+
+export async function rejectVerification(
+  adminId: string,
+  userId: string,
+  reason?: string
+): Promise<AdminActionResult> {
+  const supabase = createServerClient();
+  if (!supabase) return { success: false, error: "Database unavailable" };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      verification_status: "none",
+      persona_status: "rejected",
+    })
+    .eq("id", userId)
+    .eq("verification_status", "pending");
+
+  if (error) return { success: false, error: error.message };
+
+  await supabase.from("admin_actions").insert({
+    admin_id: adminId,
+    action_type: "reject_verification",
+    target_id: userId,
+    details: reason ? { reason } : null,
+  });
+
+  return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// Get pending verifications
+// ---------------------------------------------------------------------------
+
+export type PendingVerification = {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  persona_inquiry_id: string | null;
+  persona_status: string | null;
+  created_at: string;
+};
+
+export async function getPendingVerifications(limit = 20): Promise<PendingVerification[]> {
+  const supabase = createServerClient();
+  if (!supabase) return [];
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, username, display_name, avatar_url, persona_inquiry_id, persona_status, created_at")
+    .eq("verification_status", "pending")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return (data ?? []) as PendingVerification[];
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Dashboard data fetchers
 // ═══════════════════════════════════════════════════════════════════════════
@@ -316,6 +408,7 @@ export type DashboardStats = {
   totalLikes: number;
   totalComments: number;
   totalFollows: number;
+  pendingVerifications: number;
   signupsToday: number;
   signupsThisWeek: number;
 };
@@ -337,6 +430,7 @@ export async function getDashboardStats(): Promise<DashboardStats | null> {
     postsRes, storiesRes, listingsRes,
     chatsRes, requestsRes, reportsRes,
     likesRes, commentsRes, followsRes,
+    pendingVerificationsRes,
     signupsTodayRes, signupsWeekRes,
   ] = await Promise.all([
     supabase.from("profiles").select("id", { count: "exact", head: true }),
@@ -351,6 +445,7 @@ export async function getDashboardStats(): Promise<DashboardStats | null> {
     supabase.from("likes").select("user_id", { count: "exact", head: true }),
     supabase.from("comments").select("id", { count: "exact", head: true }),
     supabase.from("follows").select("follower_id", { count: "exact", head: true }),
+    supabase.from("profiles").select("id", { count: "exact", head: true }).eq("verification_status", "pending"),
     supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", todayISO),
     supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", weekAgoISO),
   ]);
@@ -369,6 +464,7 @@ export async function getDashboardStats(): Promise<DashboardStats | null> {
     totalLikes: likesRes.count ?? 0,
     totalComments: commentsRes.count ?? 0,
     totalFollows: followsRes.count ?? 0,
+    pendingVerifications: pendingVerificationsRes.count ?? 0,
     signupsToday: signupsTodayRes.count ?? 0,
     signupsThisWeek: signupsWeekRes.count ?? 0,
   };

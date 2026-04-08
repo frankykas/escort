@@ -11,7 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { AdminActions } from "./AdminActions";
-import type { DashboardStats, RecentUser, ReportRow } from "@/lib/admin";
+import type { DashboardStats, RecentUser, ReportRow, PendingVerification } from "@/lib/admin";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -32,12 +32,86 @@ function timeAgo(iso: string) {
 // Page
 // ---------------------------------------------------------------------------
 
+function VerificationRow({
+  verification,
+  adminId,
+  onResolved,
+}: {
+  verification: PendingVerification;
+  adminId: string;
+  onResolved: () => void;
+}) {
+  const [acting, setActing] = useState(false);
+
+  async function handleAction(action: "approve" | "reject") {
+    setActing(true);
+    const res = await fetch("/api/admin/verification", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminId, userId: verification.id, action }),
+    });
+    if (res.ok) onResolved();
+    setActing(false);
+  }
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-3.5">
+      <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-zinc-800">
+        {verification.avatar_url ? (
+          <img
+            src={verification.avatar_url}
+            alt={verification.username}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-xs font-bold text-zinc-400">
+            {verification.username[0]?.toUpperCase()}
+          </div>
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/u/${verification.username}`}
+            className="text-[13px] font-semibold text-white hover:text-amber-400 truncate"
+          >
+            {verification.display_name || verification.username}
+          </Link>
+          <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-bold text-amber-400">
+            {verification.persona_status ?? "pending"}
+          </span>
+        </div>
+        <p className="text-[11px] text-zinc-500">
+          @{verification.username} · {timeAgo(verification.created_at)}
+        </p>
+      </div>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <button
+          onClick={() => handleAction("approve")}
+          disabled={acting}
+          className="rounded-lg bg-emerald-500/15 px-3 py-1.5 text-[11px] font-semibold text-emerald-400 transition hover:bg-emerald-500/25 disabled:opacity-40"
+        >
+          Approve
+        </button>
+        <button
+          onClick={() => handleAction("reject")}
+          disabled={acting}
+          className="rounded-lg bg-red-500/15 px-3 py-1.5 text-[11px] font-semibold text-red-400 transition hover:bg-red-500/25 disabled:opacity-40"
+        >
+          Reject
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const { user } = useSession();
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
   const [reports, setReports] = useState<ReportRow[]>([]);
+  const [verifications, setVerifications] = useState<PendingVerification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -55,6 +129,7 @@ export default function AdminDashboard() {
     setStats(data.stats);
     setRecentUsers(data.recentUsers ?? []);
     setReports(data.reports ?? []);
+    setVerifications(data.pendingVerifications ?? []);
     setLoading(false);
     setRefreshing(false);
   }
@@ -87,6 +162,7 @@ export default function AdminDashboard() {
     { label: "Active Listings", value: stats.totalListings, icon: ListOrdered, color: "text-cyan-400", bg: "bg-cyan-500/10" },
     { label: "Active Chats", value: stats.activeChats, icon: MessageSquare, color: "text-sky-400", bg: "bg-sky-500/10" },
     { label: "Pending Requests", value: stats.pendingRequests, icon: Clock, color: "text-yellow-400", bg: "bg-yellow-500/10" },
+    { label: "Pending Verifications", value: stats.pendingVerifications, icon: ShieldCheck, color: "text-amber-400", bg: "bg-amber-500/10" },
     { label: "Pending Reports", value: stats.pendingReports, icon: AlertTriangle, color: "text-red-400", bg: "bg-red-500/10" },
     { label: "Total Likes", value: stats.totalLikes, icon: Heart, color: "text-rose-400", bg: "bg-rose-500/10" },
     { label: "Total Comments", value: stats.totalComments, icon: MessageCircle, color: "text-teal-400", bg: "bg-teal-500/10" },
@@ -151,6 +227,37 @@ export default function AdminDashboard() {
                 </div>
               );
             })}
+          </div>
+        </section>
+
+        {/* Pending Verifications */}
+        <section>
+          <h2 className="text-[13px] font-semibold uppercase tracking-widest text-zinc-500 mb-4">
+            Pending Verifications
+            {verifications.length > 0 && (
+              <span className="ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-400 text-[10px] font-bold text-zinc-950">
+                {verifications.length}
+              </span>
+            )}
+          </h2>
+          <div className="rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-md overflow-hidden">
+            {verifications.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-10 text-center">
+                <ShieldCheck size={24} className="text-emerald-500/60" />
+                <p className="text-[13px] text-zinc-600">No pending verifications.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-white/5">
+                {verifications.map((v) => (
+                  <VerificationRow
+                    key={v.id}
+                    verification={v}
+                    adminId={user!.id}
+                    onResolved={() => fetchData(true)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </section>
 

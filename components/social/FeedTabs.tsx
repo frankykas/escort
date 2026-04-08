@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 export function FeedTabs() {
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
   const activeTab = searchParams.get("tab") === "favorites" ? "favorites" : "for-you";
 
   return (
@@ -19,7 +21,7 @@ export function FeedTabs() {
             : "text-zinc-600 hover:text-zinc-400"
         )}
       >
-        For You
+        {t("home_for_you")}
       </Link>
       <Link
         href="/?tab=favorites"
@@ -30,7 +32,7 @@ export function FeedTabs() {
             : "text-zinc-600 hover:text-zinc-400"
         )}
       >
-        Favorites
+        {t("home_favorites")}
       </Link>
     </div>
   );

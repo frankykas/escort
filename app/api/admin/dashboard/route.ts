@@ -4,6 +4,7 @@ import {
   getDashboardStats,
   getRecentSignups,
   getPendingReports,
+  getPendingVerifications,
 } from "@/lib/admin";
 
 export async function GET(req: NextRequest) {
@@ -13,11 +14,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const [stats, recentUsers, reports] = await Promise.all([
+  const [stats, recentUsers, reports, pendingVerifications] = await Promise.all([
     getDashboardStats(),
     getRecentSignups(15),
     getPendingReports(10),
+    getPendingVerifications(20),
   ]);
 
-  return NextResponse.json({ stats, recentUsers, reports });
+  return NextResponse.json({ stats, recentUsers, reports, pendingVerifications });
 }

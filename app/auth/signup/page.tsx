@@ -16,6 +16,8 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState<State>("idle");
 
@@ -23,6 +25,14 @@ export default function SignUpPage() {
     e.preventDefault();
     setError(null);
 
+    if (!ageConfirmed) {
+      setError("You must confirm you are at least 18 years old.");
+      return;
+    }
+    if (!termsAccepted) {
+      setError("You must accept the Terms of Service and Privacy Policy.");
+      return;
+    }
     if (password !== confirm) {
       setError("Passwords do not match.");
       return;
@@ -128,11 +138,44 @@ export default function SignUpPage() {
                 />
               </div>
 
+              {/* Age confirmation */}
+              <label className="flex items-start gap-2.5 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={ageConfirmed}
+                  onChange={(e) => setAgeConfirmed(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-white/20 bg-zinc-800 text-amber-400 accent-amber-400"
+                />
+                <span className="text-[12px] text-zinc-500 leading-snug group-hover:text-zinc-400 transition">
+                  I confirm that I am at least <strong className="text-zinc-300">18 years old</strong>
+                </span>
+              </label>
+
+              {/* Terms & Privacy */}
+              <label className="flex items-start gap-2.5 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-white/20 bg-zinc-800 text-amber-400 accent-amber-400"
+                />
+                <span className="text-[12px] text-zinc-500 leading-snug group-hover:text-zinc-400 transition">
+                  I agree to the{" "}
+                  <Link href="/legal/terms" className="text-amber-400/80 hover:text-amber-400 underline underline-offset-2">
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/legal/privacy" className="text-amber-400/80 hover:text-amber-400 underline underline-offset-2">
+                    Privacy Policy
+                  </Link>
+                </span>
+              </label>
+
               {error && <p className="text-xs text-red-400">{error}</p>}
 
               <button
                 type="submit"
-                disabled={state === "loading"}
+                disabled={state === "loading" || !ageConfirmed || !termsAccepted}
                 className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {state === "loading" ? (

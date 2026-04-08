@@ -13,6 +13,7 @@ import { useSession } from "@/hooks/useSession";
 import { useProfile } from "@/contexts/ProfileContext";
 import { supabase } from "@/lib/supabase/client";
 import { USE_POSTING_PACKAGES } from "@/lib/features";
+import { compressImage } from "@/lib/image";
 
 // ---------------------------------------------------------------------------
 // Types & constants
@@ -111,13 +112,14 @@ export default function UploadPostPage() {
 
     let mediaUrl: string | null = null;
 
-    // 1. Upload file if present
+    // 1. Upload file if present (images are compressed client-side first)
     if (file) {
-      const ext  = file.name.split(".").pop() ?? "jpg";
+      const compressed = await compressImage(file, { maxDimension: 1600, quality: 0.82 });
+      const ext  = compressed.name.split(".").pop() ?? "jpg";
       const path = `${user.id}/${Date.now()}.${ext}`;
       const { error: uploadErr } = await supabase.storage
         .from("status-updates")
-        .upload(path, file, { upsert: false });
+        .upload(path, compressed, { upsert: false, contentType: compressed.type });
 
       if (uploadErr) {
         setError("Photo upload failed. Please try again.");
@@ -226,7 +228,16 @@ export default function UploadPostPage() {
 
   if (step === "success") {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-950 px-6 text-center pb-20">
+      <div className="relative flex min-h-screen flex-col items-center justify-center bg-zinc-950 px-6 text-center pb-20">
+        {/* Close button */}
+        <button
+          onClick={() => router.back()}
+          className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800/80 text-zinc-400 transition hover:bg-zinc-700 hover:text-white"
+          aria-label="Close"
+        >
+          <X size={20} />
+        </button>
+
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}

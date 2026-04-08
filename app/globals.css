@@ -71,3 +71,60 @@ body {
 .ptr-spinner {
   animation: ptr-spin 0.8s linear infinite;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*  Premium ambient effects                                                   */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 2. Film grain texture ─────────────────────────────────────────────────
+   Near-invisible noise overlay. Makes flat black feel like matte paper. */
+
+.film-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  mix-blend-mode: overlay;
+}
+
+/* ── 4. Glow bleed — gold glow on interactive surfaces ─────────────────── */
+
+.glow-interactive {
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.glow-interactive:hover,
+.glow-interactive:focus-within {
+  box-shadow:
+    0 0 24px rgba(252, 186, 3, 0.1),
+    0 0 48px rgba(252, 186, 3, 0.05);
+}
+
+.glow-card {
+  transition: box-shadow 0.35s ease, border-color 0.35s ease;
+}
+
+.glow-card:hover {
+  border-color: rgba(252, 186, 3, 0.15) !important;
+  box-shadow:
+    0 0 20px rgba(252, 186, 3, 0.08),
+    0 0 50px rgba(252, 186, 3, 0.04),
+    inset 0 1px 0 rgba(252, 186, 3, 0.06);
+}
+
+/* Tap glow for mobile */
+.glow-card:active,
+.glow-tap:active {
+  box-shadow:
+    0 0 20px rgba(252, 186, 3, 0.12),
+    0 0 40px rgba(252, 186, 3, 0.06);
+}
+
+/* Gold text glow for links/buttons */
+.glow-text:hover {
+  text-shadow: 0 0 16px rgba(252, 186, 3, 0.35);
+}

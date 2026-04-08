@@ -5,10 +5,12 @@ import Link from "next/link";
 import { AnimatePresence } from "framer-motion";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import { SignInModal } from "./SignInModal";
 
 export function NavAuth() {
   const { user, loading } = useSession();
+  const { t } = useTranslation();
   const [username, setUsername] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -44,7 +46,7 @@ export function NavAuth() {
           onClick={() => supabase.auth.signOut()}
           className="text-xs text-zinc-600 transition-colors hover:text-zinc-300"
         >
-          Sign Out
+          {t("sign_out")}
         </button>
       </div>
     );
@@ -56,13 +58,13 @@ export function NavAuth() {
         href="/auth/signup"
         className="text-xs text-zinc-400 transition-colors hover:text-zinc-100"
       >
-        Sign Up
+        {t("sign_up")}
       </Link>
       <button
         onClick={() => setIsModalOpen(true)}
         className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-zinc-400 transition-colors hover:border-white/20 hover:text-zinc-100"
       >
-        Sign In
+        {t("sign_in")}
       </button>
 
       <AnimatePresence>

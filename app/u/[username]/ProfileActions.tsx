@@ -12,6 +12,7 @@ import { useFollow } from "@/hooks/useFollow";
 import { useRequestStatus } from "@/hooks/useMessageRequests";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 type Props = {
   profileId: string;
@@ -26,6 +27,7 @@ export function ProfileActions({
   profileId, username, initialIsFollowing, userId: _serverUserId, isOwnProfile, isProvider,
 }: Props) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, loading: sessionLoading } = useSession();
 
   // Always use client-side user ID — server-side is unreliable
@@ -230,7 +232,7 @@ export function ProfileActions({
                 : "bg-white text-zinc-950 hover:bg-zinc-200"
             )}
           >
-            {isFollowing ? "Following" : "Follow"}
+            {isFollowing ? t("post_following") : t("post_follow")}
             {isFollowing && <ChevronDown size={13} className="text-zinc-500" />}
           </motion.button>
 

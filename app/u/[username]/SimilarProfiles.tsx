@@ -16,6 +16,7 @@ type SimilarProfile = {
   age: number | null;
   verification_status: string | null;
   tagline: string | null;
+  is_promoted?: boolean;
 };
 
 type Props = {
@@ -30,6 +31,31 @@ export function SimilarProfiles({ profileId, city, serviceCategories }: Props) {
 
   useEffect(() => {
     async function load() {
+      // Fetch bumped providers (tier 2/3), geo-filtered by city
+      const { data: bumpedData } = await supabase.rpc("get_bumped_provider_ids", {
+        p_min_tier: 2,
+        p_exclude_id: profileId,
+        p_city: city || null,
+        p_limit: 4,
+      });
+      const bumpedIds = new Set(
+        ((bumpedData ?? []) as { provider_id: string }[]).map((b) => b.provider_id)
+      );
+
+      // Fetch promoted profiles
+      let promotedProfiles: SimilarProfile[] = [];
+      if (bumpedIds.size > 0) {
+        const { data: promoted } = await supabase
+          .from("profiles")
+          .select("id, username, avatar_url, city, age, verification_status, tagline")
+          .in("id", [...bumpedIds]);
+        promotedProfiles = ((promoted ?? []) as SimilarProfile[]).map((p) => ({
+          ...p,
+          is_promoted: true,
+        }));
+      }
+
+      // Fetch organic similar profiles
       let query = supabase
         .from("profiles")
         .select("id, username, avatar_url, city, age, verification_status, tagline")
@@ -41,21 +67,27 @@ export function SimilarProfiles({ profileId, city, serviceCategories }: Props) {
         query = query.eq("city", city);
       }
 
-      const { data } = await query;
-      let results = data ?? [];
+      // Exclude bumped providers from organic results to avoid duplicates
+      if (bumpedIds.size > 0) {
+        query = query.not("id", "in", `(${[...bumpedIds].join(",")})`);
+      }
 
-      if (results.length < 4 && city) {
-        const existingIds = [profileId, ...results.map((p) => p.id)];
+      const { data } = await query;
+      let organicResults = (data ?? []) as SimilarProfile[];
+
+      if (organicResults.length < 4 && city) {
+        const existingIds = [profileId, ...organicResults.map((p) => p.id), ...bumpedIds];
         const { data: more } = await supabase
           .from("profiles")
           .select("id, username, avatar_url, city, age, verification_status, tagline")
           .eq("is_provider", true)
-          .not("id", "in", `(${existingIds.join(",")})`)
-          .limit(12 - results.length);
-        results = [...results, ...(more ?? [])];
+          .not("id", "in", `(${[...existingIds].join(",")})`)
+          .limit(12 - organicResults.length);
+        organicResults = [...organicResults, ...((more ?? []) as SimilarProfile[])];
       }
 
-      setProfiles(results);
+      // Promoted profiles appear first, then organic
+      setProfiles([...promotedProfiles, ...organicResults]);
       setLoading(false);
     }
 
@@ -133,6 +165,14 @@ export function SimilarProfiles({ profileId, city, serviceCategories }: Props) {
 
                   {/* Gradient overlay — bottom half */}
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+                  {/* Promoted badge — top left */}
+                  {p.is_promoted && (
+                    <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-amber-400/90 px-1.5 py-0.5 shadow-md">
+                      <Sparkles size={8} className="text-zinc-900" />
+                      <span className="text-[8px] font-bold text-zinc-900 uppercase tracking-wide">Ad</span>
+                    </div>
+                  )}
 
                   {/* Verified badge — top right */}
                   {isVerified && (

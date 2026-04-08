@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { useProfile } from "@/contexts/ProfileContext";
 import { supabase } from "@/lib/supabase/client";
+import { compressImage } from "@/lib/image";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -165,12 +166,14 @@ export default function EditProfilePage() {
     const objectUrl = URL.createObjectURL(file);
     setAvatarPreview(objectUrl);
 
-    const ext  = file.name.split(".").pop() ?? "jpg";
+    // Avatars are smaller — 800px is plenty
+    const compressed = await compressImage(file, { maxDimension: 800, quality: 0.85 });
+    const ext  = compressed.name.split(".").pop() ?? "jpg";
     const path = `${user.id}/avatar.${ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from("avatars")
-      .upload(path, file, { upsert: true, contentType: file.type });
+      .upload(path, compressed, { upsert: true, contentType: compressed.type });
 
     if (uploadError) {
       showToast("error", "Photo upload failed. Try again.");

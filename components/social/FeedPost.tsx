@@ -14,6 +14,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useLike } from "@/hooks/useLike";
 import { useFollow } from "@/hooks/useFollow";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { FeedPostData } from "./SocialHome";
 
 type Props = {
@@ -29,19 +30,20 @@ function formatCount(n: number): string {
   return n.toLocaleString();
 }
 
-function formatTimestamp(isoString: string): string {
+function formatTimestamp(isoString: string, t: (k: import("@/lib/i18n/en").TranslationKey) => string): string {
   const diff = Date.now() - new Date(isoString).getTime();
   const minutes = Math.floor(diff / 60_000);
-  if (minutes < 1) return "JUST NOW";
-  if (minutes < 60) return `${minutes} MINUTE${minutes !== 1 ? "S" : ""} AGO`;
+  if (minutes < 1) return t("time_just_now_up");
+  if (minutes < 60) return `${minutes} ${minutes !== 1 ? t("time_minutes") : t("time_minute")} ${t("time_ago")}`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} HOUR${hours !== 1 ? "S" : ""} AGO`;
+  if (hours < 24) return `${hours} ${hours !== 1 ? t("time_hours") : t("time_hour")} ${t("time_ago")}`;
   const days = Math.floor(hours / 24);
-  return `${days} DAY${days !== 1 ? "S" : ""} AGO`;
+  return `${days} ${days !== 1 ? t("time_days") : t("time_day")} ${t("time_ago")}`;
 }
 
 export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
-  const { 
+  const { t } = useTranslation();
+  const {
     caption, 
     media_url, 
     created_at, 
@@ -73,7 +75,7 @@ export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
   });
 
   return (
-    <article className="mx-3 my-2 overflow-hidden rounded-2xl bg-gradient-to-b from-zinc-900 to-zinc-950 border border-white/5 shadow-md">
+    <article className="mx-3 my-2 overflow-hidden rounded-2xl bg-gradient-to-b from-zinc-900 to-zinc-950 border border-white/5 shadow-md glow-card">
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-3 py-3 border-b border-white/5">
         <Link href={`/u/${username}`} className="flex items-center gap-2.5">
@@ -120,7 +122,7 @@ export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
                 following ? "text-zinc-400" : "text-sky-400"
               )}
             >
-              {following ? "Following" : "Follow"}
+              {following ? t("post_following") : t("post_follow")}
             </button>
           )}
           <button
@@ -179,7 +181,7 @@ export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
       {/* ── Likes count ── */}
       <div className="px-3 pt-1">
         <p className="text-[13px] font-semibold text-white">
-          {formatCount(likesCount)} likes
+          {formatCount(likesCount)} {t("post_likes")}
         </p>
       </div>
 
@@ -189,7 +191,7 @@ export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
           <p className="line-clamp-2 text-[13px] leading-relaxed text-zinc-100">
             <span className="font-semibold mr-1.5">{username}</span>
             {caption}
-            <span className="text-zinc-500"> more</span>
+            <span className="text-zinc-500"> {t("post_more")}</span>
           </p>
         </div>
       )}
@@ -198,7 +200,7 @@ export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
       {comments_count > 0 && (
         <div className="px-3 pt-1.5">
           <Link href={`/post/${post.post_id}`} className="text-[13px] text-zinc-500 hover:text-zinc-300 transition-colors">
-            View all {comments_count} comments
+            {t("feed_view_comments")} {comments_count} {t("feed_comments")}
           </Link>
         </div>
       )}
@@ -207,7 +209,7 @@ export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
       {views_count > 0 && (
         <div className="px-3 pt-0.5">
           <p className="text-[11px] text-zinc-600">
-            {formatCount(views_count)} views
+            {formatCount(views_count)} {t("feed_views")}
           </p>
         </div>
       )}
@@ -215,13 +217,13 @@ export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
       {/* ── Ghost comment input ── */}
       <div className="flex items-center gap-3 px-3 py-2.5 mt-1.5 border-t border-white/5">
         <div className="h-6 w-6 rounded-full bg-zinc-800 flex-shrink-0" />
-        <span className="text-[13px] text-zinc-600 select-none">Add a comment…</span>
+        <span className="text-[13px] text-zinc-600 select-none">{t("post_add_comment")}</span>
       </div>
 
       {/* ── Timestamp ── */}
       <div className="px-3 pb-3">
         <p className="text-[10px] tracking-widest text-zinc-600 uppercase">
-          {formatTimestamp(created_at)}
+          {formatTimestamp(created_at, t)}
         </p>
       </div>
     </article>

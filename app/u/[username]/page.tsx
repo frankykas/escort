@@ -19,6 +19,7 @@ import {
 import { ProfileCategoryStrip } from "./ProfileCategoryStrip";
 import { USE_BOOKINGS } from "@/lib/features";
 import { cn, formatLastSeen } from "@/lib/utils";
+import { getServerT } from "@/lib/i18n";
 import type { ProfileAttributes } from "./ProfileTabs";
 
 function formatCount(n: number): string {
@@ -36,6 +37,7 @@ type Props = { params: Promise<{ username: string }> };
 
 export default async function ProfilePage({ params }: Props) {
   const { username } = await params;
+  const t = await getServerT();
   const supabase = createServerClient();
 
   if (!supabase) {
@@ -278,15 +280,15 @@ export default async function ProfilePage({ params }: Props) {
 
         {/* Stats */}
         <div className="mt-4 flex items-center gap-6">
-          <StatItem value={formatCount(posts.length)} label="Posts" />
+          <StatItem value={formatCount(posts.length)} label={t("pub_posts")} />
           <div className="h-8 w-px bg-white/5" />
-          <StatItem value={formatCount(followersCount)} label="Followers" />
+          <StatItem value={formatCount(followersCount)} label={t("pub_followers")} />
           <div className="h-8 w-px bg-white/5" />
-          <StatItem value={formatCount(followingCount)} label="Following" />
+          <StatItem value={formatCount(followingCount)} label={t("profile_following")} />
           {listings.length > 0 && (
             <>
               <div className="h-8 w-px bg-white/5" />
-              <StatItem value={formatCount(listings.length)} label="Listings" />
+              <StatItem value={formatCount(listings.length)} label={t("pub_listings")} />
             </>
           )}
         </div>

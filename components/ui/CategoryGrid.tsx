@@ -7,11 +7,13 @@ import { ChevronDown, ChevronRight, Grid3X3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CATEGORIES, getFeaturedCategories } from "@/lib/categories";
 import type { Category } from "@/lib/categories";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 // ─── Explore page grid (gradient cards) ─────────────────────────────────────
 
 export function CategoryGrid() {
   const [expanded, setExpanded] = useState(false);
+  const { t } = useTranslation();
   const featured = getFeaturedCategories();
   const displayCategories = expanded ? CATEGORIES : featured;
 
@@ -22,14 +24,14 @@ export function CategoryGrid() {
         <div className="flex items-center gap-2">
           <Grid3X3 size={13} className="text-[#FCBA03]" />
           <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-            Browse by category
+            {t("cat_browse")}
           </span>
         </div>
         <Link
           href="/categories"
           className="flex items-center gap-0.5 text-[11px] font-medium text-[#FCBA03] transition-colors hover:text-[#fdd44b]"
         >
-          View all
+          {t("cat_view_all")}
           <ChevronRight size={12} />
         </Link>
       </div>
@@ -47,7 +49,7 @@ export function CategoryGrid() {
           onClick={() => setExpanded(true)}
           className="flex w-full items-center justify-center gap-1 pb-3 text-[11px] font-medium text-zinc-500 transition-colors hover:text-zinc-300"
         >
-          Show all {CATEGORIES.length} categories
+          {t("cat_show_all")} {CATEGORIES.length} {t("cat_categories")}
           <ChevronDown size={12} />
         </button>
       )}
@@ -90,6 +92,7 @@ function CategoryCard({ category, index }: { category: Category; index: number }
 
 export function CategoryStrip() {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation();
   const featured = getFeaturedCategories();
 
   return (
@@ -102,7 +105,7 @@ export function CategoryStrip() {
         <div className="flex items-center gap-2">
           <Grid3X3 size={13} className="text-[#FCBA03]" />
           <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-            Browse by category
+            {t("cat_browse")}
           </span>
         </div>
         <motion.div
@@ -149,7 +152,7 @@ export function CategoryStrip() {
                 href="/categories"
                 className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#FCBA03] transition-colors hover:text-[#fdd44b]"
               >
-                View all {CATEGORIES.length} categories
+                {t("cat_view_all")} {CATEGORIES.length} {t("cat_categories")}
                 <ChevronRight size={11} />
               </Link>
             </div>
@@ -163,6 +166,7 @@ export function CategoryStrip() {
 // ─── Full categories page grid (premium cards) ──────────────────────────────
 
 export function FullCategoryGrid() {
+  const { t } = useTranslation();
   return (
     <div className="grid grid-cols-2 gap-3 px-5">
       {CATEGORIES.map((cat, i) => (
@@ -173,7 +177,7 @@ export function FullCategoryGrid() {
           transition={{ duration: 0.35, delay: i * 0.03, ease: "easeOut" }}
         >
           <Link href={`/category/${cat.slug}`} className="group block">
-            <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#141414] transition-all duration-300 group-hover:border-[#FCBA03]/20 group-hover:shadow-[0_0_24px_rgba(252,186,3,0.06)] group-active:scale-[0.98]">
+            <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#141414] transition-all duration-300 group-hover:border-[#FCBA03]/20 group-hover:shadow-[0_0_24px_rgba(252,186,3,0.06)] group-active:scale-[0.98] glow-card">
               {/* Top accent line */}
               <div className={cn(
                 "h-[3px] w-full bg-gradient-to-r opacity-60 transition-opacity group-hover:opacity-100",
@@ -199,7 +203,7 @@ export function FullCategoryGrid() {
                 {/* Browse link */}
                 <div className="mt-3 flex items-center gap-1">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-[#FCBA03]/70 group-hover:text-[#FCBA03] transition-colors">
-                    Browse
+                    {t("cat_browse_cta")}
                   </span>
                   <ChevronRight size={10} className="text-[#FCBA03]/50 group-hover:text-[#FCBA03] group-hover:translate-x-0.5 transition-all" />
                 </div>
