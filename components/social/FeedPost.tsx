@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { useLike } from "@/hooks/useLike";
 import { useFollow } from "@/hooks/useFollow";
 import { useTranslation } from "@/lib/i18n/useTranslation";
+import { useSignupPrompt } from "@/hooks/useSignupPrompt";
 import type { FeedPostData } from "./SocialHome";
 
 type Props = {
@@ -22,6 +23,8 @@ type Props = {
   isLiked: boolean;
   isFollowing: boolean;
   userId: string | null;
+  /** True for the first post in the feed — sets fetchPriority high so this is the LCP image. */
+  priority?: boolean;
 };
 
 function formatCount(n: number): string {
@@ -41,8 +44,9 @@ function formatTimestamp(isoString: string, t: (k: import("@/lib/i18n/en").Trans
   return `${days} ${days !== 1 ? t("time_days") : t("time_day")} ${t("time_ago")}`;
 }
 
-export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
+export function FeedPost({ post, isLiked, isFollowing, userId, priority = false }: Props) {
   const { t } = useTranslation();
+  const { promptIfGuest, modal: signupModal } = useSignupPrompt();
   const {
     caption, 
     media_url, 
@@ -76,6 +80,7 @@ export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
 
   return (
     <article className="mx-3 my-2 overflow-hidden rounded-2xl bg-gradient-to-b from-zinc-900 to-zinc-950 border border-white/5 shadow-md glow-card">
+      {signupModal}
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-3 py-3 border-b border-white/5">
         <Link href={`/u/${username}`} className="flex items-center gap-2.5">
@@ -113,10 +118,10 @@ export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
         </Link>
 
         <div className="flex items-center gap-3">
-          {/* Follow — hidden on own posts and when signed out */}
-          {userId && !isOwnPost && (
+          {/* Follow — hidden on own posts */}
+          {!isOwnPost && (
             <button
-              onClick={toggleFollow}
+              onClick={() => { if (!promptIfGuest("follow")) toggleFollow(); }}
               className={cn(
                 "text-[13px] font-semibold transition-colors",
                 following ? "text-zinc-400" : "text-sky-400"
@@ -143,7 +148,10 @@ export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
               alt={caption ?? "Post"}
               fill
               className="object-cover"
-              sizes="100vw"
+              // Feed is full-width on mobile, capped at ~470px on tablet/desktop.
+              // A bare "100vw" forces a 1920px image on big screens for no reason.
+              sizes="(max-width: 640px) 100vw, 470px"
+              priority={priority}
             />
           </div>
         </Link>
@@ -153,7 +161,7 @@ export function FeedPost({ post, isLiked, isFollowing, userId }: Props) {
       <div className="flex items-center justify-between px-3 pt-3 pb-1">
         <div className="flex items-center gap-4">
           <motion.button
-            onClick={toggleLike}
+            onClick={() => { if (!promptIfGuest("like")) toggleLike(); }}
             aria-label={liked ? "Unlike" : "Like"}
             whileTap={{ scale: 1.3 }}
             transition={{ type: "spring", stiffness: 500, damping: 15 }}

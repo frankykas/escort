@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-fetch";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -274,12 +275,12 @@ function ThreadView({ partner }: { partner: Profile }) {
   useEffect(() => {
     if (!user || !partner) return;
     if (isProvider) {
-      fetch(`/api/block?blockerId=${user.id}&blockedId=${partner.id}`)
+      apiFetch(`/api/block?blockerId=${user.id}&blockedId=${partner.id}`)
         .then((r) => r.json())
         .then((d) => setIsBlocked(d.blocked ?? false))
         .catch(() => {});
     }
-    fetch(`/api/block?blockerId=${partner.id}&blockedId=${user.id}`)
+    apiFetch(`/api/block?blockerId=${partner.id}&blockedId=${user.id}`)
       .then((r) => r.json())
       .then((d) => setBlockedByThem(d.blocked ?? false))
       .catch(() => {});
@@ -298,10 +299,10 @@ function ThreadView({ partner }: { partner: Profile }) {
     setBlocking(true);
     setBlockConfirmOpen(false);
     const method = isBlocked ? "DELETE" : "POST";
-    await fetch("/api/block", {
+    await apiFetch("/api/block", {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ blockerId: user.id, blockedId: partner.id }),
+      body: JSON.stringify({ blockedId: partner.id }),
     });
     setIsBlocked(!isBlocked);
     setBlocking(false);

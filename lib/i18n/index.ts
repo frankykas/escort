@@ -9,7 +9,7 @@ export const STORAGE_KEY = "cleopatra_locale";
 const translations = { en, fr } as const;
 
 /** Build-time default from env var. Falls back to "en". */
-export const ENV_LOCALE = (process.env.NEXT_PUBLIC_LOCALE ?? "en") as Locale;
+export const ENV_LOCALE = (process.env.NEXT_PUBLIC_LOCALE ?? "fr") as Locale;
 
 /**
  * Translate a key. Safe to call in Server Components and Client Components.

@@ -9,6 +9,7 @@ import {
   Image as ImageIcon, ListOrdered, UserCheck, Loader2, RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-fetch";
 import { useSession } from "@/hooks/useSession";
 import { AdminActions } from "./AdminActions";
 import type { DashboardStats, RecentUser, ReportRow, PendingVerification } from "@/lib/admin";
@@ -34,21 +35,19 @@ function timeAgo(iso: string) {
 
 function VerificationRow({
   verification,
-  adminId,
   onResolved,
 }: {
   verification: PendingVerification;
-  adminId: string;
   onResolved: () => void;
 }) {
   const [acting, setActing] = useState(false);
 
   async function handleAction(action: "approve" | "reject") {
     setActing(true);
-    const res = await fetch("/api/admin/verification", {
+    const res = await apiFetch("/api/admin/verification", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ adminId, userId: verification.id, action }),
+      body: JSON.stringify({ userId: verification.id, action }),
     });
     if (res.ok) onResolved();
     setActing(false);
@@ -119,7 +118,7 @@ export default function AdminDashboard() {
     if (!user) return;
     if (showRefresh) setRefreshing(true);
 
-    const res = await fetch(`/api/admin/dashboard?userId=${user.id}`);
+    const res = await apiFetch(`/api/admin/dashboard`);
     if (!res.ok) {
       router.replace("/");
       return;
@@ -252,7 +251,6 @@ export default function AdminDashboard() {
                   <VerificationRow
                     key={v.id}
                     verification={v}
-                    adminId={user!.id}
                     onResolved={() => fetchData(true)}
                   />
                 ))}

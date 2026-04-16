@@ -14,6 +14,7 @@ import { useSession } from "@/hooks/useSession";
 import { useProfile } from "@/contexts/ProfileContext";
 import { supabase } from "@/lib/supabase/client";
 import { compressImage } from "@/lib/image";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -38,6 +39,7 @@ const inputCls =
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, checked } = useSession();
   const { refetch } = useProfile();
 
@@ -90,7 +92,7 @@ export default function OnboardingPage() {
       .upload(path, compressed, { upsert: true, contentType: compressed.type });
 
     if (upErr) {
-      setError("Photo upload failed. Try again.");
+      setError(t("onb_err_photo"));
       setAvatarPreview(null);
       setUploading(false);
       return;
@@ -109,7 +111,7 @@ export default function OnboardingPage() {
 
   async function handleFinish() {
     if (!user) return;
-    if (!username.trim()) { setError("Username is required"); return; }
+    if (!username.trim()) { setError(t("onb_err_username")); return; }
 
     setSaving(true);
     setError(null);
@@ -139,7 +141,7 @@ export default function OnboardingPage() {
     if (saveErr) {
       setSaving(false);
       if (saveErr.message.includes("profiles_username_key")) {
-        setError("That username is taken. Try another.");
+        setError(t("onb_err_username_taken"));
       } else {
         setError(saveErr.message);
       }
@@ -191,8 +193,8 @@ export default function OnboardingPage() {
               className="space-y-4"
             >
               <div className="text-center">
-                <h1 className="text-[20px] font-bold text-white">Welcome to Cleopatra</h1>
-                <p className="mt-1.5 text-[14px] text-zinc-400">How will you use the platform?</p>
+                <h1 className="text-[20px] font-bold text-white">{t("onb_welcome")}</h1>
+                <p className="mt-1.5 text-[14px] text-zinc-400">{t("onb_how_use")}</p>
               </div>
 
               <button
@@ -203,9 +205,9 @@ export default function OnboardingPage() {
                   <Search size={24} className="text-sky-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-[16px] font-semibold text-white">I&apos;m browsing</p>
+                  <p className="text-[16px] font-semibold text-white">{t("onb_browsing")}</p>
                   <p className="mt-0.5 text-[13px] text-zinc-500">
-                    Discover providers, browse listings, and connect
+                    {t("onb_browsing_desc")}
                   </p>
                 </div>
                 <ArrowRight size={18} className="flex-shrink-0 text-zinc-600" />
@@ -219,9 +221,9 @@ export default function OnboardingPage() {
                   <Crown size={24} className="text-amber-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-[16px] font-semibold text-white">I&apos;m a provider</p>
+                  <p className="text-[16px] font-semibold text-white">{t("onb_provider")}</p>
                   <p className="mt-0.5 text-[13px] text-zinc-500">
-                    Create listings, post content, and grow your audience
+                    {t("onb_provider_desc")}
                   </p>
                 </div>
                 <ArrowRight size={18} className="flex-shrink-0 text-zinc-600" />
@@ -238,13 +240,10 @@ export default function OnboardingPage() {
               className="rounded-2xl border border-white/10 bg-zinc-900/80 p-6 backdrop-blur-xl"
             >
               <h1 className="text-[18px] font-bold text-white">
-                {role === "provider" ? "Set up your profile" : "Choose your username"}
+                {role === "provider" ? t("onb_setup_profile") : t("onb_choose_username")}
               </h1>
               <p className="mt-1 text-[13px] text-zinc-500">
-                {role === "provider"
-                  ? "Complete these basics to start getting discovered."
-                  : "This is how other users will see you."
-                }
+                {role === "provider" ? t("onb_provider_intro") : t("onb_client_intro")}
               </p>
 
               <div className="mt-6 space-y-5">
@@ -287,13 +286,13 @@ export default function OnboardingPage() {
                 {/* Username */}
                 <div>
                   <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
-                    Username *
+                    {t("onb_username_label")}
                   </label>
                   <input
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="e.g. sophia.belle"
+                    placeholder={t("onb_username_ph")}
                     maxLength={30}
                     className={inputCls}
                   />
@@ -305,12 +304,12 @@ export default function OnboardingPage() {
                     {/* Bio */}
                     <div>
                       <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
-                        Short bio
+                        {t("onb_bio")}
                       </label>
                       <textarea
                         value={bio}
                         onChange={(e) => setBio(e.target.value)}
-                        placeholder="A few words about yourself..."
+                        placeholder={t("onb_bio_ph")}
                         maxLength={160}
                         rows={2}
                         className={cn(inputCls, "resize-none")}
@@ -321,20 +320,20 @@ export default function OnboardingPage() {
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
-                          City
+                          {t("onb_city")}
                         </label>
                         <input
                           type="text"
                           value={city}
                           onChange={(e) => setCity(e.target.value)}
-                          placeholder="e.g. Toronto"
+                          placeholder={t("onb_city_ph")}
                           maxLength={40}
                           className={inputCls}
                         />
                       </div>
                       <div>
                         <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
-                          Country
+                          {t("onb_country")}
                         </label>
                         <select
                           value={countryCode}
@@ -351,7 +350,7 @@ export default function OnboardingPage() {
                     {/* Categories */}
                     <div>
                       <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
-                        Services you offer
+                        {t("onb_services")}
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {SERVICE_CATS.map((cat) => (
@@ -381,9 +380,9 @@ export default function OnboardingPage() {
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 transition hover:bg-amber-300 active:scale-[0.99] disabled:opacity-40"
                 >
                   {saving ? (
-                    <><Loader2 size={14} className="animate-spin" /> Saving...</>
+                    <><Loader2 size={14} className="animate-spin" /> {t("onb_saving")}</>
                   ) : (
-                    <>{role === "provider" ? "Next" : "Get Started"} <ArrowRight size={15} /></>
+                    <>{role === "provider" ? t("onb_next") : t("onb_get_started")} <ArrowRight size={15} /></>
                   )}
                 </button>
 
@@ -391,7 +390,7 @@ export default function OnboardingPage() {
                   onClick={() => { setStep("role"); setRole(null); }}
                   className="w-full text-center text-[12px] text-zinc-600 hover:text-zinc-400 transition"
                 >
-                  Go back
+                  {t("onb_go_back")}
                 </button>
               </div>
             </motion.div>
@@ -408,9 +407,9 @@ export default function OnboardingPage() {
               <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-400/10">
                 <DollarSign size={24} className="text-amber-400" />
               </div>
-              <h1 className="text-[18px] font-bold text-white">What is your base rate?</h1>
+              <h1 className="text-[18px] font-bold text-white">{t("onb_rate_title")}</h1>
               <p className="mt-1 text-[13px] text-zinc-500">
-                Set a starting hourly rate. You can customize prices for different durations later.
+                {t("onb_rate_desc")}
               </p>
 
               <div className="mt-6 space-y-5">
@@ -423,21 +422,21 @@ export default function OnboardingPage() {
                     placeholder="250"
                     className={cn(inputCls, "pl-12")}
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[12px] text-zinc-600">per hour</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[12px] text-zinc-600">{t("onb_rate_per_hour")}</span>
                 </div>
 
                 <button
                   onClick={() => setStep("listing")}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 transition hover:bg-amber-300 active:scale-[0.99]"
                 >
-                  Next <ArrowRight size={15} />
+                  {t("onb_next")} <ArrowRight size={15} />
                 </button>
 
                 <button
                   onClick={() => setStep("profile")}
                   className="w-full text-center text-[12px] text-zinc-600 hover:text-zinc-400 transition"
                 >
-                  Go back
+                  {t("onb_go_back")}
                 </button>
               </div>
             </motion.div>
@@ -454,21 +453,21 @@ export default function OnboardingPage() {
               <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500/10">
                 <PlusCircle size={24} className="text-sky-400" />
               </div>
-              <h1 className="text-[18px] font-bold text-white">Add your first listing</h1>
+              <h1 className="text-[18px] font-bold text-white">{t("onb_listing_title")}</h1>
               <p className="mt-1 text-[13px] text-zinc-500">
-                Listings help clients find specific services and durations you offer.
+                {t("onb_listing_desc")}
               </p>
 
               <div className="mt-6 space-y-4">
                 <div>
                   <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
-                    Listing title
+                    {t("onb_listing_title_label")}
                   </label>
                   <input
                     type="text"
                     value={listingTitle}
                     onChange={(e) => setListingTitle(e.target.value)}
-                    placeholder="e.g. 1h Companionship"
+                    placeholder={t("onb_listing_title_ph")}
                     className={inputCls}
                   />
                 </div>
@@ -476,22 +475,22 @@ export default function OnboardingPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
-                      Duration (min)
+                      {t("onb_duration_min")}
                     </label>
                     <select
                       value={listingDuration}
                       onChange={(e) => setListingDuration(e.target.value)}
                       className={inputCls}
                     >
-                      <option value="30">30 min</option>
-                      <option value="60">60 min</option>
-                      <option value="90">90 min</option>
-                      <option value="120">2 hours</option>
+                      <option value="30">{t("onb_min_30")}</option>
+                      <option value="60">{t("onb_min_60")}</option>
+                      <option value="90">{t("onb_min_90")}</option>
+                      <option value="120">{t("onb_hours_2")}</option>
                     </select>
                   </div>
                   <div>
                     <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
-                      Price (CA$)
+                      {t("onb_price_cad")}
                     </label>
                     <input
                       type="number"
@@ -509,9 +508,9 @@ export default function OnboardingPage() {
                   className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 transition hover:bg-amber-300 active:scale-[0.99] disabled:opacity-40"
                 >
                   {saving ? (
-                    <><Loader2 size={14} className="animate-spin" /> Launching...</>
+                    <><Loader2 size={14} className="animate-spin" /> {t("onb_launching")}</>
                   ) : (
-                    <><Sparkles size={15} /> Launch My Profile</>
+                    <><Sparkles size={15} /> {t("onb_launch_profile")}</>
                   )}
                 </button>
 
@@ -520,7 +519,7 @@ export default function OnboardingPage() {
                   disabled={saving}
                   className="w-full text-center text-[12px] text-zinc-600 hover:text-zinc-400 transition"
                 >
-                  Skip for now
+                  {t("onb_skip")}
                 </button>
               </div>
             </motion.div>
@@ -538,20 +537,21 @@ export default function OnboardingPage() {
                 <CheckCircle size={32} className="text-amber-400" />
               </div>
               <h1 className="mt-4 text-[20px] font-bold text-white">
-                {role === "provider" ? "You're live!" : "Welcome aboard!"}
+                {role === "provider" ? t("onb_live") : t("onb_welcome_aboard")}
               </h1>
               <p className="mt-2 text-[14px] text-zinc-400">
-                {role === "provider"
-                  ? "Your profile is set up. Check your dashboard to manage your listings and posts."
-                  : "You're all set. Start exploring providers and listings."
-                }
+                {role === "provider" ? t("onb_live_body") : t("onb_client_body")}
               </p>
               <button
-                onClick={() => router.push("/")}
+                onClick={() => {
+                  const next = localStorage.getItem("signup_next");
+                  if (next) localStorage.removeItem("signup_next");
+                  router.push(next && next.startsWith("/") ? next : "/");
+                }}
                 className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 transition hover:bg-amber-300"
               >
                 <ArrowRight size={16} />
-                {role === "provider" ? "Go to Dashboard" : "Start Exploring"}
+                {role === "provider" ? t("onb_go_dashboard") : t("onb_start_exploring")}
               </button>
             </motion.div>
           )}

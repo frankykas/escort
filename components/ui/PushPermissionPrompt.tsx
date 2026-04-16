@@ -61,7 +61,7 @@ export function PushPermissionPrompt() {
     if (!user || submitting) return;
     setSubmitting(true);
     try {
-      const ok = await subscribeToPush(user.id);
+      const ok = await subscribeToPush();
       if (ok) {
         // Permanent: they granted it
         localStorage.setItem(`${DISMISS_KEY_PREFIX}${user.id}`, "1");

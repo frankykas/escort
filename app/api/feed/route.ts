@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getFeedPosts, addComment, getPostComments } from "@/lib/feed";
+import { getFeedPosts, addComment } from "@/lib/feed";
+import { requireUser } from "@/lib/api-auth";
 
 // Get feed posts with embedded comments
 export async function GET(req: NextRequest) {
@@ -15,12 +16,16 @@ export async function GET(req: NextRequest) {
 
 // Add a comment to a post
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { statusUpdateId, userId, bodyText, parentCommentId } = body;
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const userId = auth.user.id;
 
-  if (!statusUpdateId || !userId || !bodyText) {
+  const body = await req.json();
+  const { statusUpdateId, bodyText, parentCommentId } = body;
+
+  if (!statusUpdateId || !bodyText) {
     return NextResponse.json(
-      { error: "statusUpdateId, userId, and bodyText are required" },
+      { error: "statusUpdateId and bodyText are required" },
       { status: 400 }
     );
   }

@@ -1,23 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/api-auth";
 
 /**
  * POST /api/push/subscribe
  *
  * Called by the client after the browser returns a push subscription.
- * Upserts the subscription row for the given user.
+ * Upserts the subscription row for the authenticated user.
  *
- * Body: { userId, endpoint, p256dh, auth, userAgent? }
+ * Body: { endpoint, p256dh, auth, userAgent? }
  */
 export async function POST(req: NextRequest) {
+  const authed = await requireUser(req);
+  if (!authed.ok) return authed.response;
+  const userId = authed.user.id;
+
   const supabase = createServerClient();
   if (!supabase) return NextResponse.json({ error: "Database unavailable" }, { status: 503 });
 
-  const { userId, endpoint, p256dh, auth, userAgent } = await req.json();
+  const { endpoint, p256dh, auth, userAgent } = await req.json();
 
-  if (!userId || !endpoint || !p256dh || !auth) {
+  if (!endpoint || !p256dh || !auth) {
     return NextResponse.json(
-      { error: "userId, endpoint, p256dh, and auth are required" },
+      { error: "endpoint, p256dh, and auth are required" },
       { status: 400 }
     );
   }

@@ -3,17 +3,23 @@ import {
   getPostingPackages,
   getCreditBalance,
   getPurchaseHistory,
-  recordPackagePurchase,
 } from "@/lib/packages";
+import { requireUser } from "@/lib/api-auth";
 
-// Get available packages + optionally a provider's balance/history
+// Get available packages + optionally the caller's balance/history.
+// Balance/history is only ever returned for the authenticated user — this
+// route never reveals another provider's credit state.
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const providerId = searchParams.get("providerId");
+  const includeOwn = searchParams.get("includeOwn") === "1" || searchParams.has("providerId");
 
   const packages = await getPostingPackages();
 
-  if (providerId) {
+  if (includeOwn) {
+    const auth = await requireUser(req);
+    if (!auth.ok) return auth.response;
+    const providerId = auth.user.id;
+
     const [balance, history] = await Promise.all([
       getCreditBalance(providerId),
       getPurchaseHistory(providerId),
@@ -23,25 +29,4 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ packages });
-}
-
-// Record a purchase (called after Stripe webhook confirms payment)
-export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { providerId, packageId, stripePaymentIntentId } = body;
-
-  if (!providerId || !packageId || !stripePaymentIntentId) {
-    return NextResponse.json(
-      { error: "providerId, packageId, and stripePaymentIntentId are required" },
-      { status: 400 }
-    );
-  }
-
-  const result = await recordPackagePurchase(providerId, packageId, stripePaymentIntentId);
-
-  if (!result.success) {
-    return NextResponse.json({ error: result.error }, { status: 400 });
-  }
-
-  return NextResponse.json({ purchaseId: result.purchaseId });
 }

@@ -1,21 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/api-auth";
 
 /**
  * POST /api/persona/complete
  *
  * Called by the client after the Persona Embedded Flow completes.
- * Stores the inquiry ID + status and sets verification_status to "pending".
+ * Stores the inquiry ID + status and sets verification_status to "pending"
+ * (or "verified" if Persona auto-approved).
  *
- * Body: { userId: string, inquiryId: string, status: string }
+ * Body: { inquiryId: string, status: string }
  */
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { userId, inquiryId, status } = body;
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const userId = auth.user.id;
 
-  if (!userId || !inquiryId || !status) {
+  const body = await req.json();
+  const { inquiryId, status } = body;
+
+  if (!inquiryId || !status) {
     return NextResponse.json(
-      { error: "userId, inquiryId, and status are required" },
+      { error: "inquiryId and status are required" },
       { status: 400 }
     );
   }

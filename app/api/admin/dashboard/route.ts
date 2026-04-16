@@ -6,11 +6,12 @@ import {
   getPendingReports,
   getPendingVerifications,
 } from "@/lib/admin";
+import { requireUser } from "@/lib/api-auth";
 
 export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get("userId");
-
-  if (!isAdmin(userId)) {
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  if (!isAdmin(auth.user.id)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

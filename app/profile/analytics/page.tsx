@@ -11,6 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -65,6 +66,7 @@ function timeAgo(iso: string) {
 
 export default function AnalyticsPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, checked } = useSession();
   const [loading, setLoading] = useState(true);
   const [overview, setOverview] = useState<OverviewStats | null>(null);
@@ -286,7 +288,7 @@ export default function AnalyticsPage() {
           {sortedPosts.length === 0 ? (
             <div className="rounded-2xl border border-white/5 bg-zinc-900 py-12 text-center">
               <ImageIcon size={24} className="mx-auto text-zinc-700 mb-2" />
-              <p className="text-[13px] text-zinc-600">No posts yet. Create your first post to see analytics.</p>
+              <p className="text-[13px] text-zinc-600">{t("analytics_no_posts")}</p>
             </div>
           ) : (
             <div className="rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-md overflow-hidden divide-y divide-white/5">

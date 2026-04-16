@@ -14,6 +14,8 @@ import { useSession } from "@/hooks/useSession";
 import { useProfile } from "@/contexts/ProfileContext";
 import { supabase } from "@/lib/supabase/client";
 import { compressImage } from "@/lib/image";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { TranslationKey } from "@/lib/i18n/en";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -81,8 +83,19 @@ const EMPTY_FORM: ProfileForm = {
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
+const DAY_KEYS: Record<string, TranslationKey> = {
+  monday: "day_monday",
+  tuesday: "day_tuesday",
+  wednesday: "day_wednesday",
+  thursday: "day_thursday",
+  friday: "day_friday",
+  saturday: "day_saturday",
+  sunday: "day_sunday",
+};
+
 export default function EditProfilePage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, loading: sessionLoading } = useSession();
   const { refetch } = useProfile();
   const [form, setForm]         = useState<ProfileForm>(EMPTY_FORM);
@@ -176,7 +189,7 @@ export default function EditProfilePage() {
       .upload(path, compressed, { upsert: true, contentType: compressed.type });
 
     if (uploadError) {
-      showToast("error", "Photo upload failed. Try again.");
+      showToast("error", t("pe_err_photo"));
       setAvatarPreview(null);
       setUploading(false);
       return;
@@ -193,12 +206,12 @@ export default function EditProfilePage() {
     // Validate age and height ranges
     const parsedAge = form.age ? parseInt(form.age, 10) : null;
     if (parsedAge !== null && (parsedAge < 18 || parsedAge > 99)) {
-      showToast("error", "Age must be between 18 and 99.");
+      showToast("error", t("pe_err_age"));
       return;
     }
     const parsedHeight = form.height_cm ? parseInt(form.height_cm, 10) : null;
     if (parsedHeight !== null && (parsedHeight < 140 || parsedHeight > 220)) {
-      showToast("error", "Height must be between 140 and 220 cm.");
+      showToast("error", t("pe_err_height"));
       return;
     }
 
@@ -238,10 +251,10 @@ export default function EditProfilePage() {
 
     setSaving(false);
     if (error) {
-      showToast("error", error.message.includes("profiles_username_key") ? "That username is taken." : error.message);
+      showToast("error", error.message.includes("profiles_username_key") ? t("pe_err_username_taken") : error.message);
     } else {
       refetch();
-      showToast("success", "Profile saved!");
+      showToast("success", t("pe_saved"));
       setTimeout(() => router.push(`/profile`), 1200);
     }
   }
@@ -273,14 +286,14 @@ export default function EditProfilePage() {
         >
           <ArrowLeft size={18} />
         </button>
-        <span className="text-[15px] font-semibold text-white">Edit Profile</span>
+        <span className="text-[15px] font-semibold text-white">{t("pe_title")}</span>
         <button
           onClick={handleSave}
           disabled={saving || uploading}
           className="flex h-8 items-center gap-1.5 rounded-full bg-amber-400 px-4 text-[13px] font-bold text-zinc-950 shadow-[0_0_15px_rgba(251,191,36,0.3)] transition-all hover:bg-amber-300 disabled:opacity-50"
         >
           {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} strokeWidth={3} />}
-          Save
+          {t("pe_save")}
         </button>
       </header>
 
@@ -311,15 +324,15 @@ export default function EditProfilePage() {
             {uploading ? <Loader2 size={13} className="animate-spin" /> : <Camera size={13} />}
           </div>
         </button>
-        <p className="mt-3 text-[12px] text-zinc-500">Tap to change photo</p>
+        <p className="mt-3 text-[12px] text-zinc-500">{t("pe_tap_photo")}</p>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
       </div>
 
       <div className="space-y-6 px-4">
 
         {/* ── Basic info ── */}
-        <Section icon={User} title="Basic info">
-          <Field label="Username">
+        <Section icon={User} title={t("pe_sec_basic")}>
+          <Field label={t("pe_username")}>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 text-[14px]">@</span>
               <input
@@ -327,47 +340,47 @@ export default function EditProfilePage() {
                 value={form.username}
                 onChange={(e) => patch("username", e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                 maxLength={30}
-                placeholder="yourname"
+                placeholder={t("pe_username_ph")}
                 className={cn(inputCls, "pl-8")}
               />
             </div>
-            <Hint>3–30 characters. Letters, numbers and underscores only.</Hint>
+            <Hint>{t("pe_username_hint")}</Hint>
           </Field>
 
-          <Field label="Tagline">
+          <Field label={t("pe_tagline")}>
             <input
               type="text"
               value={form.tagline}
               onChange={(e) => patch("tagline", e.target.value)}
               maxLength={80}
-              placeholder="Your catchy headline…"
+              placeholder={t("pe_tagline_ph")}
               className={inputCls}
             />
             <div className="flex justify-between">
-              <Hint>A short headline shown on your profile card.</Hint>
+              <Hint>{t("pe_tagline_hint")}</Hint>
               <Counter val={form.tagline.length} max={80} />
             </div>
           </Field>
 
-          <Field label="Short bio">
+          <Field label={t("pe_short_bio")}>
             <textarea
               value={form.bio}
               onChange={(e) => patch("bio", e.target.value)}
               maxLength={140}
               rows={2}
-              placeholder="One line about you…"
+              placeholder={t("pe_short_bio_ph")}
               className={cn(inputCls, "resize-none")}
             />
             <div className="flex justify-end"><Counter val={form.bio.length} max={140} /></div>
           </Field>
 
-          <Field label="About me">
+          <Field label={t("pe_about_me")}>
             <textarea
               value={form.bio_long}
               onChange={(e) => patch("bio_long", e.target.value)}
               maxLength={600}
               rows={4}
-              placeholder="Tell visitors more about yourself, your personality, and what to expect…"
+              placeholder={t("pe_about_me_ph")}
               className={cn(inputCls, "resize-none")}
             />
             <div className="flex justify-end"><Counter val={form.bio_long.length} max={600} /></div>
@@ -375,9 +388,9 @@ export default function EditProfilePage() {
         </Section>
 
         {/* ── Personal ── */}
-        <Section icon={Globe} title="Personal details">
+        <Section icon={Globe} title={t("pe_sec_personal")}>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Age">
+            <Field label={t("pe_age")}>
               <input
                 type="number" inputMode="numeric"
                 value={form.age} onChange={(e) => patch("age", e.target.value)}
@@ -385,17 +398,17 @@ export default function EditProfilePage() {
                 className={inputCls}
               />
             </Field>
-            <Field label="Nationality">
+            <Field label={t("pe_nationality")}>
               <input
                 type="text"
                 value={form.nationality} onChange={(e) => patch("nationality", e.target.value)}
-                maxLength={40} placeholder="e.g. Canadian"
+                maxLength={40} placeholder={t("pe_nationality_ph")}
                 className={inputCls}
               />
             </Field>
           </div>
 
-          <Field label="Languages spoken">
+          <Field label={t("pe_languages")}>
             <ChipGroup
               options={LANGUAGES}
               selected={form.languages}
@@ -405,8 +418,8 @@ export default function EditProfilePage() {
         </Section>
 
         {/* ── Physical ── */}
-        <Section icon={Ruler} title="Physical appearance">
-          <Field label="Height (cm)">
+        <Section icon={Ruler} title={t("pe_sec_physical")}>
+          <Field label={t("pe_height")}>
             <input
               type="number" inputMode="numeric"
               value={form.height_cm} onChange={(e) => patch("height_cm", e.target.value)}
@@ -418,30 +431,30 @@ export default function EditProfilePage() {
             )}
           </Field>
 
-          <Field label="Build">
+          <Field label={t("pe_build")}>
             <ChipGroup options={BUILD_OPTIONS} selected={form.build ? [form.build] : []} onToggle={(v) => patch("build", form.build === v ? "" : v)} single />
           </Field>
 
-          <Field label="Hair colour">
+          <Field label={t("pe_hair")}>
             <ChipGroup options={HAIR_OPTIONS} selected={form.hair_color ? [form.hair_color] : []} onToggle={(v) => patch("hair_color", form.hair_color === v ? "" : v)} single />
           </Field>
 
-          <Field label="Eye colour">
+          <Field label={t("pe_eye")}>
             <ChipGroup options={EYE_OPTIONS} selected={form.eye_color ? [form.eye_color] : []} onToggle={(v) => patch("eye_color", form.eye_color === v ? "" : v)} single />
           </Field>
         </Section>
 
         {/* ── Location ── */}
-        <Section icon={MapPin} title="Location">
-          <Field label="City">
+        <Section icon={MapPin} title={t("pe_sec_location")}>
+          <Field label={t("pe_city")}>
             <input
               type="text"
               value={form.city} onChange={(e) => patch("city", e.target.value)}
-              maxLength={60} placeholder="e.g. Toronto"
+              maxLength={60} placeholder={t("pe_city_ph")}
               className={inputCls}
             />
           </Field>
-          <Field label="Country">
+          <Field label={t("pe_country")}>
             <div className="relative">
               <select
                 value={form.country_code}
@@ -458,9 +471,9 @@ export default function EditProfilePage() {
         </Section>
 
         {/* ── Identity & preferences (providers) ── */}
-        <Section icon={Heart} title="Identity & preferences">
+        <Section icon={Heart} title={t("pe_sec_identity")}>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Gender">
+            <Field label={t("pe_gender")}>
               <ChipGroup
                 options={GENDER_OPTIONS}
                 selected={form.gender ? [form.gender] : []}
@@ -468,7 +481,7 @@ export default function EditProfilePage() {
                 single
               />
             </Field>
-            <Field label="Pronouns">
+            <Field label={t("pe_pronouns")}>
               <ChipGroup
                 options={PRONOUN_OPTIONS}
                 selected={form.pronouns ? [form.pronouns] : []}
@@ -478,23 +491,23 @@ export default function EditProfilePage() {
             </Field>
           </div>
 
-          <Field label="Caters to">
+          <Field label={t("pe_caters_to")}>
             <ChipGroup
               options={CATERS_TO_OPTIONS}
               selected={form.caters_to}
               onToggle={(v) => toggleArray("caters_to", v)}
             />
-            <Hint>Select the client types you see.</Hint>
+            <Hint>{t("pe_caters_hint")}</Hint>
           </Field>
         </Section>
 
         {/* ── Weekly availability ── */}
-        <Section icon={Calendar} title="Weekly availability">
-          <Hint>Set your typical hours for each day. Leave blank for days you&apos;re unavailable.</Hint>
+        <Section icon={Calendar} title={t("pe_sec_availability")}>
+          <Hint>{t("pe_avail_hint")}</Hint>
           <div className="mt-2 space-y-2">
             {DAYS_OF_WEEK.map((day) => (
               <div key={day} className="flex items-center gap-3">
-                <span className="w-16 text-[12px] font-medium capitalize text-zinc-400">{day}</span>
+                <span className="w-16 text-[12px] font-medium text-zinc-400">{t(DAY_KEYS[day])}</span>
                 <input
                   type="text"
                   value={form.availability_schedule[day] ?? ""}
@@ -504,22 +517,22 @@ export default function EditProfilePage() {
                       availability_schedule: { ...f.availability_schedule, [day]: e.target.value },
                     }))
                   }
-                  placeholder="e.g. 10am – 8pm"
+                  placeholder={t("pe_avail_ph")}
                   maxLength={30}
                   className={cn(inputCls, "flex-1 py-2.5 text-[13px]")}
                 />
               </div>
             ))}
           </div>
-          <Hint>Examples: &quot;All day&quot;, &quot;10am – 8pm&quot;, &quot;Evenings only&quot;, or leave blank</Hint>
+          <Hint>{t("pe_avail_examples")}</Hint>
         </Section>
 
         {/* ── Provider settings ── */}
-        <Section icon={Sparkles} title="Services & rates">
+        <Section icon={Sparkles} title={t("pe_sec_services")}>
           <div className="flex items-center justify-between rounded-2xl border border-white/5 bg-zinc-900/60 px-4 py-4">
             <div>
-              <p className="text-[14px] font-semibold text-white">I offer services</p>
-              <p className="text-[12px] text-zinc-500">Show listings, rates and appear in Explore</p>
+              <p className="text-[14px] font-semibold text-white">{t("pe_offers_services")}</p>
+              <p className="text-[12px] text-zinc-500">{t("pe_offers_desc")}</p>
             </div>
             <Toggle checked={form.is_provider} onChange={(v) => patch("is_provider", v)} />
           </div>
@@ -530,22 +543,22 @@ export default function EditProfilePage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex items-center justify-between rounded-xl border border-white/5 bg-zinc-900/60 px-3 py-3.5">
                   <div>
-                    <p className="text-[13px] font-medium text-white">In-call</p>
-                    <p className="text-[10px] text-zinc-500">At my location</p>
+                    <p className="text-[13px] font-medium text-white">{t("pe_incall")}</p>
+                    <p className="text-[10px] text-zinc-500">{t("pe_incall_desc")}</p>
                   </div>
                   <Toggle checked={form.incall} onChange={(v) => patch("incall", v)} />
                 </div>
                 <div className="flex items-center justify-between rounded-xl border border-white/5 bg-zinc-900/60 px-3 py-3.5">
                   <div>
-                    <p className="text-[13px] font-medium text-white">Out-call</p>
-                    <p className="text-[10px] text-zinc-500">At your location</p>
+                    <p className="text-[13px] font-medium text-white">{t("pe_outcall")}</p>
+                    <p className="text-[10px] text-zinc-500">{t("pe_outcall_desc")}</p>
                   </div>
                   <Toggle checked={form.outcall} onChange={(v) => patch("outcall", v)} />
                 </div>
               </div>
 
               {/* Hourly rate */}
-              <Field label="Hourly rate">
+              <Field label={t("pe_hourly_rate")}>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-zinc-400">CA$</span>
                   <input
@@ -555,21 +568,21 @@ export default function EditProfilePage() {
                     className={cn(inputCls, "pl-12")}
                   />
                 </div>
-                <Hint>Displayed on your Explore card and profile. Stored in CA$.</Hint>
+                <Hint>{t("pe_hourly_hint")}</Hint>
               </Field>
 
               {/* Service categories */}
-              <Field label="Service categories">
+              <Field label={t("pe_service_cats")}>
                 <ChipGroup
                   options={SERVICE_CATS}
                   selected={form.service_categories}
                   onToggle={(v) => toggleArray("service_categories", v)}
                 />
-                <Hint>These appear as filters in Explore.</Hint>
+                <Hint>{t("pe_service_cats_hint")}</Hint>
               </Field>
 
               {/* Contact methods */}
-              <Field label="WhatsApp number">
+              <Field label={t("pe_whatsapp")}>
                 <input
                   type="tel" inputMode="tel"
                   value={form.contact_whatsapp}
@@ -578,22 +591,22 @@ export default function EditProfilePage() {
                   maxLength={20}
                   className={inputCls}
                 />
-                <Hint>Full number with country code. Shown as a contact option on your profile.</Hint>
+                <Hint>{t("pe_whatsapp_hint")}</Hint>
               </Field>
 
-              <Field label="Telegram handle">
+              <Field label={t("pe_telegram")}>
                 <input
                   type="text"
                   value={form.contact_telegram}
                   onChange={(e) => patch("contact_telegram", e.target.value)}
-                  placeholder="@yourtelegram"
+                  placeholder={t("pe_telegram_ph")}
                   maxLength={40}
                   className={inputCls}
                 />
-                <Hint>Your Telegram username. Clients can message you directly.</Hint>
+                <Hint>{t("pe_telegram_hint")}</Hint>
               </Field>
 
-              <Field label="Phone number">
+              <Field label={t("pe_phone")}>
                 <input
                   type="tel" inputMode="tel"
                   value={form.contact_phone}
@@ -602,7 +615,7 @@ export default function EditProfilePage() {
                   maxLength={20}
                   className={inputCls}
                 />
-                <Hint>Optional. Shown as a call button on your profile. Only add if you want clients to call you.</Hint>
+                <Hint>{t("pe_phone_hint")}</Hint>
               </Field>
             </div>
           )}
@@ -612,14 +625,14 @@ export default function EditProfilePage() {
         <div className="flex items-center gap-3 rounded-2xl border border-amber-400/10 bg-amber-400/5 px-4 py-4">
           <Shield size={18} className="flex-shrink-0 text-amber-400" />
           <div className="flex-1">
-            <p className="text-[13px] font-semibold text-white">Get verified</p>
-            <p className="text-[11px] text-zinc-500">A gold checkmark builds trust and boosts your visibility.</p>
+            <p className="text-[13px] font-semibold text-white">{t("pe_get_verified")}</p>
+            <p className="text-[11px] text-zinc-500">{t("pe_get_verified_desc")}</p>
           </div>
           <button
             onClick={() => router.push("/profile/verify")}
             className="rounded-full border border-amber-400/30 px-3 py-1.5 text-[11px] font-semibold text-amber-400 hover:bg-amber-400/10"
           >
-            Apply
+            {t("pe_apply")}
           </button>
         </div>
 
@@ -630,7 +643,7 @@ export default function EditProfilePage() {
           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-4 text-[15px] font-bold text-zinc-950 shadow-[0_0_25px_rgba(251,191,36,0.25)] transition-all hover:bg-amber-300 active:scale-[0.99] disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} strokeWidth={3} />}
-          {saving ? "Saving…" : "Save profile"}
+          {saving ? t("pe_saving") : t("pe_save_profile")}
         </button>
 
       </div>

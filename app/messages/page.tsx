@@ -9,6 +9,7 @@ import {
   Check, X, Clock, Pin, CheckCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-fetch";
 import { useSession } from "@/hooks/useSession";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useMessageRequests } from "@/hooks/useMessageRequests";
@@ -230,10 +231,10 @@ function MessagesPageInner() {
 
     await Promise.all(
       unreadConvos.map((c) =>
-        fetch("/api/chat/mark-read", {
+        apiFetch("/api/chat/mark-read", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ channelId: c.channelId, userId: user.id }),
+          body: JSON.stringify({ channelId: c.channelId }),
         })
       )
     );

@@ -4,9 +4,19 @@ import "./globals.css";
 import { BottomNav } from "@/components/ui/BottomNav";
 import { LocaleSwitcher } from "@/components/ui/LocaleSwitcher";
 import { ProfileProvider } from "@/contexts/ProfileContext";
-import { AmbientAura, Vignette } from "@/components/ui/AmbientEffects";
-import { OnboardingTour } from "@/components/ui/OnboardingTour";
-import { PushPermissionPrompt } from "@/components/ui/PushPermissionPrompt";
+import { Vignette } from "@/components/ui/AmbientEffects";
+import { ClientShell } from "@/components/ui/ClientShell";
+
+// Pulled from NEXT_PUBLIC_SUPABASE_URL at build time so the preconnect always
+// matches the env the client is talking to.
+const SUPABASE_ORIGIN = (() => {
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    return url ? new URL(url).origin : null;
+  } catch {
+    return null;
+  }
+})();
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,15 +44,21 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
+      <head>
+        {/* Preconnect to Supabase so the TLS handshake happens in parallel
+            with the HTML download — saves ~150-250ms on the first auth/data
+            request after navigation. */}
+        {SUPABASE_ORIGIN && (
+          <link rel="preconnect" href={SUPABASE_ORIGIN} crossOrigin="" />
+        )}
+      </head>
       <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-50 pb-[60px]">
         <ProfileProvider>
-          <AmbientAura />
+          <ClientShell />
           <Vignette />
           <div className="film-grain" aria-hidden="true" />
           {children}
           <BottomNav />
-          <OnboardingTour />
-          <PushPermissionPrompt />
           <LocaleSwitcher />
         </ProfileProvider>
       </body>

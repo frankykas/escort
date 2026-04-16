@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, X, Loader2 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
+import { apiFetch } from "@/lib/api-fetch";
 
 export function AdminActions({
   reportId,
@@ -18,10 +19,10 @@ export function AdminActions({
     if (!user) return;
     setLoading(resolution === "actioned" ? "action" : "dismiss");
 
-    const res = await fetch("/api/admin/reports", {
+    const res = await apiFetch("/api/admin/reports", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reportId, resolution, userId: user.id }),
+      body: JSON.stringify({ reportId, resolution }),
     });
 
     setLoading(null);

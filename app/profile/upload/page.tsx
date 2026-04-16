@@ -9,6 +9,7 @@ import {
   Film, Camera, Coins, ShoppingBag, CheckCircle, Share2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-fetch";
 import { useSession } from "@/hooks/useSession";
 import { useProfile } from "@/contexts/ProfileContext";
 import { supabase } from "@/lib/supabase/client";
@@ -133,11 +134,10 @@ export default function UploadPostPage() {
 
     // 2. Call the appropriate API
     if (postType === "story") {
-      const res = await fetch("/api/stories", {
+      const res = await apiFetch("/api/stories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          providerId: user.id,
           mediaUrl,
           mediaType: "image",
           caption: caption.trim() || undefined,
@@ -156,11 +156,10 @@ export default function UploadPostPage() {
         : null;
 
       if (mediaUrl) {
-        const res = await fetch("/api/posts", {
+        const res = await apiFetch("/api/posts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            providerId: user.id,
             caption: caption.trim() || "",
             mediaUrl,
             mediaType: "image",
@@ -181,11 +180,10 @@ export default function UploadPostPage() {
           }).eq("id", json.postId);
         }
       } else {
-        const res = await fetch("/api/posts", {
+        const res = await apiFetch("/api/posts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            providerId: user.id,
             caption: caption.trim(),
             mediaUrl: "", // text-only
             mediaType: "text",

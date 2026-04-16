@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdmin } from "@/lib/admin";
+import { requireUser } from "@/lib/api-auth";
 
 export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get("userId");
-  return NextResponse.json({ isAdmin: isAdmin(userId) });
+  const auth = await requireUser(req);
+  if (!auth.ok) return NextResponse.json({ isAdmin: false });
+  return NextResponse.json({ isAdmin: isAdmin(auth.user.id) });
 }

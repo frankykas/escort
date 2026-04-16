@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ChevronLeft, ShieldBan, Loader2 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { apiFetch } from "@/lib/api-fetch";
 
 type BlockedUser = {
   id: string;
@@ -49,10 +50,10 @@ export default function BlockedListPage() {
   async function handleUnblock(blockedId: string) {
     if (!user) return;
     setUnblocking(blockedId);
-    await fetch("/api/block", {
+    await apiFetch("/api/block", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ blockerId: user.id, blockedId }),
+      body: JSON.stringify({ blockedId }),
     });
     setBlocked((prev) => prev.filter((b) => b.blocked_id !== blockedId));
     setUnblocking(null);

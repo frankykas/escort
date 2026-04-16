@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { createLiveKitToken, getLiveKitWsUrl } from "@/lib/livekit";
+import { requireUser } from "@/lib/api-auth";
 
 export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get("userId");
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const userId = auth.user.id;
+
   const channelId = req.nextUrl.searchParams.get("channelId");
 
-  if (!userId || !channelId) {
+  if (!channelId) {
     return NextResponse.json(
-      { error: "userId and channelId are required" },
+      { error: "channelId is required" },
       { status: 400 }
     );
   }
@@ -16,17 +20,6 @@ export async function GET(req: NextRequest) {
   const supabase = createServerClient();
   if (!supabase) {
     return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
-  }
-
-  // Verify user exists
-  const { data: profile, error } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("id", userId)
-    .single();
-
-  if (error || !profile) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
   // Verify user is a member of this channel

@@ -8,6 +8,8 @@
  *   - getPushState(): inspect current permission / subscription status
  */
 
+import { apiFetch } from "@/lib/api-fetch";
+
 const SW_PATH = "/sw.js";
 
 export type PushState =
@@ -54,7 +56,7 @@ export async function getPushState(): Promise<PushState> {
 
 // ─── Subscribe ────────────────────────────────────────────────────────────────
 
-export async function subscribeToPush(userId: string): Promise<boolean> {
+export async function subscribeToPush(): Promise<boolean> {
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   if (!publicKey) {
     console.error("NEXT_PUBLIC_VAPID_PUBLIC_KEY is not set");
@@ -80,11 +82,10 @@ export async function subscribeToPush(userId: string): Promise<boolean> {
 
   // Step 4: POST to server
   const json = sub.toJSON();
-  const res = await fetch("/api/push/subscribe", {
+  const res = await apiFetch("/api/push/subscribe", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      userId,
       endpoint: sub.endpoint,
       p256dh: json.keys?.p256dh,
       auth: json.keys?.auth,
@@ -97,17 +98,17 @@ export async function subscribeToPush(userId: string): Promise<boolean> {
 
 // ─── Unsubscribe ──────────────────────────────────────────────────────────────
 
-export async function unsubscribeFromPush(userId: string): Promise<boolean> {
+export async function unsubscribeFromPush(): Promise<boolean> {
   const reg = await navigator.serviceWorker.getRegistration(SW_PATH);
   if (!reg) return true;
   const sub = await reg.pushManager.getSubscription();
   if (!sub) return true;
 
   // Tell the server first so we remove the DB row even if the browser call fails
-  await fetch("/api/push/unsubscribe", {
+  await apiFetch("/api/push/unsubscribe", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId, endpoint: sub.endpoint }),
+    body: JSON.stringify({ endpoint: sub.endpoint }),
   });
 
   return sub.unsubscribe();
@@ -115,11 +116,12 @@ export async function unsubscribeFromPush(userId: string): Promise<boolean> {
 
 // ─── VAPID base64url → Uint8Array (required by PushManager.subscribe) ────────
 
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const raw = atob(base64);
-  const output = new Uint8Array(raw.length);
+  const buffer = new ArrayBuffer(raw.length);
+  const output = new Uint8Array(buffer);
   for (let i = 0; i < raw.length; i++) output[i] = raw.charCodeAt(i);
   return output;
 }

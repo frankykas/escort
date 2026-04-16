@@ -13,6 +13,7 @@ import { Room, RoomEvent } from "livekit-client";
 import type { RemoteParticipant } from "livekit-client";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { apiFetch } from "@/lib/api-fetch";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -173,10 +174,10 @@ export function ChatProvider({
       }
 
       // Persist to Supabase (fire-and-forget, but log errors)
-      fetch("/api/chat/messages", {
+      apiFetch("/api/chat/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ channelId, userId: user.id, text }),
+        body: JSON.stringify({ channelId, text }),
       }).catch((e) => console.error("[ChatProvider] Persist failed:", e));
     },
     [user, channelId]
@@ -237,12 +238,11 @@ export function ChatProvider({
         }
 
         // 6. Persist to Supabase
-        fetch("/api/chat/messages", {
+        apiFetch("/api/chat/messages", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             channelId,
-            userId: user.id,
             text: text || null,
             attachmentUrl,
             attachmentType,
@@ -258,10 +258,10 @@ export function ChatProvider({
   // ── Mark read ────────────────────────────────────────────────────────────
   const markRead = useCallback(async () => {
     if (!user || !channelId) return;
-    await fetch("/api/chat/mark-read", {
+    await apiFetch("/api/chat/mark-read", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ channelId, userId: user.id }),
+      body: JSON.stringify({ channelId }),
     }).catch(() => {});
   }, [user, channelId]);
 

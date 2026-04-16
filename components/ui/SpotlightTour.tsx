@@ -25,6 +25,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 export type TourStep = {
   /** The data-tour attribute value of the element to highlight. */
@@ -54,6 +55,7 @@ const TOOLTIP_WIDTH = 320;
 const VIEWPORT_MARGIN = 16;
 
 export function SpotlightTour({ steps, storageKey, forceOpen, onClose }: Props) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
@@ -153,7 +155,13 @@ export function SpotlightTour({ steps, storageKey, forceOpen, onClose }: Props) 
     const vh = typeof window !== "undefined" ? window.innerHeight : 0;
 
     if (!rect) {
-      return { top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
+      // No target found — center in viewport. Use pixel values (not percent +
+      // transform) because framer-motion's animate writes to `transform` and
+      // would clobber a translate(-50%,-50%).
+      return {
+        top: Math.max(VIEWPORT_MARGIN, (vh - tooltipHeight) / 2),
+        left: Math.max(VIEWPORT_MARGIN, (vw - TOOLTIP_WIDTH) / 2),
+      };
     }
 
     // How much room is available above and below the target (minus the cutout padding + gap)
@@ -253,14 +261,14 @@ export function SpotlightTour({ steps, storageKey, forceOpen, onClose }: Props) 
           <button
             onClick={complete}
             className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-800 hover:text-white"
-            aria-label="Skip tour"
+            aria-label={t("tour_skip_aria")}
           >
             <X size={14} />
           </button>
 
           {/* Step counter */}
           <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-amber-400">
-            Step {stepIndex + 1} of {steps.length}
+            {t("tour_step")} {stepIndex + 1} {t("tour_of")} {steps.length}
           </p>
 
           {/* Title + body */}
@@ -287,14 +295,14 @@ export function SpotlightTour({ steps, storageKey, forceOpen, onClose }: Props) 
                   onClick={complete}
                   className="text-[12px] font-medium text-zinc-500 hover:text-zinc-300 transition"
                 >
-                  Skip
+                  {t("tour_skip")}
                 </button>
               )}
               <button
                 onClick={next}
                 className="flex items-center gap-1.5 rounded-full bg-amber-400 px-3.5 py-1.5 text-[12px] font-bold text-zinc-950 transition hover:bg-amber-300"
               >
-                {stepIndex === steps.length - 1 ? "Got it" : "Next"}
+                {stepIndex === steps.length - 1 ? t("tour_got_it") : t("tour_next")}
                 {stepIndex < steps.length - 1 && <ArrowRight size={12} />}
               </button>
             </div>

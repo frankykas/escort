@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 type Purchase = {
   id: string;
@@ -21,6 +22,7 @@ type Purchase = {
 
 export default function BillingPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, checked } = useSession();
   const [creditBalance, setCreditBalance] = useState(0);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
@@ -109,7 +111,7 @@ export default function BillingPage() {
           <p className="mb-3 px-1 text-[11px] font-medium uppercase tracking-widest text-zinc-600">Credits are used for</p>
           <div className="rounded-2xl border border-white/5 bg-zinc-900 divide-y divide-white/5">
             {[
-              { text: "Your first listing is always free", highlight: true },
+              { text: t("billing_first_free"), highlight: true },
               { text: "Additional service listings (1 credit, live for 24h)" },
               { text: "Relisting expired listings (1 credit)" },
               { text: "Creating feed posts (1 credit each)" },

@@ -4,17 +4,28 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import {
   ArrowLeft, Plus, Pencil, Trash2, Clock, X, Check,
   ListOrdered, ExternalLink, Coins, ShoppingBag,
-  Timer, RefreshCw, Loader2, Megaphone, Sparkles,
-  Zap, Eye, Users, Rss,
+  Timer, RefreshCw, Loader2, Megaphone, Sparkles, Star,
+  Zap, Eye, Users, Rss, ImagePlus, GripVertical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-fetch";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { compressImage } from "@/lib/image";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { TranslationKey } from "@/lib/i18n/en";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+type ListingImage = {
+  id: string;
+  url: string;
+  sort_order: number;
+};
 
 type Listing = {
   id: string;
@@ -27,6 +38,7 @@ type Listing = {
   service_type: string | null;
   perks: string[];
   expires_at: string;
+  images?: ListingImage[];
 };
 
 type FormData = {
@@ -43,19 +55,24 @@ const EMPTY_FORM: FormData = {
   rate_pounds: "", service_type: "", perks_text: "",
 };
 
-const SERVICE_TYPES = [
-  "Companionship", "Dinner Date", "Travel",
-  "GFE", "Couples", "Massage", "Domination",
+const SERVICE_TYPE_KEYS: { value: string; labelKey: TranslationKey }[] = [
+  { value: "Companionship", labelKey: "svc_companionship" },
+  { value: "Dinner Date",   labelKey: "svc_dinner_date" },
+  { value: "Travel",        labelKey: "svc_travel" },
+  { value: "GFE",           labelKey: "svc_gfe" },
+  { value: "Couples",       labelKey: "svc_couples" },
+  { value: "Massage",       labelKey: "svc_massage" },
+  { value: "Domination",    labelKey: "svc_domination" },
 ];
 
-const DURATION_PRESETS = [
-  { label: "On request", value: "" },
-  { label: "30 min",     value: "30" },
-  { label: "1 hr",       value: "60" },
-  { label: "90 min",     value: "90" },
-  { label: "2 hr",       value: "120" },
-  { label: "4 hr",       value: "240" },
-  { label: "Overnight",  value: "720" },
+const DURATION_PRESET_KEYS: { labelKey: TranslationKey; value: string }[] = [
+  { labelKey: "lf_dur_on_request", value: "" },
+  { labelKey: "lf_dur_30",         value: "30" },
+  { labelKey: "lf_dur_1h",         value: "60" },
+  { labelKey: "lf_dur_90",         value: "90" },
+  { labelKey: "lf_dur_2h",         value: "120" },
+  { labelKey: "lf_dur_4h",         value: "240" },
+  { labelKey: "lf_dur_overnight",  value: "720" },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -65,8 +82,8 @@ function formatRate(pence: number): string {
 }
 
 function formatDuration(minutes: number | null): string {
-  if (!minutes) return "On request";
-  if (minutes === 720) return "Overnight";
+  if (!minutes) return "—";
+  if (minutes === 720) return "Overnight"; // translated at render time
   if (minutes < 60) return `${minutes} min`;
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
@@ -102,6 +119,7 @@ function timeRemaining(expiresAt: string): string {
 
 export default function ListingsPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, loading: sessionLoading } = useSession();
   const [listings, setListings]         = useState<Listing[]>([]);
   const [loading, setLoading]           = useState(true);
@@ -116,10 +134,16 @@ export default function ListingsPage() {
   const [bumpDrawer, setBumpDrawer] = useState<{ listingId: string; listingTitle: string } | null>(null);
   const [bumpingTier, setBumpingTier] = useState<number | null>(null);
   const [activeBumps, setActiveBumps] = useState<Record<string, { tier: number; expires_at: string }>>({});
+  const [starDrawer, setStarDrawer] = useState<{ listingId: string; listingTitle: string } | null>(null);
+  const [starring, setStarring] = useState(false);
+  const [starSlots, setStarSlots] = useState<{ active_count: number; max_slots: number; slots_available: number; next_available: string | null } | null>(null);
+  const [activeStars, setActiveStars] = useState<Record<string, { expires_at: string }>>({});
+  const [pendingImages, setPendingImages] = useState<{ file?: File; url: string; id?: string }[]>([]);
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
   const isFirstListing = listings.length === 0;
 
   const fetchListings = useCallback(async (userId: string) => {
-    const [listingsResult, balanceResult, bumpsResult] = await Promise.all([
+    const [listingsResult, balanceResult, bumpsResult, imagesResult, starsResult] = await Promise.all([
       supabase
         .from("listings")
         .select("id, title, description, duration_minutes, rate, is_active, sort_order, service_type, perks, expires_at")
@@ -136,8 +160,32 @@ export default function ListingsPage() {
         .eq("provider_id", userId)
         .eq("is_active", true)
         .gt("expires_at", new Date().toISOString()),
+      supabase
+        .from("listing_images")
+        .select("id, listing_id, url, sort_order")
+        .eq("provider_id", userId)
+        .order("sort_order"),
+      supabase
+        .from("listing_stars")
+        .select("listing_id, expires_at")
+        .eq("provider_id", userId)
+        .eq("is_active", true)
+        .gt("expires_at", new Date().toISOString()),
     ]);
-    setListings((listingsResult.data as Listing[]) ?? []);
+
+    // Attach images to listings
+    const imgMap = new Map<string, ListingImage[]>();
+    for (const img of (imagesResult.data ?? []) as (ListingImage & { listing_id: string })[]) {
+      const arr = imgMap.get(img.listing_id) ?? [];
+      arr.push({ id: img.id, url: img.url, sort_order: img.sort_order });
+      imgMap.set(img.listing_id, arr);
+    }
+    const listingsWithImages = ((listingsResult.data ?? []) as Listing[]).map((l) => ({
+      ...l,
+      images: imgMap.get(l.id) ?? [],
+    }));
+
+    setListings(listingsWithImages);
     setCreditBalance(balanceResult.data?.post_credits_balance ?? 0);
 
     // Build active bumps map
@@ -146,6 +194,13 @@ export default function ListingsPage() {
       bumps[b.listing_id] = { tier: b.tier, expires_at: b.expires_at };
     }
     setActiveBumps(bumps);
+
+    // Build active stars map
+    const stars: Record<string, { expires_at: string }> = {};
+    for (const s of (starsResult.data ?? []) as { listing_id: string; expires_at: string }[]) {
+      stars[s.listing_id] = { expires_at: s.expires_at };
+    }
+    setActiveStars(stars);
 
     setLoading(false);
   }, []);
@@ -163,7 +218,9 @@ export default function ListingsPage() {
   }, []);
 
   function openAdd() {
-    setEditingId(null); setFormData(EMPTY_FORM); setFormError(null); setDrawerOpen(true);
+    setEditingId(null); setFormData(EMPTY_FORM); setFormError(null);
+    setPendingImages([]); setRemovedImageIds([]);
+    setDrawerOpen(true);
   }
 
   function openEdit(listing: Listing) {
@@ -176,19 +233,22 @@ export default function ListingsPage() {
       service_type:     listing.service_type ?? "",
       perks_text:       (listing.perks ?? []).join("\n"),
     });
+    setPendingImages((listing.images ?? []).map((img) => ({ url: img.url, id: img.id })));
+    setRemovedImageIds([]);
     setFormError(null); setDrawerOpen(true);
   }
 
   function closeDrawer() {
     setDrawerOpen(false); setEditingId(null); setFormData(EMPTY_FORM); setFormError(null);
+    setPendingImages([]); setRemovedImageIds([]);
   }
 
   function handleSave() {
     if (!user) return;
     const title = formData.title.trim();
     const rate  = parseInt(formData.rate_pounds, 10);
-    if (title.length < 2) { setFormError("Title must be at least 2 characters."); return; }
-    if (!formData.rate_pounds || isNaN(rate) || rate <= 0) { setFormError("Please enter a valid rate."); return; }
+    if (title.length < 2) { setFormError(t("lp_title_min")); return; }
+    if (!formData.rate_pounds || isNaN(rate) || rate <= 0) { setFormError(t("lp_rate_invalid")); return; }
 
     if (editingId) {
       // Editing — no credit cost, save directly
@@ -214,6 +274,8 @@ export default function ListingsPage() {
       .map((p) => p.trim())
       .filter(Boolean);
 
+    let listingId = editingId;
+
     if (editingId) {
       const payload = {
         title,
@@ -226,11 +288,10 @@ export default function ListingsPage() {
       const { error } = await supabase.from("listings").update(payload).eq("id", editingId);
       if (error) { setFormError(error.message); setSaving(false); return; }
     } else {
-      const res = await fetch("/api/listings", {
+      const res = await apiFetch("/api/listings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          providerId: user.id,
           title,
           description: formData.description.trim() || null,
           durationMinutes: formData.duration_minutes ? parseInt(formData.duration_minutes, 10) : null,
@@ -245,6 +306,44 @@ export default function ListingsPage() {
         setFormError(json.error ?? "Failed to create listing.");
         setSaving(false);
         return;
+      }
+      listingId = json.listingId;
+    }
+
+    // ── Handle images ──
+    if (listingId) {
+      // Delete removed images
+      if (removedImageIds.length > 0) {
+        await supabase.from("listing_images").delete().in("id", removedImageIds);
+      }
+
+      // Upload new images (ones with a File object)
+      const newImages = pendingImages.filter((img) => img.file);
+      for (let i = 0; i < newImages.length; i++) {
+        const img = newImages[i];
+        if (!img.file) continue;
+        try {
+          const compressed = await compressImage(img.file, { maxDimension: 1600, quality: 0.82 });
+          const ext = compressed.name.split(".").pop() ?? "webp";
+          const path = `${user.id}/${listingId}/${Date.now()}_${i}.${ext}`;
+          const { error: uploadErr } = await supabase.storage
+            .from("listing-images")
+            .upload(path, compressed, { upsert: false, contentType: compressed.type });
+          if (uploadErr) continue;
+          const { data: urlData } = supabase.storage.from("listing-images").getPublicUrl(path);
+          await supabase.from("listing_images").insert({
+            listing_id: listingId,
+            provider_id: user.id,
+            url: urlData.publicUrl,
+            sort_order: pendingImages.indexOf(img),
+          });
+        } catch { /* skip failed uploads */ }
+      }
+
+      // Update sort order for existing images that weren't removed
+      const existingImages = pendingImages.filter((img) => img.id && !removedImageIds.includes(img.id));
+      for (let i = 0; i < existingImages.length; i++) {
+        await supabase.from("listing_images").update({ sort_order: pendingImages.indexOf(existingImages[i]) }).eq("id", existingImages[i].id!);
       }
     }
 
@@ -271,10 +370,10 @@ export default function ListingsPage() {
 
   async function doRelist(listingId: string) {
     if (!user) return;
-    const res = await fetch("/api/listings/relist", {
+    const res = await apiFetch("/api/listings/relist", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ providerId: user.id, listingId }),
+      body: JSON.stringify({ listingId }),
     });
     const json = await res.json();
     if (!res.ok) {
@@ -297,10 +396,10 @@ export default function ListingsPage() {
   async function doBump(listingId: string, tier: number) {
     if (!user) return;
     setBumpingTier(tier);
-    const res = await fetch("/api/listings/bump", {
+    const res = await apiFetch("/api/listings/bump", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ providerId: user.id, listingId, tier }),
+      body: JSON.stringify({ listingId, tier }),
     });
     const json = await res.json();
     setBumpingTier(null);
@@ -309,6 +408,38 @@ export default function ListingsPage() {
       return;
     }
     setBumpDrawer(null);
+    await fetchListings(user.id);
+  }
+
+  async function openStarDrawer(listingId: string, listingTitle: string) {
+    if (!user) return;
+    // Fetch provider city + slot availability
+    const { data: profile } = await supabase.from("profiles").select("city").eq("id", user.id).single();
+    if (!profile?.city) {
+      setFormError(t("star_no_city"));
+      return;
+    }
+    const res = await apiFetch(`/api/listings/star?city=${encodeURIComponent(profile.city)}`);
+    const json = await res.json();
+    setStarSlots(json.slots);
+    setStarDrawer({ listingId, listingTitle });
+  }
+
+  async function doStar(listingId: string) {
+    if (!user) return;
+    setStarring(true);
+    const res = await apiFetch("/api/listings/star", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ listingId }),
+    });
+    const json = await res.json();
+    setStarring(false);
+    if (!res.ok) {
+      setFormError(json.error ?? "Failed to star listing");
+      return;
+    }
+    setStarDrawer(null);
     await fetchListings(user.id);
   }
 
@@ -328,7 +459,7 @@ export default function ListingsPage() {
         >
           <ArrowLeft size={18} />
         </button>
-        <span className="text-[15px] font-semibold text-white">My Listings</span>
+        <span className="text-[15px] font-semibold text-white">{t("lp_title")}</span>
         <button
           onClick={openAdd}
           disabled={!hasCredits && !isFirstListing}
@@ -357,7 +488,7 @@ export default function ListingsPage() {
               {creditBalance} credit{creditBalance !== 1 ? "s" : ""}
             </span>
             <p className="text-[11px] text-zinc-500">
-              {isFirstListing ? "Your first listing is free!" : "1 credit = 1 listing (24h)"}
+              {isFirstListing ? t("listings_first_free") : t("listings_credit_per_listing")}
             </p>
           </div>
         </div>
@@ -366,7 +497,7 @@ export default function ListingsPage() {
           className="flex items-center gap-1.5 rounded-full bg-amber-400 px-3 py-1.5 text-[11px] font-semibold text-zinc-950 hover:bg-amber-300 transition"
         >
           <ShoppingBag size={12} />
-          Buy Credits
+          {t("lp_buy_credits")}
         </Link>
       </div>
 
@@ -374,9 +505,9 @@ export default function ListingsPage() {
       {listings.length > 0 && (
         <div className="mx-4 mt-3 flex gap-3">
           {[
-            { value: String(listings.length),     label: "Total" },
-            { value: String(activeCount),          label: "Live", highlight: activeCount > 0 },
-            { value: avgRate(listings),            label: "Avg rate" },
+            { value: String(listings.length),     label: t("lp_stat_total") },
+            { value: String(activeCount),          label: t("lp_stat_live"), highlight: activeCount > 0 },
+            { value: avgRate(listings),            label: t("lp_stat_avg_rate") },
           ].map(({ value, label, highlight }) => (
             <div
               key={label}
@@ -398,17 +529,16 @@ export default function ListingsPage() {
             <ListOrdered size={28} className="text-zinc-600" />
           </div>
           <div>
-            <p className="text-[16px] font-semibold text-zinc-200">No listings yet</p>
+            <p className="text-[16px] font-semibold text-zinc-200">{t("listings_no_listings")}</p>
             <p className="mt-1 text-[13px] leading-relaxed text-zinc-500">
-              Your first listing is <span className="font-semibold text-amber-400">completely free</span>!
-              Additional listings cost 1 credit each and stay live for 24 hours.
+              {t("listings_first_free_long")}
             </p>
           </div>
           <button
             onClick={openAdd}
             className="mt-2 rounded-full bg-amber-400 px-6 py-2.5 text-[13px] font-semibold text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.25)] transition-all hover:bg-amber-300 active:scale-[0.98]"
           >
-            Create your free listing
+            {t("lp_create_free")}
           </button>
         </div>
       ) : (
@@ -422,8 +552,10 @@ export default function ListingsPage() {
               onDelete={() => setDeleteConfirm(listing.id)}
               onRelist={() => handleRelist(listing.id)}
               onBump={() => setBumpDrawer({ listingId: listing.id, listingTitle: listing.title })}
+              onStar={() => openStarDrawer(listing.id, listing.title)}
               hasCredits={hasCredits}
               activeBump={activeBumps[listing.id] ?? null}
+              activeStar={activeStars[listing.id] ?? null}
               deleteConfirmOpen={deleteConfirm === listing.id}
               onDeleteConfirm={() => handleDelete(listing.id)}
               onDeleteCancel={() => setDeleteConfirm(null)}
@@ -436,7 +568,7 @@ export default function ListingsPage() {
               className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/10 py-4 text-[13px] font-medium text-zinc-500 transition-all hover:border-amber-400/30 hover:text-amber-400"
             >
               <Plus size={15} />
-              Add another listing {isFirstListing ? "(free)" : "(1 credit)"}
+              {t("lp_add_another")} {isFirstListing ? t("lp_add_free") : t("lp_add_credit")}
             </button>
           )}
         </div>
@@ -454,6 +586,28 @@ export default function ListingsPage() {
             onClose={closeDrawer}
             saving={saving}
             error={formError}
+            images={pendingImages}
+            onAddImages={(files) => {
+              const remaining = 6 - pendingImages.length;
+              const toAdd = Array.from(files).slice(0, remaining).map((file) => ({
+                file,
+                url: URL.createObjectURL(file),
+              }));
+              setPendingImages((prev) => [...prev, ...toAdd]);
+            }}
+            onRemoveImage={(index) => {
+              const img = pendingImages[index];
+              if (img?.id) setRemovedImageIds((prev) => [...prev, img.id!]);
+              setPendingImages((prev) => prev.filter((_, i) => i !== index));
+            }}
+            onReorderImages={(from, to) => {
+              setPendingImages((prev) => {
+                const arr = [...prev];
+                const [item] = arr.splice(from, 1);
+                arr.splice(to, 0, item);
+                return arr;
+              });
+            }}
           />
         )}
       </AnimatePresence>
@@ -477,24 +631,24 @@ export default function ListingsPage() {
                   <Coins size={22} className="text-amber-400" />
                 </div>
                 <h3 className="text-[16px] font-semibold text-white">
-                  {creditConfirm.action === "create" ? "Create Listing" : "Relist"}
+                  {creditConfirm.action === "create" ? t("lp_create_listing") : t("lp_relist_action")}
                 </h3>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-400">
-                  This will use <span className="font-semibold text-amber-400">1 credit</span> from your balance.
-                  You currently have <span className="font-semibold text-white">{creditBalance} credit{creditBalance !== 1 ? "s" : ""}</span>.
+                  {t("lp_credit_use_notice").replace("{amount}", `1 ${t("bump_credit")}`)}
+                  {" "}{t("lp_you_have_credits").replace("{count}", `${creditBalance} ${creditBalance !== 1 ? t("bump_credits") : t("bump_credit")}`)}
                 </p>
                 <div className="mt-5 flex w-full gap-3">
                   <button
                     onClick={() => setCreditConfirm(null)}
                     className="flex-1 rounded-xl border border-white/10 py-2.5 text-[13px] font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200"
                   >
-                    Cancel
+                    {t("lp_cancel")}
                   </button>
                   <button
                     onClick={onCreditConfirm}
                     className="flex-1 rounded-xl bg-amber-400 py-2.5 text-[13px] font-bold text-zinc-950 transition hover:bg-amber-300"
                   >
-                    Spend 1 Credit
+                    {t("lp_spend_credit")}
                   </button>
                 </div>
               </div>
@@ -516,46 +670,59 @@ export default function ListingsPage() {
           />
         )}
       </AnimatePresence>
+
+      {/* ── Star drawer ── */}
+      <AnimatePresence>
+        {starDrawer && (
+          <StarDrawer
+            listingTitle={starDrawer.listingTitle}
+            creditBalance={creditBalance}
+            starring={starring}
+            slots={starSlots}
+            onActivate={() => doStar(starDrawer.listingId)}
+            onClose={() => setStarDrawer(null)}
+            error={formError}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
 // ─── Bump Drawer ────────────────────────────────────────────────────────────
 
-const BUMP_TIERS = [
+type BumpTierDef = {
+  tier: number;
+  credits: number;
+  labelKey: TranslationKey;
+  descKey: TranslationKey;
+  featureKeys: TranslationKey[];
+  icon: React.ElementType;
+  color: string;
+  borderColor: string;
+  bgColor: string;
+  popular?: boolean;
+};
+
+const BUMP_TIERS: BumpTierDef[] = [
   {
-    tier: 1,
-    credits: 1,
-    label: "Basic Bump",
-    description: "Your listing appears in the Explore page Stories bar for 24h.",
-    features: ["Explore Stories"],
-    icon: Eye,
-    color: "text-sky-400",
-    borderColor: "border-sky-400/30",
-    bgColor: "bg-sky-400/10",
+    tier: 1, credits: 1,
+    labelKey: "bump_basic", descKey: "bump_basic_desc",
+    featureKeys: ["bump_feat_stories"],
+    icon: Eye, color: "text-sky-400", borderColor: "border-sky-400/30", bgColor: "bg-sky-400/10",
   },
   {
-    tier: 2,
-    credits: 2,
-    label: "Premium Bump",
-    description: "Stories + appear in the \"Similar Profiles\" section when users browse other escorts.",
-    features: ["Explore Stories", "Similar Profiles"],
-    icon: Users,
-    color: "text-violet-400",
-    borderColor: "border-violet-400/30",
-    bgColor: "bg-violet-400/10",
+    tier: 2, credits: 2,
+    labelKey: "bump_premium", descKey: "bump_premium_desc",
+    featureKeys: ["bump_feat_stories", "bump_feat_profiles"],
+    icon: Users, color: "text-violet-400", borderColor: "border-violet-400/30", bgColor: "bg-violet-400/10",
     popular: true,
   },
   {
-    tier: 3,
-    credits: 3,
-    label: "Maximum Exposure",
-    description: "Stories + Similar Profiles + your listing is pinned in the main Explore feed.",
-    features: ["Explore Stories", "Similar Profiles", "Explore Feed"],
-    icon: Zap,
-    color: "text-amber-400",
-    borderColor: "border-amber-400/30",
-    bgColor: "bg-amber-400/10",
+    tier: 3, credits: 3,
+    labelKey: "bump_maximum", descKey: "bump_maximum_desc",
+    featureKeys: ["bump_feat_stories", "bump_feat_profiles", "bump_feat_feed"],
+    icon: Zap, color: "text-amber-400", borderColor: "border-amber-400/30", bgColor: "bg-amber-400/10",
   },
 ];
 
@@ -574,6 +741,7 @@ function BumpDrawer({
   onClose: () => void;
   error: string | null;
 }) {
+  const { t } = useTranslation();
   return (
     <>
       <motion.div
@@ -597,7 +765,7 @@ function BumpDrawer({
           <div>
             <div className="flex items-center gap-2">
               <Megaphone size={16} className="text-amber-400" />
-              <h2 className="text-[15px] font-semibold text-white">Bump Listing</h2>
+              <h2 className="text-[15px] font-semibold text-white">{t("bump_title")}</h2>
             </div>
             <p className="mt-0.5 text-[12px] text-zinc-500 line-clamp-1">{listingTitle}</p>
           </div>
@@ -608,8 +776,8 @@ function BumpDrawer({
 
         <div className="space-y-3 px-5 py-4">
           <p className="text-[12px] text-zinc-400 leading-relaxed">
-            Promote your listing to reach more clients. Each bump lasts <span className="text-white font-medium">24 hours</span>.
-            You have <span className="font-semibold text-amber-400">{creditBalance} credit{creditBalance !== 1 ? "s" : ""}</span>.
+            {t("bump_intro")} <span className="text-white font-medium">{t("bump_24h")}</span>.
+            {" "}{t("bump_you_have")} <span className="font-semibold text-amber-400">{creditBalance} {creditBalance !== 1 ? t("bump_credits") : t("bump_credit")}</span>.
           </p>
 
           {BUMP_TIERS.map((bt) => {
@@ -631,7 +799,7 @@ function BumpDrawer({
               >
                 {bt.popular && (
                   <span className="absolute -top-2.5 right-3 rounded-full bg-violet-500 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
-                    Popular
+                    {t("bump_popular")}
                   </span>
                 )}
                 <div className="flex items-start gap-3">
@@ -640,17 +808,17 @@ function BumpDrawer({
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-[14px] font-semibold text-white">{bt.label}</span>
+                      <span className="text-[14px] font-semibold text-white">{t(bt.labelKey)}</span>
                       <span className={cn("text-[13px] font-bold", bt.color)}>
-                        {bt.credits} credit{bt.credits !== 1 ? "s" : ""}
+                        {bt.credits} {bt.credits !== 1 ? t("bump_credits") : t("bump_credit")}
                       </span>
                     </div>
-                    <p className="mt-0.5 text-[11px] leading-relaxed text-zinc-500">{bt.description}</p>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-zinc-500">{t(bt.descKey)}</p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
-                      {bt.features.map((f) => (
-                        <span key={f} className="inline-flex items-center gap-1 rounded-full border border-white/8 bg-zinc-900 px-2 py-0.5 text-[9px] font-medium text-zinc-400">
+                      {bt.featureKeys.map((fk) => (
+                        <span key={fk} className="inline-flex items-center gap-1 rounded-full border border-white/8 bg-zinc-900 px-2 py-0.5 text-[9px] font-medium text-zinc-400">
                           <Check size={8} className={bt.color} />
-                          {f}
+                          {t(fk)}
                         </span>
                       ))}
                     </div>
@@ -676,11 +844,172 @@ function BumpDrawer({
   );
 }
 
+// ─── Star Drawer ─────────────────────────────────────────────────────────────
+
+function StarDrawer({
+  listingTitle,
+  creditBalance,
+  starring,
+  slots,
+  onActivate,
+  onClose,
+  error,
+}: {
+  listingTitle: string;
+  creditBalance: number;
+  starring: boolean;
+  slots: { active_count: number; max_slots: number; slots_available: number; next_available: string | null } | null;
+  onActivate: () => void;
+  onClose: () => void;
+  error: string | null;
+}) {
+  const { t } = useTranslation();
+  const canAfford = creditBalance >= 3;
+  const slotsFull = slots ? slots.slots_available <= 0 : false;
+  const canActivate = canAfford && !slotsFull && !starring;
+
+  function slotCountdown(isoDate: string | null): string {
+    if (!isoDate) return "";
+    const diff = new Date(isoDate).getTime() - Date.now();
+    if (diff <= 0) return "";
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  }
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+        className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-amber-400/20 bg-zinc-950 shadow-2xl"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 16px)" }}
+      >
+        {/* Handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="h-1 w-10 rounded-full bg-amber-400/40" />
+        </div>
+
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-white/5 px-5 py-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <Star size={16} className="text-amber-400 fill-amber-400" />
+              <h2 className="text-[15px] font-semibold text-white">{t("star_title")}</h2>
+            </div>
+            <p className="mt-0.5 text-[12px] text-zinc-500 line-clamp-1">{listingTitle}</p>
+          </div>
+          <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="space-y-4 px-5 py-4">
+          {/* Intro */}
+          <p className="text-[12px] text-zinc-400 leading-relaxed">
+            {t("star_intro")}
+          </p>
+
+          {/* Duration + Cost */}
+          <div className="flex gap-3">
+            <div className="flex-1 rounded-xl border border-amber-400/15 bg-amber-400/5 px-4 py-3 text-center">
+              <Clock size={14} className="mx-auto mb-1 text-amber-400" />
+              <p className="text-[14px] font-bold text-white">{t("star_duration_label")}</p>
+            </div>
+            <div className="flex-1 rounded-xl border border-amber-400/15 bg-amber-400/5 px-4 py-3 text-center">
+              <Coins size={14} className="mx-auto mb-1 text-amber-400" />
+              <p className="text-[14px] font-bold text-white">{t("star_cost_label")}</p>
+            </div>
+          </div>
+
+          {/* Slot indicator */}
+          {slots && (
+            <div className="rounded-xl border border-white/5 bg-zinc-900 px-4 py-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] text-zinc-500">
+                  {slots.active_count}/{slots.max_slots} {t("star_slots_info")}
+                </span>
+              </div>
+              <div className="flex gap-1.5">
+                {Array.from({ length: slots.max_slots }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      "h-2 flex-1 rounded-full transition-colors",
+                      i < slots.active_count
+                        ? "bg-amber-400"
+                        : "bg-zinc-800"
+                    )}
+                  />
+                ))}
+              </div>
+              {slotsFull && slots.next_available && (
+                <p className="mt-2 text-[11px] text-amber-400">
+                  {t("star_next_available")} {slotCountdown(slots.next_available)}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Credit balance */}
+          <p className="text-[12px] text-zinc-400">
+            {t("bump_you_have")} <span className="font-semibold text-amber-400">{creditBalance} {creditBalance !== 1 ? t("bump_credits") : t("bump_credit")}</span>.
+          </p>
+
+          {/* Activate button */}
+          <button
+            onClick={canActivate ? onActivate : undefined}
+            disabled={!canActivate}
+            className={cn(
+              "w-full rounded-2xl py-3.5 text-[14px] font-bold transition-all",
+              canActivate
+                ? "bg-gradient-to-r from-amber-400 to-amber-500 text-zinc-950 hover:from-amber-300 hover:to-amber-400 active:scale-[0.98] shadow-lg shadow-amber-400/20"
+                : "bg-zinc-800 text-zinc-600 cursor-not-allowed"
+            )}
+          >
+            {starring ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 size={16} className="animate-spin" />
+                {t("star_activating")}
+              </span>
+            ) : slotsFull ? (
+              t("star_slots_full")
+            ) : !canAfford ? (
+              `${t("star_cost_label")} — ${t("bump_credits")} ${t("lp_status_paused").toLowerCase()}`
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                <Star size={16} className="fill-zinc-950" />
+                {t("star_activate")}
+              </span>
+            )}
+          </button>
+
+          {/* Rotation info */}
+          <p className="text-center text-[10px] text-zinc-600 leading-relaxed">
+            {t("star_rotation_info")}
+          </p>
+
+          {error && (
+            <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-[12px] text-red-400">
+              {error}
+            </p>
+          )}
+        </div>
+      </motion.div>
+    </>
+  );
+}
+
 // ─── Listing Row ─────────────────────────────────────────────────────────────
 
 function ListingRow({
-  listing, onEdit, onToggle, onDelete, onRelist, onBump, hasCredits,
-  activeBump, deleteConfirmOpen, onDeleteConfirm, onDeleteCancel,
+  listing, onEdit, onToggle, onDelete, onRelist, onBump, onStar, hasCredits,
+  activeBump, activeStar, deleteConfirmOpen, onDeleteConfirm, onDeleteCancel,
 }: {
   listing: Listing;
   onEdit: () => void;
@@ -688,12 +1017,15 @@ function ListingRow({
   onDelete: () => void;
   onRelist: () => void;
   onBump: () => void;
+  onStar: () => void;
   hasCredits: boolean;
   activeBump: { tier: number; expires_at: string } | null;
+  activeStar: { expires_at: string } | null;
   deleteConfirmOpen: boolean;
   onDeleteConfirm: () => void;
   onDeleteCancel: () => void;
 }) {
+  const { t } = useTranslation();
   const [relisting, setRelisting] = useState(false);
   const expired = isExpired(listing.expires_at);
   const remaining = timeRemaining(listing.expires_at);
@@ -738,7 +1070,7 @@ function ListingRow({
           {listing.perks?.length > 0 && (
             <>
               <span className="text-zinc-700">·</span>
-              <span className="text-[11px]">{listing.perks.length} perks</span>
+              <span className="text-[11px]">{listing.perks.length} {t("lp_perks")}</span>
             </>
           )}
         </div>
@@ -756,14 +1088,32 @@ function ListingRow({
           <div className="flex items-center gap-2">
             <Megaphone size={12} className="text-amber-400" />
             <span className="text-[11px] font-semibold text-amber-400">
-              Tier {activeBump.tier} Bump Active
+              {t("lp_bump_tier")} {activeBump.tier} — {t("lp_bump_active")}
             </span>
             <span className="text-[10px] text-zinc-500">
               · {timeRemaining(activeBump.expires_at)}
             </span>
           </div>
           <span className="text-[9px] font-medium uppercase tracking-wider text-amber-400/60">
-            {activeBump.tier === 1 ? "Stories" : activeBump.tier === 2 ? "Stories + Profiles" : "Full Exposure"}
+            {activeBump.tier === 1 ? t("lp_bump_stories") : activeBump.tier === 2 ? t("lp_bump_stories_profiles") : t("lp_bump_full")}
+          </span>
+        </div>
+      )}
+
+      {/* Active star indicator */}
+      {activeStar && !expired && (
+        <div className="flex items-center justify-between border-t border-amber-400/20 bg-gradient-to-r from-amber-400/10 to-amber-500/5 px-4 py-2">
+          <div className="flex items-center gap-2">
+            <Star size={12} className="text-amber-400 fill-amber-400" />
+            <span className="text-[11px] font-semibold text-amber-400">
+              {t("star_active")}
+            </span>
+            <span className="text-[10px] text-zinc-500">
+              · {timeRemaining(activeStar.expires_at)}
+            </span>
+          </div>
+          <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-400">
+            {t("star_badge")}
           </span>
         </div>
       )}
@@ -775,21 +1125,32 @@ function ListingRow({
           className="flex w-full items-center justify-center gap-2 border-t border-white/5 py-2.5 text-[11px] font-semibold text-amber-400 transition-colors hover:bg-amber-400/5"
         >
           <Megaphone size={12} />
-          Promote this listing
+          {t("lp_promote")}
+        </button>
+      )}
+
+      {/* Star CTA for live listings without active star */}
+      {!expired && listing.is_active && !activeStar && (
+        <button
+          onClick={onStar}
+          className="flex w-full items-center justify-center gap-2 border-t border-white/5 py-2.5 text-[11px] font-semibold text-amber-500 transition-colors hover:bg-amber-500/5"
+        >
+          <Star size={12} className="fill-amber-500" />
+          {t("star_promote")}
         </button>
       )}
 
       {/* Relist banner for expired listings */}
       {expired && (
         <div className="flex items-center justify-between border-t border-amber-400/10 bg-amber-400/5 px-4 py-2.5">
-          <p className="text-[12px] text-amber-400">Expired — relist for 1 credit</p>
+          <p className="text-[12px] text-amber-400">{t("lp_expired_relist")}</p>
           <button
             onClick={handleRelist}
             disabled={!hasCredits || relisting}
             className="flex items-center gap-1.5 rounded-full bg-amber-400 px-3.5 py-1.5 text-[11px] font-bold text-zinc-950 transition hover:bg-amber-300 disabled:opacity-50"
           >
             {relisting ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
-            {relisting ? "Relisting…" : "Relist"}
+            {relisting ? t("lp_relisting") : t("lp_relist")}
           </button>
         </div>
       )}
@@ -804,25 +1165,25 @@ function ListingRow({
           )}
         >
           <span className={cn("h-1.5 w-1.5 rounded-full", listing.is_active && !expired ? "bg-emerald-400" : "bg-zinc-700")} />
-          {expired ? "Expired" : listing.is_active ? "Live" : "Paused"}
+          {expired ? t("lp_status_expired") : listing.is_active ? t("lp_status_live") : t("lp_status_paused")}
         </button>
 
         <div className="h-6 w-px bg-white/5" />
 
         <button onClick={onEdit} className="flex flex-1 items-center justify-center gap-1.5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 transition-colors hover:bg-white/5 hover:text-zinc-300">
-          <Pencil size={11} /> Edit
+          <Pencil size={11} /> {t("lp_edit")}
         </button>
 
         <div className="h-6 w-px bg-white/5" />
 
         <Link href={`/listings/${listing.id}`} className="flex flex-1 items-center justify-center gap-1.5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 transition-colors hover:bg-white/5 hover:text-zinc-300">
-          <ExternalLink size={11} /> View
+          <ExternalLink size={11} /> {t("lp_view")}
         </Link>
 
         <div className="h-6 w-px bg-white/5" />
 
         <button onClick={onDelete} className="flex flex-1 items-center justify-center gap-1.5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-600 transition-colors hover:bg-red-500/10 hover:text-red-400">
-          <Trash2 size={11} /> Delete
+          <Trash2 size={11} /> {t("lp_delete")}
         </button>
       </div>
 
@@ -834,13 +1195,13 @@ function ListingRow({
             className="overflow-hidden border-t border-red-500/20 bg-red-500/5"
           >
             <div className="flex items-center justify-between px-4 py-3">
-              <p className="text-[12px] text-red-400">Delete this listing?</p>
+              <p className="text-[12px] text-red-400">{t("lp_delete_confirm")}</p>
               <div className="flex gap-4">
                 <button onClick={onDeleteCancel} className="flex items-center gap-1 text-[11px] font-medium text-zinc-400 hover:text-zinc-200">
-                  <X size={12} /> Cancel
+                  <X size={12} /> {t("lp_cancel")}
                 </button>
                 <button onClick={onDeleteConfirm} className="flex items-center gap-1 text-[11px] font-bold text-red-400 hover:text-red-300">
-                  <Trash2 size={12} /> Delete
+                  <Trash2 size={12} /> {t("lp_delete")}
                 </button>
               </div>
             </div>
@@ -855,6 +1216,7 @@ function ListingRow({
 
 function ListingDrawer({
   isEdit, isFirstListing, formData, onChange, onSave, onClose, saving, error,
+  images, onAddImages, onRemoveImage, onReorderImages,
 }: {
   isEdit: boolean;
   isFirstListing: boolean;
@@ -864,7 +1226,13 @@ function ListingDrawer({
   onClose: () => void;
   saving: boolean;
   error: string | null;
+  images: { file?: File; url: string; id?: string }[];
+  onAddImages: (files: FileList) => void;
+  onRemoveImage: (index: number) => void;
+  onReorderImages: (from: number, to: number) => void;
 }) {
+  const { t } = useTranslation();
+
   function patch(key: keyof FormData, value: string) {
     onChange({ ...formData, [key]: value });
   }
@@ -890,10 +1258,10 @@ function ListingDrawer({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/5 px-5 py-3">
           <div>
-            <h2 className="text-[15px] font-semibold text-white">{isEdit ? "Edit Listing" : "New Listing"}</h2>
+            <h2 className="text-[15px] font-semibold text-white">{isEdit ? t("lf_edit") : t("lf_new")}</h2>
             {!isEdit && (
               <p className="text-[11px] text-zinc-500">
-                {isFirstListing ? "Free · Live for 24 hours" : "Costs 1 credit · Live for 24 hours"}
+                {isFirstListing ? t("lf_free_subtitle") : t("lf_credit_subtitle")}
               </p>
             )}
           </div>
@@ -904,8 +1272,57 @@ function ListingDrawer({
 
         <div className="max-h-[72vh] space-y-4 overflow-y-auto px-5 py-4">
 
+          {/* Photos */}
+          <Field label={`${t("lf_photos")} (${images.length}/6)`}>
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {images.map((img, i) => (
+                <div key={img.url} className="relative flex-shrink-0 group">
+                  <div className="relative h-24 w-24 overflow-hidden rounded-xl border border-white/10">
+                    <Image src={img.url} alt={`Photo ${i + 1}`} fill className="object-cover" sizes="96px" />
+                    {i === 0 && (
+                      <span className="absolute bottom-1 left-1 rounded-full bg-amber-400 px-1.5 py-0.5 text-[8px] font-bold text-zinc-950">
+                        {t("lf_cover")}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => onRemoveImage(i)}
+                    className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X size={10} />
+                  </button>
+                  {i > 0 && (
+                    <button
+                      onClick={() => onReorderImages(i, i - 1)}
+                      className="absolute -bottom-1 -left-1 flex h-5 w-5 items-center justify-center rounded-full bg-zinc-700 text-zinc-300 shadow opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Move left"
+                    >
+                      <GripVertical size={9} />
+                    </button>
+                  )}
+                </div>
+              ))}
+              {images.length < 6 && (
+                <label className="flex h-24 w-24 flex-shrink-0 cursor-pointer items-center justify-center rounded-xl border border-dashed border-white/15 bg-zinc-900 text-zinc-500 transition hover:border-amber-400/40 hover:text-amber-400">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => { if (e.target.files?.length) onAddImages(e.target.files); e.target.value = ""; }}
+                  />
+                  <div className="flex flex-col items-center gap-1">
+                    <ImagePlus size={18} />
+                    <span className="text-[9px] font-medium">{t("lf_add")}</span>
+                  </div>
+                </label>
+              )}
+            </div>
+            <p className="mt-1 text-[10px] text-zinc-600">{t("lf_photo_hint")}</p>
+          </Field>
+
           {/* Title */}
-          <Field label="Title *">
+          <Field label={`${t("lf_title")} *`}>
             <input
               type="text" placeholder="e.g. GFE – The Full Experience"
               value={formData.title} onChange={(e) => patch("title", e.target.value)}
@@ -916,20 +1333,20 @@ function ListingDrawer({
           </Field>
 
           {/* Service type */}
-          <Field label="Service type">
+          <Field label={t("lf_service_type")}>
             <div className="flex flex-wrap gap-2">
-              {SERVICE_TYPES.map((type) => (
+              {SERVICE_TYPE_KEYS.map(({ value, labelKey }) => (
                 <button
-                  key={type}
-                  onClick={() => patch("service_type", formData.service_type === type ? "" : type)}
+                  key={value}
+                  onClick={() => patch("service_type", formData.service_type === value ? "" : value)}
                   className={cn(
                     "rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-all",
-                    formData.service_type === type
+                    formData.service_type === value
                       ? "border-amber-400/50 bg-amber-400/10 text-amber-400"
                       : "border-white/8 bg-zinc-900 text-zinc-400 hover:border-white/15 hover:text-zinc-200"
                   )}
                 >
-                  {type}
+                  {t(labelKey)}
                 </button>
               ))}
             </div>
@@ -937,7 +1354,7 @@ function ListingDrawer({
 
           {/* Rate + Duration inline */}
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Rate (CA$) *">
+            <Field label={`${t("lf_rate")} *`}>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[14px] font-semibold text-zinc-400">CA$</span>
                 <input
@@ -948,23 +1365,23 @@ function ListingDrawer({
                 />
               </div>
             </Field>
-            <Field label="Duration">
+            <Field label={t("lf_duration")}>
               <select
                 value={formData.duration_minutes}
                 onChange={(e) => patch("duration_minutes", e.target.value)}
                 className="w-full rounded-xl border border-white/8 bg-zinc-900 px-3 py-3 text-[14px] text-zinc-100 outline-none transition focus:border-amber-400/40"
               >
-                {DURATION_PRESETS.map((p) => (
-                  <option key={p.value} value={p.value}>{p.label}</option>
+                {DURATION_PRESET_KEYS.map((p) => (
+                  <option key={p.value} value={p.value}>{t(p.labelKey)}</option>
                 ))}
               </select>
             </Field>
           </div>
 
           {/* Description */}
-          <Field label="Description">
+          <Field label={t("lf_description")}>
             <textarea
-              placeholder="Describe what this service includes…"
+              placeholder={t("lf_desc_ph")}
               value={formData.description} onChange={(e) => patch("description", e.target.value)}
               maxLength={500} rows={3}
               className="w-full resize-none rounded-xl border border-white/8 bg-zinc-900 px-4 py-3 text-[14px] text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-amber-400/40 focus:ring-1 focus:ring-amber-400/20"
@@ -973,15 +1390,15 @@ function ListingDrawer({
           </Field>
 
           {/* Perks */}
-          <Field label="What's included (one per line)">
+          <Field label={t("lf_included")}>
             <textarea
-              placeholder={"Incall or outcall\nStrictly discreet\nDinner or drinks"}
+              placeholder={t("lf_included_ph")}
               value={formData.perks_text} onChange={(e) => patch("perks_text", e.target.value)}
               rows={4}
               className="w-full resize-none rounded-xl border border-white/8 bg-zinc-900 px-4 py-3 font-mono text-[13px] text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-amber-400/40 focus:ring-1 focus:ring-amber-400/20"
             />
             <p className="mt-1 text-[10px] text-zinc-600">
-              {formData.perks_text.split("\n").filter((l) => l.trim()).length} perks added
+              {formData.perks_text.split("\n").filter((l) => l.trim()).length} {t("lf_perks_count")}
             </p>
           </Field>
 
@@ -999,13 +1416,13 @@ function ListingDrawer({
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:bg-amber-300 active:scale-[0.99] disabled:opacity-60"
           >
             {saving ? (
-              <span className="animate-pulse">Saving…</span>
+              <span className="animate-pulse">{t("lf_saving")}</span>
             ) : isEdit ? (
-              <><Check size={16} /> Save changes</>
+              <><Check size={16} /> {t("lf_save_changes")}</>
             ) : isFirstListing ? (
-              <><Plus size={16} /> Create listing (free)</>
+              <><Plus size={16} /> {t("lf_create_free")}</>
             ) : (
-              <><Plus size={16} /> Create listing (1 credit)</>
+              <><Plus size={16} /> {t("lf_create_credit")}</>
             )}
           </button>
         </div>

@@ -75,6 +75,7 @@ export function FeedList({ posts }: Props) {
               isLiked={engagementLoaded ? likedPostIds.has(post.post_id) : false}
               isFollowing={engagementLoaded ? followedProfileIds.has(post.provider_id) : false}
               userId={user?.id ?? null}
+              priority={index === 0}
             />
           </ScrollReveal>
         ))}

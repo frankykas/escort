@@ -1,16 +1,26 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 
 export default function SignInPage() {
+  return (
+    <Suspense>
+      <SignInForm />
+    </Suspense>
+  );
+}
+
+function SignInForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useTranslation();
+  const nextPath = searchParams.get("next");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +41,7 @@ export default function SignInPage() {
     if (authError) {
       setError(authError.message);
     } else {
-      router.push("/");
+      router.push(nextPath && nextPath.startsWith("/") ? nextPath : "/");
     }
   }
 
@@ -63,7 +73,7 @@ export default function SignInPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                placeholder="you@example.com"
+                placeholder={t("auth_email_ph")}
                 className="w-full bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-600"
               />
             </div>
@@ -78,7 +88,7 @@ export default function SignInPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
-                placeholder="••••••••"
+                placeholder={t("auth_password_ph_dots")}
                 className="w-full bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-600"
               />
             </div>
@@ -90,7 +100,7 @@ export default function SignInPage() {
                 href="/auth/reset-password"
                 className="text-[11px] text-zinc-500 transition-colors hover:text-zinc-300"
               >
-                Forgot password?
+                {t("auth_forgot_password")}
               </Link>
             </div>
 

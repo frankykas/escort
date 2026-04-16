@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProviderPostAnalytics, getProviderStats } from "@/lib/analytics";
+import { requireUser } from "@/lib/api-auth";
 
+// Analytics are private to the provider — only the authenticated caller may
+// see their own stats.
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const providerId = searchParams.get("providerId");
-  const view = searchParams.get("view") ?? "stats"; // "stats" or "posts"
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const providerId = auth.user.id;
 
-  if (!providerId) {
-    return NextResponse.json({ error: "providerId is required" }, { status: 400 });
-  }
+  const { searchParams } = new URL(req.url);
+  const view = searchParams.get("view") ?? "stats"; // "stats" or "posts"
 
   if (view === "stats") {
     const stats = await getProviderStats(providerId);

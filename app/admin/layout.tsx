@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
+import { apiFetch } from "@/lib/api-fetch";
 
 export default function AdminLayout({
   children,
@@ -24,7 +25,7 @@ export default function AdminLayout({
     }
 
     // Check admin status via API
-    fetch(`/api/admin/auth?userId=${user.id}`)
+    apiFetch(`/api/admin/auth`)
       .then((r) => r.json())
       .then((data) => {
         if (data.isAdmin) {

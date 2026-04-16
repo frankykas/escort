@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { CheckCircle, Loader2, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-fetch";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 type Props = {
   userId: string;
@@ -10,6 +12,7 @@ type Props = {
 };
 
 export function PersonaVerification({ userId, onComplete }: Props) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<"pending" | "verified" | "error" | null>(null);
 
@@ -44,11 +47,10 @@ export function PersonaVerification({ userId, onComplete }: Props) {
         }) => {
           // Send result to our backend
           try {
-            const res = await fetch("/api/persona/complete", {
+            const res = await apiFetch("/api/persona/complete", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                userId,
                 inquiryId,
                 status,
               }),
@@ -91,9 +93,9 @@ export function PersonaVerification({ userId, onComplete }: Props) {
           <CheckCircle size={32} className="text-emerald-400" />
         </div>
         <div>
-          <p className="text-[16px] font-bold text-white">You're Verified!</p>
+          <p className="text-[16px] font-bold text-white">{t("pv_verified_title")}</p>
           <p className="mt-1 text-[13px] text-zinc-400">
-            Your identity has been confirmed. The gold badge is now active on your profile.
+            {t("pv_verified_body")}
           </p>
         </div>
       </div>
@@ -107,9 +109,9 @@ export function PersonaVerification({ userId, onComplete }: Props) {
           <ShieldCheck size={32} className="text-amber-400" />
         </div>
         <div>
-          <p className="text-[16px] font-bold text-white">Verification submitted</p>
+          <p className="text-[16px] font-bold text-white">{t("pv_pending_title")}</p>
           <p className="mt-1 text-[13px] text-zinc-400">
-            Your ID is being reviewed. You'll receive the gold badge once approved.
+            {t("pv_pending_body")}
           </p>
         </div>
       </div>
@@ -131,19 +133,19 @@ export function PersonaVerification({ userId, onComplete }: Props) {
         {loading ? (
           <>
             <Loader2 size={18} className="animate-spin" />
-            Opening verification...
+            {t("pv_opening")}
           </>
         ) : (
           <>
             <ShieldCheck size={18} />
-            Start Verification
+            {t("pv_start")}
           </>
         )}
       </button>
 
       {result === "error" && (
         <p className="text-center text-[12px] text-red-400">
-          Something went wrong. Please try again.
+          {t("pv_error")}
         </p>
       )}
     </div>

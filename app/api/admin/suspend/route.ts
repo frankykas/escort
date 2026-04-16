@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { suspendPosting, unsuspendPosting } from "@/lib/admin";
+import { suspendPosting, unsuspendPosting, isAdmin } from "@/lib/admin";
+import { requireUser } from "@/lib/api-auth";
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { adminId, providerId, action, reason } = body;
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const adminId = auth.user.id;
+  if (!isAdmin(adminId)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
-  if (!adminId || !providerId || !action) {
+  const body = await req.json();
+  const { providerId, action, reason } = body;
+
+  if (!providerId || !action) {
     return NextResponse.json(
-      { error: "adminId, providerId, and action are required" },
+      { error: "providerId and action are required" },
       { status: 400 }
     );
   }

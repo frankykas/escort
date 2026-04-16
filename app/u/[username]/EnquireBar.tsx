@@ -8,8 +8,11 @@ import {
   CheckCircle, Loader2, ExternalLink, Phone, Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-fetch";
 import { useSession } from "@/hooks/useSession";
 import { useRequestStatus } from "@/hooks/useMessageRequests";
+import { useSignupPrompt } from "@/hooks/useSignupPrompt";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 // ─── WhatsApp / Telegram brand icons (inline SVG) ──────────────────────────
 
@@ -46,7 +49,9 @@ type Step = "options" | "compose" | "sending" | "sent" | "pending";
 
 export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp, contactTelegram, contactPhone }: Props) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user } = useSession();
+  const { promptIfGuest, modal: signupModal } = useSignupPrompt();
   const { status: requestStatus, loading: statusLoading, refresh: refreshStatus } = useRequestStatus(user?.id ?? null, providerId);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [step, setStep] = useState<Step>("options");
@@ -67,7 +72,7 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
   }
 
   function handleMainCta() {
-    if (!user) { router.push("/auth/signin"); return; }
+    if (promptIfGuest("message")) return;
 
     // If already accepted, go straight to chat
     if (requestStatus === "accepted") {
@@ -93,17 +98,16 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
   }
 
   async function handleSend() {
-    if (!user) { router.push("/auth/signin"); return; }
+    if (promptIfGuest("message")) return;
     if (!message.trim()) return;
 
     setStep("sending");
     setSubmitError(null);
 
-    const res = await fetch("/api/chat/requests", {
+    const res = await apiFetch("/api/chat/requests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        senderId: user.id,
         recipientId: providerId,
         introMessage: message.trim(),
       }),
@@ -146,18 +150,18 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
 
   // Button label based on request status
   const ctaLabel = statusLoading
-    ? "Send Message Request"
+    ? t("eb_send_message_request")
     : requestStatus === "accepted"
-      ? "Open Chat"
+      ? t("eb_open_chat")
       : requestStatus === "pending"
-        ? "Request Pending"
-        : "Send Message Request";
+        ? t("eb_request_pending")
+        : t("eb_send_message_request");
 
   const contactOptions = [
     ...(hasWhatsapp ? [{
       icon: WhatsAppIcon,
       label: "WhatsApp",
-      sub: "Chat on WhatsApp",
+      sub: t("eb_chat_whatsapp"),
       color: "text-emerald-400",
       iconBg: "bg-emerald-500/15",
       border: "border-emerald-500/15",
@@ -167,7 +171,7 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
     ...(hasTelegram ? [{
       icon: TelegramIcon,
       label: "Telegram",
-      sub: "Message on Telegram",
+      sub: t("eb_msg_telegram"),
       color: "text-sky-400",
       iconBg: "bg-sky-500/15",
       border: "border-sky-500/15",
@@ -176,7 +180,7 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
     }] : []),
     ...(hasPhone ? [{
       icon: Phone,
-      label: "Call",
+      label: t("eb_call"),
       sub: contactPhone!,
       color: "text-violet-400",
       iconBg: "bg-violet-500/15",
@@ -186,17 +190,17 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
     }] : []),
     {
       icon: MessageCircle,
-      label: requestStatus === "accepted" ? "Open Chat" : "Send a Message Request",
+      label: requestStatus === "accepted" ? t("eb_open_chat") : t("eb_send_a_request"),
       sub: requestStatus === "accepted"
-        ? `Continue your conversation with @${username}`
+        ? t("eb_continue_conversation").replace("{username}", username)
         : requestStatus === "pending"
-          ? "Request pending — waiting for approval"
-          : `Request to chat privately with @${username}`,
+          ? t("eb_request_pending_approval")
+          : t("eb_request_to_chat").replace("{username}", username),
       color: "text-amber-400",
       iconBg: "bg-amber-400/15",
       border: "border-amber-400/20",
       action: () => {
-        if (!user) { router.push("/auth/signin"); return; }
+        if (promptIfGuest("message")) return;
         if (requestStatus === "accepted") {
           router.push(`/messages/${username}`);
         } else if (requestStatus === "pending") {
@@ -211,6 +215,7 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
 
   return (
     <>
+      {signupModal}
       {/* ── Sticky bar ── */}
       <div className="fixed inset-x-0 bottom-[57px] z-30 border-t border-white/5 bg-zinc-950/95 px-4 py-3 backdrop-blur-xl">
         <div className="mx-auto flex max-w-lg items-center gap-3">
@@ -296,24 +301,24 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
                 <div className="flex-1">
                   {step === "options" && (
                     <>
-                      <p className="text-[16px] font-semibold text-white">Contact</p>
-                      <p className="mt-0.5 text-[12px] text-zinc-500">Reach out to @{username}</p>
+                      <p className="text-[16px] font-semibold text-white">{t("eb_contact")}</p>
+                      <p className="mt-0.5 text-[12px] text-zinc-500">{t("eb_reach_out").replace("{username}", username)}</p>
                     </>
                   )}
                   {step === "compose" && (
                     <>
-                      <p className="text-[16px] font-semibold text-white">Message Request</p>
-                      <p className="mt-0.5 text-[12px] text-zinc-500">Introduce yourself to @{username}</p>
+                      <p className="text-[16px] font-semibold text-white">{t("eb_message_request")}</p>
+                      <p className="mt-0.5 text-[12px] text-zinc-500">{t("eb_introduce_yourself").replace("{username}", username)}</p>
                     </>
                   )}
                   {step === "sending" && (
-                    <p className="text-[16px] font-semibold text-white">Sending request...</p>
+                    <p className="text-[16px] font-semibold text-white">{t("eb_sending_request")}</p>
                   )}
                   {step === "sent" && (
-                    <p className="text-[16px] font-semibold text-white">Request sent!</p>
+                    <p className="text-[16px] font-semibold text-white">{t("eb_request_sent")}</p>
                   )}
                   {step === "pending" && (
-                    <p className="text-[16px] font-semibold text-white">Request pending</p>
+                    <p className="text-[16px] font-semibold text-white">{t("eb_request_pending_title")}</p>
                   )}
                 </div>
                 <button
@@ -367,7 +372,7 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
                     <div className="rounded-2xl border border-white/5 bg-zinc-900/50 p-1">
                       <textarea
                         autoFocus
-                        placeholder={`Hi ${username}, I'd love to connect...`}
+                        placeholder={t("eb_compose_placeholder").replace("{username}", username)}
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         maxLength={500}
@@ -376,7 +381,7 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
                       />
                       <div className="flex items-center justify-between px-3 pb-2">
                         <p className="text-[10px] text-zinc-600">{message.length}/500</p>
-                        <p className="text-[10px] text-zinc-600">Private &amp; secure</p>
+                        <p className="text-[10px] text-zinc-600">{t("eb_private_secure")}</p>
                       </div>
                     </div>
 
@@ -389,7 +394,7 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
                       disabled={!message.trim()}
                       className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:bg-amber-300 active:scale-[0.99] disabled:opacity-40"
                     >
-                      <Send size={15} strokeWidth={2.5} /> Send Request
+                      <Send size={15} strokeWidth={2.5} /> {t("eb_send_request")}
                     </button>
                   </motion.div>
                 )}
@@ -402,7 +407,7 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
                     className="flex flex-col items-center gap-4 py-10 text-center"
                   >
                     <Loader2 size={32} className="animate-spin text-amber-400" />
-                    <p className="text-[14px] text-zinc-400">Sending your request...</p>
+                    <p className="text-[14px] text-zinc-400">{t("eb_sending_your_request")}</p>
                   </motion.div>
                 )}
 
@@ -418,17 +423,16 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
                       <CheckCircle size={32} className="text-amber-400" />
                     </div>
                     <div>
-                      <p className="text-[17px] font-semibold text-white">Request sent!</p>
+                      <p className="text-[17px] font-semibold text-white">{t("eb_request_sent")}</p>
                       <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500">
-                        @{username} will review your message request.
-                        You&apos;ll be notified when they respond.
+                        {t("eb_review_message").replace("{username}", username)}
                       </p>
                     </div>
                     <button
                       onClick={closeSheet}
                       className="rounded-full border border-white/10 px-5 py-2.5 text-[13px] font-medium text-zinc-300 transition-all hover:border-white/20 hover:text-white"
                     >
-                      Close
+                      {t("eb_close")}
                     </button>
                   </motion.div>
                 )}
@@ -445,17 +449,16 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
                       <Clock size={32} className="text-amber-400" />
                     </div>
                     <div>
-                      <p className="text-[17px] font-semibold text-white">Request pending</p>
+                      <p className="text-[17px] font-semibold text-white">{t("eb_request_pending_title")}</p>
                       <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500">
-                        Your message request to @{username} is waiting for their approval.
-                        You&apos;ll be notified when they respond.
+                        {t("eb_pending_message").replace("{username}", username)}
                       </p>
                     </div>
                     <button
                       onClick={closeSheet}
                       className="rounded-full border border-white/10 px-5 py-2.5 text-[13px] font-medium text-zinc-300 transition-all hover:border-white/20 hover:text-white"
                     >
-                      Close
+                      {t("eb_close")}
                     </button>
                   </motion.div>
                 )}

@@ -13,6 +13,7 @@ import { useRequestStatus } from "@/hooks/useMessageRequests";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
 import { useTranslation } from "@/lib/i18n/useTranslation";
+import { useSignupPrompt } from "@/hooks/useSignupPrompt";
 
 type Props = {
   profileId: string;
@@ -29,6 +30,7 @@ export function ProfileActions({
   const router = useRouter();
   const { t } = useTranslation();
   const { user, loading: sessionLoading } = useSession();
+  const { promptIfGuest, modal: signupModal } = useSignupPrompt();
 
   // Always use client-side user ID — server-side is unreliable
   const clientUserId = user?.id ?? null;
@@ -125,7 +127,7 @@ export function ProfileActions({
             className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-zinc-700 py-2 text-sm font-semibold text-white transition-colors hover:bg-zinc-800"
           >
             <Pencil size={14} />
-            Edit Profile
+            {t("pa_edit_profile")}
           </button>
           {isProvider && (
             <button
@@ -133,7 +135,7 @@ export function ProfileActions({
               className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-zinc-700 py-2 text-sm font-semibold text-white transition-colors hover:bg-zinc-800"
             >
               <BarChart3 size={14} />
-              Analytics
+              {t("pa_analytics")}
             </button>
           )}
         </div>
@@ -144,12 +146,12 @@ export function ProfileActions({
           {copied ? (
             <>
               <Check size={14} className="text-emerald-400" />
-              <span className="text-emerald-400">Link copied!</span>
+              <span className="text-emerald-400">{t("pa_link_copied")}</span>
             </>
           ) : (
             <>
               <Share2 size={14} />
-              Share Profile
+              {t("pa_share_profile")}
             </>
           )}
         </button>
@@ -159,7 +161,7 @@ export function ProfileActions({
 
   // ── Other user's profile ──
   function handleFollow() {
-    if (!clientUserId) { router.push("/auth/signin"); return; }
+    if (promptIfGuest("follow")) return;
     if (isFollowing) {
       // Open dropdown instead of toggling directly
       setFollowMenuOpen(true);
@@ -174,7 +176,7 @@ export function ProfileActions({
   }
 
   function handleMessage() {
-    if (!clientUserId) { router.push("/auth/signin"); return; }
+    if (promptIfGuest("message")) return;
 
     if (requestStatus === "accepted") {
       router.push(`/messages/${username}`);
@@ -186,7 +188,7 @@ export function ProfileActions({
   }
 
   async function handleSubscribe() {
-    if (!clientUserId) { router.push("/auth/signin"); return; }
+    if (promptIfGuest("subscribe")) return;
     if (isSubscribed) return;
 
     setSubLoading(true);
@@ -203,12 +205,12 @@ export function ProfileActions({
   const isAccepted = requestStatus === "accepted";
 
   const messageLabel = statusLoading
-    ? "Message"
+    ? t("pa_message")
     : isAccepted
-      ? "Message"
+      ? t("pa_message")
       : isPending
-        ? "Pending"
-        : "Message";
+        ? t("pa_pending")
+        : t("pa_message");
 
   const messageIcon = isPending
     ? Clock
@@ -218,6 +220,7 @@ export function ProfileActions({
 
   return (
     <div className="space-y-2">
+      {signupModal}
       <div className="flex gap-2">
         {/* Follow / Following button with dropdown */}
         <div className="relative flex-1">
@@ -253,7 +256,7 @@ export function ProfileActions({
                     className="flex w-full items-center gap-3 px-4 py-3 text-[13px] text-red-400 transition hover:bg-zinc-800"
                   >
                     <UserMinus size={14} />
-                    Unfollow @{username}
+                    {t("pa_unfollow_user").replace("{username}", username)}
                   </button>
                 </motion.div>
               </>
@@ -296,7 +299,7 @@ export function ProfileActions({
           )}
         >
           <Crown size={15} strokeWidth={2.5} />
-          {isSubscribed ? "Subscribed" : subLoading ? "Subscribing..." : "Subscribe"}
+          {isSubscribed ? t("pa_subscribed") : subLoading ? t("pa_subscribing") : t("pa_subscribe")}
         </motion.button>
       )}
     </div>

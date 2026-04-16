@@ -10,6 +10,7 @@ import { BackButton } from "@/components/ui/BackButton";
 import { ReportButton } from "@/components/ui/ReportButton";
 import { EnquireBar } from "../EnquireBar";
 import { ListingActions } from "./ListingActions";
+import { ImageCarousel } from "./ImageCarousel";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -113,7 +114,7 @@ export default async function ListingPage({
   const listing = raw as unknown as Listing;
   const provider = listing.provider;
 
-  const [otherRes, postsRes] = await Promise.all([
+  const [otherRes, postsRes, imagesRes] = await Promise.all([
     supabase
       .from("listings")
       .select("id, title, rate, duration_minutes, service_type")
@@ -129,12 +130,24 @@ export default async function ListingPage({
       .not("media_url", "is", null)
       .order("created_at", { ascending: false })
       .limit(1),
+    supabase
+      .from("listing_images")
+      .select("url, sort_order")
+      .eq("listing_id", id)
+      .order("sort_order"),
   ]);
 
   const otherListings = (otherRes.data ?? []) as OtherListing[];
+  const listingImages = (imagesRes.data ?? []).map((img: { url: string }) => img.url);
   const heroImage = listing.cover_url
     ?? (postsRes.data?.[0] as { media_url: string } | undefined)?.media_url
     ?? null;
+  // Build the full image list: listing images first, then fallback to hero/avatar
+  const allImages = listingImages.length > 0
+    ? listingImages
+    : heroImage
+    ? [heroImage]
+    : [];
   const isVerified = provider.verification_status === "verified";
   const hasLogistics =
     listing.advance_notice_hours ||
@@ -146,11 +159,13 @@ export default async function ListingPage({
     <div className="min-h-screen bg-zinc-950 pb-40">
 
       {/* ── Hero ── */}
-      <div className="relative w-full" style={{ minHeight: "52vw", maxHeight: "520px", height: "65vw" }}>
-        {heroImage ? (
-          <Image src={heroImage} alt={listing.title} fill className="object-cover brightness-[0.45]" sizes="100vw" priority />
+      <div className="relative w-full">
+        {allImages.length > 0 ? (
+          <ImageCarousel images={allImages} title={listing.title} />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-900/40 via-zinc-900 to-zinc-950" />
+          <div className="relative w-full" style={{ minHeight: "52vw", maxHeight: "520px", height: "65vw" }}>
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-900/40 via-zinc-900 to-zinc-950" />
+          </div>
         )}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/70 to-transparent" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />

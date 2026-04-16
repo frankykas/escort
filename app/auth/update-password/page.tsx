@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 type State = "idle" | "loading" | "done";
 
 export default function UpdatePasswordPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -20,11 +22,11 @@ export default function UpdatePasswordPage() {
     setError(null);
 
     if (password !== confirm) {
-      setError("Passwords do not match.");
+      setError(t("auth_err_pw_mismatch"));
       return;
     }
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError(t("auth_err_pw_short"));
       return;
     }
 
@@ -58,28 +60,28 @@ export default function UpdatePasswordPage() {
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-400/10">
               <CheckCircle size={24} className="text-amber-400" />
             </div>
-            <h2 className="text-base font-semibold text-zinc-100">Password updated</h2>
+            <h2 className="text-base font-semibold text-zinc-100">{t("auth_pw_updated")}</h2>
             <p className="mt-2 text-sm text-zinc-400">
-              Your password has been changed successfully.
+              {t("auth_pw_updated_body")}
             </p>
             <button
               onClick={() => router.push("/")}
               className="mt-6 flex w-full items-center justify-center rounded-xl bg-white py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
             >
-              Continue
+              {t("auth_continue")}
             </button>
           </div>
         ) : (
           <div className="rounded-2xl border border-white/10 bg-zinc-900/80 p-8 backdrop-blur-xl">
-            <h1 className="mb-1 text-base font-semibold text-zinc-100">Set new password</h1>
+            <h1 className="mb-1 text-base font-semibold text-zinc-100">{t("auth_reset_title")}</h1>
             <p className="mb-6 text-xs text-zinc-500">
-              Choose a strong password for your account.
+              {t("auth_reset_subtitle")}
             </p>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
               <div className="rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3">
                 <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                  New Password
+                  {t("auth_new_password")}
                 </label>
                 <input
                   type="password"
@@ -87,14 +89,14 @@ export default function UpdatePasswordPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="new-password"
-                  placeholder="Min. 8 characters"
+                  placeholder={t("auth_password_ph_min")}
                   className="w-full bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-600"
                 />
               </div>
 
               <div className="rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3">
                 <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                  Confirm Password
+                  {t("auth_confirm_password")}
                 </label>
                 <input
                   type="password"
@@ -102,7 +104,7 @@ export default function UpdatePasswordPage() {
                   onChange={(e) => setConfirm(e.target.value)}
                   required
                   autoComplete="new-password"
-                  placeholder="Repeat password"
+                  placeholder={t("auth_password_ph_repeat")}
                   className="w-full bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-600"
                 />
               </div>
@@ -117,10 +119,10 @@ export default function UpdatePasswordPage() {
                 {state === "loading" ? (
                   <>
                     <Loader2 size={14} className="animate-spin" />
-                    Updating...
+                    {t("auth_updating")}
                   </>
                 ) : (
-                  "Update Password"
+                  t("auth_update_pw")
                 )}
               </button>
             </form>

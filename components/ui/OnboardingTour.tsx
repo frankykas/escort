@@ -10,60 +10,26 @@
 
 import { SpotlightTour, type TourStep } from "./SpotlightTour";
 import { useProfile } from "@/contexts/ProfileContext";
-
-const PROVIDER_STEPS: TourStep[] = [
-  {
-    target: "nav-home",
-    title: "Welcome to Cleopatra",
-    body: "This is your home feed — where the social side of the platform lives. Browse posts, stories, and discover what's trending.",
-  },
-  {
-    target: "nav-explore",
-    title: "Explore providers",
-    body: "Tap here to browse other creators, search by city, and see what's working in your market.",
-  },
-  {
-    target: "nav-create",
-    title: "Create content",
-    body: "This is where you'll spend most of your time. Tap the gold button to share a story, post a photo, or publish a new listing.",
-  },
-  {
-    target: "nav-messages",
-    title: "Your messages",
-    body: "All client conversations live here. New unread messages show a badge.",
-  },
-  {
-    target: "nav-profile",
-    title: "Your profile",
-    body: "Customize your bio, manage listings, view your performance, and get verified — all from here.",
-  },
-];
-
-const CLIENT_STEPS: TourStep[] = [
-  {
-    target: "nav-home",
-    title: "Welcome to Cleopatra",
-    body: "This is your home feed. Discover posts, stories, and trending providers.",
-  },
-  {
-    target: "nav-explore",
-    title: "Find what you're looking for",
-    body: "Search by city, browse categories, and filter by your preferences.",
-  },
-  {
-    target: "nav-messages",
-    title: "Your messages",
-    body: "Chat with providers you've connected with. All conversations are private.",
-  },
-  {
-    target: "nav-profile",
-    title: "Your profile",
-    body: "Manage your favorites, account settings, and privacy preferences.",
-  },
-];
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 export function OnboardingTour() {
   const { profile, isProvider, loading } = useProfile();
+  const { t } = useTranslation();
+
+  const PROVIDER_STEPS: TourStep[] = [
+    { target: "nav-u",        title: t("tour_p_welcome_title"),  body: t("tour_p_welcome_body") },
+    { target: "nav-messages", title: t("tour_p_messages_title"), body: t("tour_p_messages_body") },
+    { target: "nav-create",   title: t("tour_p_create_title"),   body: t("tour_p_create_body") },
+    { target: "nav-explore",  title: t("tour_p_explore_title"),  body: t("tour_p_explore_body") },
+    { target: "nav-profile",  title: t("tour_p_profile_title"),  body: t("tour_p_profile_body") },
+  ];
+
+  const CLIENT_STEPS: TourStep[] = [
+    { target: "nav-home",     title: t("tour_c_welcome_title"),  body: t("tour_c_welcome_body") },
+    { target: "nav-explore",  title: t("tour_c_explore_title"),  body: t("tour_c_explore_body") },
+    { target: "nav-messages", title: t("tour_c_messages_title"), body: t("tour_c_messages_body") },
+    { target: "nav-profile",  title: t("tour_c_profile_title"),  body: t("tour_c_profile_body") },
+  ];
 
   // Don't run until profile is loaded and onboarding is complete
   if (loading || !profile) return null;

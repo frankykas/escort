@@ -1,4 +1,29 @@
 import { createServerClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+// ---------------------------------------------------------------------------
+// Audit log helper
+// ---------------------------------------------------------------------------
+// Wraps the admin_actions insert so failures are LOUD instead of silent.
+// We don't propagate the error (losing the audit log shouldn't undo the
+// admin action) but we make sure it shows up in server logs.
+async function logAdminAction(
+  supabase: SupabaseClient,
+  row: {
+    admin_id: string;
+    action_type: string;
+    target_id?: string | null;
+    details?: Record<string, unknown> | null;
+  }
+): Promise<void> {
+  const { error } = await supabase.from("admin_actions").insert(row);
+  if (error) {
+    console.error(
+      "[admin] FAILED to write admin_actions row — action proceeded WITHOUT audit trail",
+      { row, error: error.message }
+    );
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Admin auth
@@ -57,8 +82,7 @@ export async function suspendPosting(
     return { success: false, error: profileError.message };
   }
 
-  // Log admin action
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: "suspend_posting",
     target_id: providerId,
@@ -92,7 +116,7 @@ export async function unsuspendPosting(
     return { success: false, error: profileError.message };
   }
 
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: "unsuspend_posting",
     target_id: providerId,
@@ -130,7 +154,7 @@ export async function grantCredits(
     return { success: false, error: error.message };
   }
 
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: "grant_credits",
     target_id: providerId,
@@ -161,7 +185,7 @@ export async function hidePost(
     return { success: false, error: error.message };
   }
 
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: "delete_post",
     target_id: postId,
@@ -206,7 +230,7 @@ export async function createPackage(
     return { success: false, error: error.message };
   }
 
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: "create_package",
     target_id: data.id,
@@ -236,7 +260,7 @@ export async function deactivatePackage(
     return { success: false, error: error.message };
   }
 
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: "deactivate_package",
     target_id: packageId,
@@ -269,7 +293,7 @@ export async function updatePlatformSetting(
     return { success: false, error: error.message };
   }
 
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: "update_setting",
     details: { key, value },
@@ -320,7 +344,7 @@ export async function approveVerification(
 
   if (error) return { success: false, error: error.message };
 
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: "approve_verification",
     target_id: userId,
@@ -352,7 +376,7 @@ export async function rejectVerification(
 
   if (error) return { success: false, error: error.message };
 
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: "reject_verification",
     target_id: userId,
@@ -554,7 +578,7 @@ export async function resolveReport(
 
   if (error) return { success: false, error: error.message };
 
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: `report_${resolution}`,
     target_id: reportId,

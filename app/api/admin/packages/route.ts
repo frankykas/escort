@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPackage, deactivatePackage } from "@/lib/admin";
+import { createPackage, deactivatePackage, isAdmin } from "@/lib/admin";
+import { requireUser } from "@/lib/api-auth";
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { adminId, action } = body;
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const adminId = auth.user.id;
+  if (!isAdmin(adminId)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
-  if (!adminId || !action) {
-    return NextResponse.json({ error: "adminId and action are required" }, { status: 400 });
+  const body = await req.json();
+  const { action } = body;
+
+  if (!action) {
+    return NextResponse.json({ error: "action is required" }, { status: 400 });
   }
 
   if (action === "create") {

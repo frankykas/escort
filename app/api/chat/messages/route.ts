@@ -1,20 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/api-auth";
 
 // ---------------------------------------------------------------------------
 // GET — Fetch message history for a channel (paginated)
 // ---------------------------------------------------------------------------
 
 export async function GET(req: NextRequest) {
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const userId = auth.user.id;
+
   const { searchParams } = req.nextUrl;
   const channelId = searchParams.get("channelId");
-  const userId = searchParams.get("userId");
   const before = searchParams.get("before"); // ISO timestamp cursor
   const limit = Math.min(Number(searchParams.get("limit") ?? 50), 100);
 
-  if (!channelId || !userId) {
+  if (!channelId) {
     return NextResponse.json(
-      { error: "channelId and userId are required" },
+      { error: "channelId is required" },
       { status: 400 }
     );
   }
@@ -63,12 +67,16 @@ export async function GET(req: NextRequest) {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { channelId, userId, text, attachmentUrl, attachmentType } = body;
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const userId = auth.user.id;
 
-  if (!channelId || !userId) {
+  const body = await req.json();
+  const { channelId, text, attachmentUrl, attachmentType } = body;
+
+  if (!channelId) {
     return NextResponse.json(
-      { error: "channelId and userId are required" },
+      { error: "channelId is required" },
       { status: 400 }
     );
   }

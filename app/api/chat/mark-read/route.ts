@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/api-auth";
 
 export async function POST(req: NextRequest) {
-  const { channelId, userId } = await req.json();
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const userId = auth.user.id;
 
-  if (!channelId || !userId) {
+  const { channelId } = await req.json();
+
+  if (!channelId) {
     return NextResponse.json(
-      { error: "channelId and userId are required" },
+      { error: "channelId is required" },
       { status: 400 }
     );
   }

@@ -8,6 +8,7 @@ import {
   Clock, Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-fetch";
 import { useSession } from "@/hooks/useSession";
 
 // ---------------------------------------------------------------------------
@@ -88,7 +89,7 @@ function PackagesPageContent() {
 
   useEffect(() => {
     if (!user) return;
-    fetch(`/api/packages?providerId=${user.id}`)
+    apiFetch(`/api/packages?includeOwn=1`)
       .then((r) => r.json())
       .then((data) => {
         setPackages(data.packages ?? []);
@@ -101,7 +102,7 @@ function PackagesPageContent() {
   // Refresh after successful purchase
   useEffect(() => {
     if (isSuccess && user) {
-      fetch(`/api/packages?providerId=${user.id}`)
+      apiFetch(`/api/packages?includeOwn=1`)
         .then((r) => r.json())
         .then((data) => {
           setBalance(data.balance ?? 0);
@@ -119,10 +120,10 @@ function PackagesPageContent() {
     if (!user || buying) return;
     setBuying(packageId);
 
-    const res = await fetch("/api/packages/checkout", {
+    const res = await apiFetch("/api/packages/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ packageId, providerId: user.id }),
+      body: JSON.stringify({ packageId }),
     });
 
     const data = await res.json();

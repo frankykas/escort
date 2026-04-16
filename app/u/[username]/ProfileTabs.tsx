@@ -18,6 +18,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import { PostModal } from "@/components/social/PostModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CATEGORIES } from "@/lib/categories";
@@ -114,14 +115,15 @@ function heightDisplay(cm: number | null): string {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function ProfileTabs({ posts, listings, attributes, isOwnProfile, isProvider = true }: Props) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>("posts");
 
   const tabs: { id: Tab; label: string; icon: React.ElementType; count?: number }[] = [
-    { id: "posts", label: "Posts", icon: Grid3X3, count: posts.length },
+    { id: "posts", label: t("tab_posts"), icon: Grid3X3, count: posts.length },
     ...(isProvider ? [
-      { id: "listings" as Tab, label: "Listings", icon: ListOrdered, count: listings.length },
+      { id: "listings" as Tab, label: t("tab_listings"), icon: ListOrdered, count: listings.length },
     ] : []),
-    { id: "about", label: "About", icon: User },
+    { id: "about", label: t("tab_about"), icon: User },
   ];
 
   return (

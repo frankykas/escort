@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
@@ -11,8 +11,18 @@ import { useTranslation } from "@/lib/i18n/useTranslation";
 type State = "idle" | "loading" | "success";
 
 export default function SignUpPage() {
+  return (
+    <Suspense>
+      <SignUpForm />
+    </Suspense>
+  );
+}
+
+function SignUpForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useTranslation();
+  const nextPath = searchParams.get("next");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -26,19 +36,19 @@ export default function SignUpPage() {
     setError(null);
 
     if (!ageConfirmed) {
-      setError("You must confirm you are at least 18 years old.");
+      setError(t("auth_err_age"));
       return;
     }
     if (!termsAccepted) {
-      setError("You must accept the Terms of Service and Privacy Policy.");
+      setError(t("auth_err_terms"));
       return;
     }
     if (password !== confirm) {
-      setError("Passwords do not match.");
+      setError(t("auth_err_pw_mismatch"));
       return;
     }
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError(t("auth_err_pw_short"));
       return;
     }
 
@@ -52,6 +62,9 @@ export default function SignUpPage() {
     }
 
     if (data.session) {
+      if (nextPath && nextPath.startsWith("/")) {
+        localStorage.setItem("signup_next", nextPath);
+      }
       router.push("/onboarding");
     } else {
       setState("success");
@@ -103,7 +116,7 @@ export default function SignUpPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
-                  placeholder="you@example.com"
+                  placeholder={t("auth_email_ph")}
                   className="w-full bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-600"
                 />
               </div>
@@ -118,7 +131,7 @@ export default function SignUpPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="new-password"
-                  placeholder="Min. 8 characters"
+                  placeholder={t("auth_password_ph_min")}
                   className="w-full bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-600"
                 />
               </div>
@@ -133,7 +146,7 @@ export default function SignUpPage() {
                   onChange={(e) => setConfirm(e.target.value)}
                   required
                   autoComplete="new-password"
-                  placeholder="Repeat password"
+                  placeholder={t("auth_password_ph_repeat")}
                   className="w-full bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-600"
                 />
               </div>
@@ -147,7 +160,7 @@ export default function SignUpPage() {
                   className="mt-0.5 h-4 w-4 rounded border-white/20 bg-zinc-800 text-amber-400 accent-amber-400"
                 />
                 <span className="text-[12px] text-zinc-500 leading-snug group-hover:text-zinc-400 transition">
-                  I confirm that I am at least <strong className="text-zinc-300">18 years old</strong>
+                  {t("auth_age_confirm_pre")} <strong className="text-zinc-300">{t("auth_age_18")}</strong>
                 </span>
               </label>
 
@@ -160,13 +173,13 @@ export default function SignUpPage() {
                   className="mt-0.5 h-4 w-4 rounded border-white/20 bg-zinc-800 text-amber-400 accent-amber-400"
                 />
                 <span className="text-[12px] text-zinc-500 leading-snug group-hover:text-zinc-400 transition">
-                  I agree to the{" "}
+                  {t("auth_terms_pre")}{" "}
                   <Link href="/legal/terms" className="text-amber-400/80 hover:text-amber-400 underline underline-offset-2">
-                    Terms of Service
+                    {t("auth_terms")}
                   </Link>{" "}
-                  and{" "}
+                  {t("auth_and")}{" "}
                   <Link href="/legal/privacy" className="text-amber-400/80 hover:text-amber-400 underline underline-offset-2">
-                    Privacy Policy
+                    {t("auth_privacy")}
                   </Link>
                 </span>
               </label>

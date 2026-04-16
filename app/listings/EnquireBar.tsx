@@ -10,6 +10,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { useSignupPrompt } from "@/hooks/useSignupPrompt";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 // ─── WhatsApp / Telegram brand icons ────────────────────────────────────────
 
@@ -67,7 +69,9 @@ export function EnquireBar({
   contactWhatsapp, contactTelegram, contactPhone,
 }: Props) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user } = useSession();
+  const { promptIfGuest, modal: signupModal } = useSignupPrompt();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [step, setStep] = useState<Step>("options");
   const [message, setMessage] = useState("");
@@ -85,7 +89,7 @@ export function EnquireBar({
   }
 
   function handleMainCta() {
-    if (!user) { router.push("/auth/signin"); return; }
+    if (promptIfGuest("message")) return;
     if (!hasExternalContact) {
       setStep("compose");
       setSheetOpen(true);
@@ -96,7 +100,7 @@ export function EnquireBar({
   }
 
   async function handleSend() {
-    if (!user) { router.push("/auth/signin"); return; }
+    if (promptIfGuest("message")) return;
     if (!message.trim()) return;
 
     setSubmitting(true);
@@ -108,7 +112,7 @@ export function EnquireBar({
       : "";
 
     const { error } = await supabase.from("messages").insert({
-      sender_id: user.id,
+      sender_id: user!.id,
       recipient_id: providerId,
       body: listingContext + message.trim(),
       listing_id: listingId ?? null,
@@ -116,7 +120,7 @@ export function EnquireBar({
 
     setSubmitting(false);
     if (error) {
-      setSubmitError("Failed to send message. Please try again.");
+      setSubmitError(t("el_failed_send"));
       return;
     }
     setStep("sent");
@@ -147,7 +151,7 @@ export function EnquireBar({
     ...(hasWhatsapp ? [{
       icon: WhatsAppIcon,
       label: "WhatsApp",
-      sub: "Chat on WhatsApp",
+      sub: t("eb_chat_whatsapp"),
       color: "text-emerald-400",
       iconBg: "bg-emerald-500/15",
       border: "border-emerald-500/15",
@@ -157,7 +161,7 @@ export function EnquireBar({
     ...(hasTelegram ? [{
       icon: TelegramIcon,
       label: "Telegram",
-      sub: "Message on Telegram",
+      sub: t("eb_msg_telegram"),
       color: "text-sky-400",
       iconBg: "bg-sky-500/15",
       border: "border-sky-500/15",
@@ -166,7 +170,7 @@ export function EnquireBar({
     }] : []),
     ...(hasPhone ? [{
       icon: Phone,
-      label: "Call",
+      label: t("eb_call"),
       sub: contactPhone!,
       color: "text-violet-400",
       iconBg: "bg-violet-500/15",
@@ -176,8 +180,8 @@ export function EnquireBar({
     }] : []),
     {
       icon: MessageCircle,
-      label: "Send a Message",
-      sub: "Private in-app message to @" + username,
+      label: t("el_send_a_message"),
+      sub: t("el_private_in_app").replace("{username}", username),
       color: "text-amber-400",
       iconBg: "bg-amber-400/15",
       border: "border-amber-400/20",
@@ -191,6 +195,7 @@ export function EnquireBar({
 
   return (
     <>
+      {signupModal}
       {/* ── Sticky bar ── */}
       <div
         className="fixed inset-x-0 bottom-[57px] z-30 border-t border-white/5 bg-zinc-950/95 px-4 backdrop-blur-xl"
@@ -216,7 +221,7 @@ export function EnquireBar({
               className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 shadow-[0_0_28px_rgba(251,191,36,0.4)] transition-all hover:bg-amber-300 active:scale-[0.98]"
             >
               <MessageCircle size={17} strokeWidth={2.5} />
-              Message
+              {t("el_message")}
             </button>
             {hasTelegram && (
               <button
@@ -273,18 +278,18 @@ export function EnquireBar({
                 <div className="flex-1">
                   {step === "options" && (
                     <>
-                      <p className="text-[16px] font-semibold text-white">Contact</p>
-                      <p className="mt-0.5 text-[12px] text-zinc-500">Reach out to @{username}</p>
+                      <p className="text-[16px] font-semibold text-white">{t("eb_contact")}</p>
+                      <p className="mt-0.5 text-[12px] text-zinc-500">{t("eb_reach_out").replace("{username}", username)}</p>
                     </>
                   )}
                   {step === "compose" && (
                     <>
-                      <p className="text-[16px] font-semibold text-white">New Message</p>
-                      <p className="mt-0.5 text-[12px] text-zinc-500">to @{username}</p>
+                      <p className="text-[16px] font-semibold text-white">{t("el_new_message")}</p>
+                      <p className="mt-0.5 text-[12px] text-zinc-500">{t("el_to_user").replace("{username}", username)}</p>
                     </>
                   )}
                   {step === "sent" && (
-                    <p className="text-[16px] font-semibold text-white">Message sent!</p>
+                    <p className="text-[16px] font-semibold text-white">{t("el_message_sent")}</p>
                   )}
                 </div>
                 <button
@@ -348,7 +353,7 @@ export function EnquireBar({
                     <div className="rounded-2xl border border-white/5 bg-zinc-900/50 p-1">
                       <textarea
                         autoFocus
-                        placeholder={`Hi ${username}, I'm interested in your services...`}
+                        placeholder={t("el_compose_placeholder").replace("{username}", username)}
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         maxLength={500}
@@ -357,7 +362,7 @@ export function EnquireBar({
                       />
                       <div className="flex items-center justify-between px-3 pb-2">
                         <p className="text-[10px] text-zinc-600">{message.length}/500</p>
-                        <p className="text-[10px] text-zinc-600">Private &amp; secure</p>
+                        <p className="text-[10px] text-zinc-600">{t("eb_private_secure")}</p>
                       </div>
                     </div>
 
@@ -371,8 +376,8 @@ export function EnquireBar({
                       className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:bg-amber-300 active:scale-[0.99] disabled:opacity-40"
                     >
                       {submitting
-                        ? <><Loader2 size={15} className="animate-spin" /> Sending&hellip;</>
-                        : <><Send size={15} strokeWidth={2.5} /> Send Message</>
+                        ? <><Loader2 size={15} className="animate-spin" /> {t("el_sending")}</>
+                        : <><Send size={15} strokeWidth={2.5} /> {t("el_send_message")}</>
                       }
                     </button>
                   </motion.div>
@@ -390,9 +395,9 @@ export function EnquireBar({
                       <CheckCircle size={32} className="text-amber-400" />
                     </div>
                     <div>
-                      <p className="text-[17px] font-semibold text-white">Message sent!</p>
+                      <p className="text-[17px] font-semibold text-white">{t("el_message_sent")}</p>
                       <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500">
-                        @{username} will see your message in their inbox.
+                        {t("el_inbox_message").replace("{username}", username)}
                       </p>
                     </div>
                     <div className="flex gap-3">
@@ -400,13 +405,13 @@ export function EnquireBar({
                         onClick={() => router.push(`/messages/${username}`)}
                         className="rounded-full bg-amber-400/10 px-5 py-2.5 text-[13px] font-medium text-amber-400 transition-all hover:bg-amber-400/20"
                       >
-                        View Conversation
+                        {t("el_view_conversation")}
                       </button>
                       <button
                         onClick={closeSheet}
                         className="rounded-full border border-white/10 px-5 py-2.5 text-[13px] font-medium text-zinc-300 transition-all hover:border-white/20 hover:text-white"
                       >
-                        Close
+                        {t("eb_close")}
                       </button>
                     </div>
                   </motion.div>
