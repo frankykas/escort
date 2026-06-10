@@ -19,6 +19,8 @@ interface FeedPost {
   provider_username: string;
   provider_avatar: string | null;
   provider_verified: string;
+  provider_city?: string | null;
+  provider_last_seen_at?: string | null;
   caption: string | null;
   media_url: string | null;
   media_type: string;
@@ -29,6 +31,10 @@ interface FeedPost {
   views_count: number;
   created_at: string;
   expires_at: string | null;
+  is_premium: boolean;
+  unlock_price: number | null;
+  content_rating: string;
+  media_path: string | null;
   latest_comments: FeedComment[];
 }
 
@@ -38,6 +44,8 @@ interface FeedParams {
   limit?: number;
   offset?: number;
   commentsPerPost?: number;
+  /** When false (default), only SFW posts are returned (age gate). */
+  allowAdult?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -54,6 +62,7 @@ export async function getFeedPosts(params: FeedParams = {}): Promise<FeedPost[]>
     limit = 20,
     offset = 0,
     commentsPerPost = 3,
+    allowAdult = false,
   } = params;
 
   const { data, error } = await supabase.rpc("get_feed_posts", {
@@ -62,6 +71,7 @@ export async function getFeedPosts(params: FeedParams = {}): Promise<FeedPost[]>
     p_limit: limit,
     p_offset: offset,
     p_comments_per_post: commentsPerPost,
+    p_allow_adult: allowAdult,
   });
 
   if (error) {

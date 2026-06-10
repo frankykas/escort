@@ -227,10 +227,10 @@ export function SpotlightTour({ steps, storageKey, forceOpen, onClose }: Props) 
           <rect
             width="100%"
             height="100%"
-            fill="rgba(0,0,0,0.78)"
+            fill="rgba(0,0,0,0.45)"
             mask="url(#spotlight-mask)"
           />
-          {/* Soft amber glow ring around the cutout */}
+          {/* Soft pink glow ring around the cutout */}
           {cutout && (
             <rect
               x={cutout.x}
@@ -240,7 +240,7 @@ export function SpotlightTour({ steps, storageKey, forceOpen, onClose }: Props) 
               rx={RADIUS}
               ry={RADIUS}
               fill="none"
-              stroke="rgba(251,191,36,0.6)"
+              stroke="rgba(244,114,182,0.6)"
               strokeWidth={2}
               className="pointer-events-none"
             />
@@ -255,25 +255,25 @@ export function SpotlightTour({ steps, storageKey, forceOpen, onClose }: Props) 
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, delay: 0.1 }}
           style={tooltipStyle}
-          className="absolute w-[320px] max-w-[calc(100vw-32px)] rounded-2xl border border-amber-400/30 bg-zinc-900 p-5 shadow-[0_8px_40px_rgba(0,0,0,0.6)] pointer-events-auto"
+          className="absolute w-[320px] max-w-[calc(100vw-32px)] rounded-2xl border border-gray-200 bg-white p-5 shadow-[0_8px_40px_rgba(0,0,0,0.1)] pointer-events-auto"
         >
           {/* Close button */}
           <button
             onClick={complete}
-            className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-800 hover:text-white"
+            className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-gray-100 hover:text-slate-700"
             aria-label={t("tour_skip_aria")}
           >
             <X size={14} />
           </button>
 
           {/* Step counter */}
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-amber-400">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-pink-500">
             {t("tour_step")} {stepIndex + 1} {t("tour_of")} {steps.length}
           </p>
 
           {/* Title + body */}
-          <h3 className="text-[16px] font-bold text-white pr-6">{currentStep.title}</h3>
-          <p className="mt-1.5 text-[13px] text-zinc-400 leading-relaxed">{currentStep.body}</p>
+          <h3 className="text-[16px] font-bold text-slate-800 pr-6">{currentStep.title}</h3>
+          <p className="mt-1.5 text-[13px] text-slate-500 leading-relaxed">{currentStep.body}</p>
 
           {/* Progress dots */}
           <div className="mt-4 flex items-center justify-between">
@@ -283,7 +283,7 @@ export function SpotlightTour({ steps, storageKey, forceOpen, onClose }: Props) 
                   key={i}
                   className={cn(
                     "h-1.5 rounded-full transition-all",
-                    i === stepIndex ? "w-5 bg-amber-400" : "w-1.5 bg-zinc-700"
+                    i === stepIndex ? "w-5 bg-pink-400" : "w-1.5 bg-gray-200"
                   )}
                 />
               ))}
@@ -293,14 +293,14 @@ export function SpotlightTour({ steps, storageKey, forceOpen, onClose }: Props) 
               {stepIndex < steps.length - 1 && (
                 <button
                   onClick={complete}
-                  className="text-[12px] font-medium text-zinc-500 hover:text-zinc-300 transition"
+                  className="text-[12px] font-medium text-slate-400 hover:text-slate-600 transition"
                 >
                   {t("tour_skip")}
                 </button>
               )}
               <button
                 onClick={next}
-                className="flex items-center gap-1.5 rounded-full bg-amber-400 px-3.5 py-1.5 text-[12px] font-bold text-zinc-950 transition hover:bg-amber-300"
+                className="flex items-center gap-1.5 rounded-full bg-pink-400 px-3.5 py-1.5 text-[12px] font-bold text-white transition hover:bg-pink-300"
               >
                 {stepIndex === steps.length - 1 ? t("tour_got_it") : t("tour_next")}
                 {stepIndex < steps.length - 1 && <ArrowRight size={12} />}

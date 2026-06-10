@@ -53,31 +53,31 @@ function TogglePill({
       className={cn(
         "flex items-center gap-3 w-full rounded-2xl border px-4 py-3.5 text-left transition-all",
         active
-          ? "border-amber-400/40 bg-amber-400/10"
-          : "border-white/8 bg-zinc-900 hover:border-white/15"
+          ? "border-pink-300 bg-pink-50"
+          : "border-gray-200 bg-gray-50 hover:border-gray-300"
       )}
     >
       {Icon && (
         <div className={cn(
           "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl",
-          active ? "bg-amber-400/20" : "bg-zinc-800"
+          active ? "bg-pink-100" : "bg-gray-100"
         )}>
-          <Icon size={15} className={active ? "text-amber-400" : "text-zinc-500"} />
+          <Icon size={15} className={active ? "text-pink-500" : "text-slate-400"} />
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className={cn("text-[14px] font-semibold", active ? "text-amber-400" : "text-zinc-200")}>
+        <p className={cn("text-[14px] font-semibold", active ? "text-pink-500" : "text-slate-700")}>
           {label}
         </p>
-        {sub && <p className="text-[11px] text-zinc-500 mt-0.5">{sub}</p>}
+        {sub && <p className="text-[11px] text-slate-400 mt-0.5">{sub}</p>}
       </div>
       <div className={cn(
         "flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border transition-all",
         active
-          ? "border-amber-400 bg-amber-400"
-          : "border-zinc-700 bg-transparent"
+          ? "border-pink-400 bg-pink-400"
+          : "border-gray-300 bg-transparent"
       )}>
-        {active && <Check size={11} className="text-zinc-950" strokeWidth={3} />}
+        {active && <Check size={11} className="text-slate-800" strokeWidth={3} />}
       </div>
     </button>
   );
@@ -117,8 +117,8 @@ function PriceRange({
               className={cn(
                 "rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-all",
                 active
-                  ? "border-amber-400/50 bg-amber-400/10 text-amber-400"
-                  : "border-white/8 bg-zinc-900 text-zinc-400 hover:border-white/15 hover:text-zinc-200"
+                  ? "border-pink-300 bg-pink-50 text-pink-500"
+                  : "border-gray-200 bg-gray-50 text-slate-500 hover:border-gray-300 hover:text-slate-700"
               )}
             >
               {p.label}
@@ -128,7 +128,7 @@ function PriceRange({
       </div>
       {/* Custom range display */}
       {!activePreset && (
-        <p className="mt-2 text-[12px] text-zinc-400">
+        <p className="mt-2 text-[12px] text-slate-500">
           CA${min.toLocaleString()} – CA${max === MAX ? max.toLocaleString() + "+" : max.toLocaleString()}
         </p>
       )}
@@ -158,7 +158,7 @@ export function ListingsFilterDrawer({ filters, onApply, onClose }: Props) {
       {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
         onClick={onClose}
       />
 
@@ -166,20 +166,20 @@ export function ListingsFilterDrawer({ filters, onApply, onClose }: Props) {
       <motion.div
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 32, stiffness: 320 }}
-        className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-white/10 bg-zinc-950"
+        className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-gray-200 bg-white"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" }}
       >
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1">
-          <div className="h-1 w-10 rounded-full bg-zinc-700" />
+          <div className="h-1 w-10 rounded-full bg-gray-300" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/5 px-5 py-4">
-          <p className="text-[17px] font-bold text-white">{t("listings_filters")}</p>
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+          <p className="text-[17px] font-bold text-slate-800">{t("listings_filters")}</p>
           <button
             onClick={onClose}
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors"
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-slate-500 hover:text-slate-700 transition-colors"
           >
             <X size={14} />
           </button>
@@ -190,7 +190,7 @@ export function ListingsFilterDrawer({ filters, onApply, onClose }: Props) {
 
           {/* Quick toggles */}
           <section>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
               Status
             </p>
             <div className="space-y-2">
@@ -213,7 +213,7 @@ export function ListingsFilterDrawer({ filters, onApply, onClose }: Props) {
 
           {/* In-call / Out-call */}
           <section>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
               {t("listings_filter_service")}
             </p>
             <div className="grid grid-cols-2 gap-2">
@@ -226,8 +226,8 @@ export function ListingsFilterDrawer({ filters, onApply, onClose }: Props) {
                     className={cn(
                       "rounded-2xl border py-4 text-[13px] font-semibold capitalize transition-all",
                       active
-                        ? "border-amber-400/40 bg-amber-400/10 text-amber-400"
-                        : "border-white/8 bg-zinc-900 text-zinc-300 hover:border-white/15"
+                        ? "border-pink-300 bg-pink-50 text-pink-500"
+                        : "border-gray-200 bg-gray-50 text-slate-700 hover:border-gray-300"
                     )}
                   >
                     {type === "incall" ? t("listings_incall") : t("listings_outcall")}
@@ -236,13 +236,13 @@ export function ListingsFilterDrawer({ filters, onApply, onClose }: Props) {
               })}
             </div>
             {local.incall && local.outcall && (
-              <p className="mt-1.5 text-[11px] text-zinc-600">Showing listings that offer either</p>
+              <p className="mt-1.5 text-[11px] text-slate-400">Showing listings that offer either</p>
             )}
           </section>
 
           {/* Price range */}
           <section>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
               {t("listings_filter_price")}
             </p>
             <PriceRange
@@ -254,17 +254,17 @@ export function ListingsFilterDrawer({ filters, onApply, onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 border-t border-white/5 px-5 pt-4">
+        <div className="flex gap-3 border-t border-gray-100 px-5 pt-4">
           <button
             onClick={() => setLocal({ ...DEFAULT_FILTERS })}
             disabled={isDefault}
-            className="flex-1 rounded-2xl border border-white/10 py-3 text-[14px] font-semibold text-zinc-400 transition-all hover:border-white/20 hover:text-zinc-200 disabled:opacity-30"
+            className="flex-1 rounded-2xl border border-gray-200 py-3 text-[14px] font-semibold text-slate-500 transition-all hover:border-gray-300 hover:text-slate-700 disabled:opacity-30"
           >
             {t("listings_filter_reset")}
           </button>
           <button
             onClick={() => onApply(local)}
-            className="flex-2 flex-grow-[2] rounded-2xl bg-amber-400 py-3 text-[14px] font-bold text-zinc-950 transition-all hover:bg-amber-300 active:scale-[0.98]"
+            className="flex-2 flex-grow-[2] rounded-2xl bg-[rgb(246,51,154)] py-3 text-[14px] font-bold text-white transition-all hover:brightness-105 active:scale-[0.98]"
           >
             {t("listings_filter_show")}
           </button>

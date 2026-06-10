@@ -34,9 +34,9 @@ export function CommentInput({ userId, onSubmit, submitting }: Props) {
       {signupModal}
       <form
         onSubmit={handleSubmit}
-        className="flex items-center gap-3 px-3 py-3 border-t border-zinc-900"
+        className="flex items-center gap-3 px-3 py-3 border-t border-gray-100"
       >
-        <div className="h-7 w-7 rounded-full bg-zinc-800 flex-shrink-0" />
+        <div className="h-7 w-7 rounded-full bg-gray-100 flex-shrink-0" />
         <input
           type="text"
           value={value}
@@ -44,7 +44,7 @@ export function CommentInput({ userId, onSubmit, submitting }: Props) {
           onFocus={handleFocus}
           maxLength={500}
           placeholder={t("post_add_comment")}
-          className="flex-1 bg-transparent text-[13px] text-zinc-100 placeholder-zinc-600 outline-none"
+          className="flex-1 bg-transparent text-[13px] text-slate-700 placeholder-slate-400 outline-none"
         />
         <button
           type="submit"
@@ -52,7 +52,7 @@ export function CommentInput({ userId, onSubmit, submitting }: Props) {
           aria-label="Post comment"
           className={cn(
             "transition-opacity",
-            value.trim() && !submitting ? "opacity-100 text-amber-400" : "opacity-30 text-zinc-600"
+            value.trim() && !submitting ? "opacity-100 text-pink-500" : "opacity-30 text-slate-400"
           )}
         >
           <Send size={18} />

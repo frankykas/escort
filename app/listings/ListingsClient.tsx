@@ -262,20 +262,20 @@ export function ListingsClient() {
   const currentSort = SORT_OPTIONS.find((s) => s.id === sortBy)!;
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-28">
+    <div className="min-h-screen bg-[#fafbfc] pb-28">
 
       {/* ── Sticky header ── */}
-      <header className="sticky top-0 z-20 border-b border-white/5 bg-zinc-950/95 backdrop-blur-xl backdrop-saturate-150">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/95 backdrop-blur-xl backdrop-saturate-150">
         <div className="px-4 pt-4 pb-3">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-[20px] font-bold text-white tracking-tight">{t("listings_title")}</h1>
+            <h1 className="text-[20px] font-bold text-slate-800 tracking-tight">{t("listings_title")}</h1>
             {/* List / Grid toggle */}
-            <div className="flex items-center gap-0.5 rounded-xl border border-white/8 bg-zinc-900 p-0.5">
+            <div className="flex items-center gap-0.5 rounded-xl border border-gray-200 bg-gray-50 p-0.5">
               <button
                 onClick={() => setViewMode("list")}
                 className={cn(
                   "flex h-7 w-7 items-center justify-center rounded-lg transition-all",
-                  viewMode === "list" ? "bg-amber-400 text-zinc-950" : "text-zinc-500 hover:text-zinc-300"
+                  viewMode === "list" ? "bg-pink-400 text-slate-800" : "text-slate-400 hover:text-slate-600"
                 )}
                 aria-label={t("listings_view_list")}
               >
@@ -285,7 +285,7 @@ export function ListingsClient() {
                 onClick={() => setViewMode("grid")}
                 className={cn(
                   "flex h-7 w-7 items-center justify-center rounded-lg transition-all",
-                  viewMode === "grid" ? "bg-amber-400 text-zinc-950" : "text-zinc-500 hover:text-zinc-300"
+                  viewMode === "grid" ? "bg-pink-400 text-slate-800" : "text-slate-400 hover:text-slate-600"
                 )}
                 aria-label={t("listings_view_grid")}
               >
@@ -296,18 +296,18 @@ export function ListingsClient() {
 
           {/* Search bar */}
           <div className="relative">
-            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder={t("listings_search_ph")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-2xl border border-white/8 bg-zinc-900 py-2.5 pl-10 pr-10 text-[14px] text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-amber-400/30 focus:ring-1 focus:ring-amber-400/20"
+              className="w-full rounded-2xl border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-10 text-[14px] text-slate-700 placeholder-slate-400 outline-none transition focus:border-pink-300 focus:ring-1 focus:ring-pink-200"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
                 <X size={14} />
               </button>
@@ -329,8 +329,8 @@ export function ListingsClient() {
                 className={cn(
                   "flex-shrink-0 rounded-full border px-4 py-1.5 text-[12px] font-medium transition-all",
                   active
-                    ? "border-amber-400/50 bg-amber-400 text-zinc-950 shadow-[0_0_14px_rgba(251,191,36,0.25)]"
-                    : "border-white/8 bg-zinc-900 text-zinc-400 hover:border-white/15 hover:text-zinc-200"
+                    ? "border-pink-300 bg-pink-400 text-slate-800 shadow-[0_0_14px_rgba(244,114,182,0.25)]"
+                    : "border-gray-200 bg-white text-slate-400 hover:border-gray-300 hover:text-slate-600"
                 )}
               >
                 {cat.label}
@@ -342,18 +342,18 @@ export function ListingsClient() {
       </header>
 
       {/* ── Sort + Filter bar ── */}
-      <div className="flex items-center gap-2 border-b border-white/5 px-4 py-2.5">
+      <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-2.5">
         {/* Sort dropdown trigger */}
         <button
           onClick={() => setSortOpen(true)}
-          className="flex flex-1 items-center gap-1.5 text-[12px] text-zinc-400 hover:text-zinc-200 transition-colors"
+          className="flex flex-1 items-center gap-1.5 text-[12px] text-slate-400 hover:text-slate-600 transition-colors"
         >
-          <span className="font-medium text-zinc-300">{SORT_OPTIONS.find((s) => s.id === sortBy)?.label}</span>
-          <ChevronRight size={12} className="rotate-90 text-zinc-600" />
+          <span className="font-medium text-slate-500">{SORT_OPTIONS.find((s) => s.id === sortBy)?.label}</span>
+          <ChevronRight size={12} className="rotate-90 text-slate-400" />
         </button>
 
         {!loading && (
-          <span className="text-[11px] text-zinc-700">
+          <span className="text-[11px] text-slate-400">
             {listings.length} {listings.length === 1 ? t("listings_results_one") : t("listings_results_many")}
           </span>
         )}
@@ -364,14 +364,14 @@ export function ListingsClient() {
           className={cn(
             "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-all",
             filterCount > 0
-              ? "border-amber-400/40 bg-amber-400/10 text-amber-400"
-              : "border-white/8 bg-zinc-900 text-zinc-400 hover:border-white/15 hover:text-zinc-200"
+              ? "border-pink-300 bg-pink-50 text-pink-500"
+              : "border-gray-200 bg-white text-slate-400 hover:border-gray-300 hover:text-slate-600"
           )}
         >
           <SlidersHorizontal size={12} />
           {t("listings_filters")}
           {filterCount > 0 && (
-            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[9px] font-bold text-zinc-950">
+            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-pink-400 px-1 text-[9px] font-bold text-slate-800">
               {filterCount}
             </span>
           )}
@@ -384,16 +384,16 @@ export function ListingsClient() {
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/60"
+              className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
               onClick={() => setSortOpen(false)}
             />
             <motion.div
               initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-white/10 bg-zinc-950 px-4 pb-10 pt-5"
+              className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-gray-200 bg-white px-4 pb-10 pt-5"
             >
-              <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-zinc-700" />
-              <p className="mb-4 text-[13px] font-semibold uppercase tracking-widest text-zinc-500">{t("listings_sort")}</p>
+              <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-gray-300" />
+              <p className="mb-4 text-[13px] font-semibold uppercase tracking-widest text-slate-400">{t("listings_sort")}</p>
               <div className="space-y-1">
                 {SORT_OPTIONS.map((opt) => (
                   <button
@@ -402,13 +402,13 @@ export function ListingsClient() {
                     className={cn(
                       "flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-[15px] transition-all",
                       sortBy === opt.id
-                        ? "bg-amber-400/10 font-semibold text-amber-400"
-                        : "text-zinc-200 hover:bg-zinc-900"
+                        ? "bg-pink-50 font-semibold text-pink-500"
+                        : "text-slate-700 hover:bg-gray-50"
                     )}
                   >
                     {opt.label}
                     {sortBy === opt.id && (
-                      <CheckCircle size={16} className="text-amber-400" />
+                      <CheckCircle size={16} className="text-pink-500" />
                     )}
                   </button>
                 ))}
@@ -434,7 +434,7 @@ export function ListingsClient() {
             <section>
               <div className="flex items-center gap-2 px-4 pb-2.5">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
                   {t("listings_available_now")} · {liveNow.length}
                 </p>
               </div>
@@ -452,8 +452,8 @@ export function ListingsClient() {
           {newToday.length > 0 && sortBy === "newest" && !search && (
             <section>
               <div className="flex items-center gap-2 px-4 pb-2.5">
-                <Zap size={12} className="text-amber-400" />
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
+                <Zap size={12} className="text-pink-500" />
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
                   {t("listings_new_today")} · {newToday.length}
                 </p>
               </div>
@@ -469,9 +469,9 @@ export function ListingsClient() {
 
           {/* Main content */}
           <section className="px-4">
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-zinc-700">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
               {category === "all" ? t("listings_all_listings") : category}
-              {search && <span className="ml-1 normal-case text-zinc-600">"{search}"</span>}
+              {search && <span className="ml-1 normal-case text-slate-400">"{search}"</span>}
             </p>
 
             {viewMode === "list" ? (
@@ -506,11 +506,11 @@ export function ListingsClient() {
             <div ref={sentinelRef} className="h-1" />
             {loadingMore && (
               <div className="flex justify-center py-6">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-amber-400" />
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-pink-400" />
               </div>
             )}
             {!hasMore && listings.length > 0 && (
-              <p className="py-6 text-center text-[12px] text-zinc-700">
+              <p className="py-6 text-center text-[12px] text-slate-400">
                 All listings loaded
               </p>
             )}
@@ -545,26 +545,26 @@ function LiveStripCard({ listing }: { listing: ListingCard }) {
           <Image src={img} alt={listing.title} fill
             className="object-cover transition duration-500 group-hover:scale-105" sizes="128px" />
         ) : (
-          <div className="flex h-full items-center justify-center bg-zinc-800">
-            <span className="text-2xl font-bold text-zinc-600">{listing.provider.username[0].toUpperCase()}</span>
+          <div className="flex h-full items-center justify-center bg-gray-100">
+            <span className="text-2xl font-bold text-slate-400">{listing.provider.username[0].toUpperCase()}</span>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
-        <div className="absolute inset-0 rounded-2xl ring-1 ring-emerald-500/20 transition group-hover:ring-emerald-500/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        <div className="absolute inset-0 rounded-2xl ring-1 ring-emerald-300/40 transition group-hover:ring-emerald-400/60" />
 
-        <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full border border-emerald-500/40 bg-black/70 px-2 py-0.5 backdrop-blur-sm">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-          <span className="text-[9px] font-bold text-emerald-400">LIVE</span>
+        <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 backdrop-blur-sm shadow-sm">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+          <span className="text-[9px] font-bold text-emerald-600">LIVE</span>
         </div>
 
         <div className="absolute inset-x-0 bottom-0 px-2 pb-2">
-          <div className="rounded-xl border border-white/10 bg-black/70 px-2.5 py-2 backdrop-blur-md">
+          <div className="rounded-xl bg-white/95 px-2.5 py-2 backdrop-blur-md shadow-sm">
             <div className="flex items-center gap-1 mb-0.5">
-              <span className="truncate text-[10px] font-bold text-white">{listing.provider.username}</span>
-              {isVerified && <CheckCircle size={8} className="flex-shrink-0 text-amber-400" />}
+              <span className="truncate text-[10px] font-bold text-slate-800">{listing.provider.username}</span>
+              {isVerified && <CheckCircle size={8} className="flex-shrink-0 text-pink-500" />}
             </div>
-            <p className="line-clamp-1 text-[9px] text-zinc-400">{listing.title}</p>
-            <p className="mt-0.5 text-[9px] font-bold text-amber-400">
+            <p className="line-clamp-1 text-[9px] text-slate-500">{listing.title}</p>
+            <p className="mt-0.5 text-[9px] font-bold text-pink-500">
               {formatRate(listing.rate, listing.duration_minutes)}
             </p>
           </div>
@@ -587,24 +587,26 @@ function NewTodayCard({ listing }: { listing: ListingCard }) {
           <Image src={img} alt={listing.title} fill
             className="object-cover transition duration-500 group-hover:scale-105" sizes="112px" />
         ) : (
-          <div className="flex h-full items-center justify-center bg-zinc-800">
-            <span className="text-xl font-bold text-zinc-600">{listing.provider.username[0].toUpperCase()}</span>
+          <div className="flex h-full items-center justify-center bg-gray-100">
+            <span className="text-xl font-bold text-slate-400">{listing.provider.username[0].toUpperCase()}</span>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent" />
-        <div className="absolute inset-0 rounded-2xl ring-1 ring-white/8" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+        <div className="absolute inset-0 rounded-2xl ring-1 ring-pink-200/40" />
 
-        <div className="absolute right-2 top-2 rounded-full bg-amber-400 px-2 py-0.5">
-          <span className="text-[8px] font-black text-zinc-950">NEW</span>
+        <div className="absolute right-2 top-2 rounded-full bg-pink-400 px-2 py-0.5 shadow-sm">
+          <span className="text-[8px] font-black text-white">NEW</span>
         </div>
 
         <div className="absolute inset-x-0 bottom-0 px-2 pb-2">
-          <div className="flex items-center gap-1">
-            <span className="truncate text-[10px] font-bold text-white">{listing.provider.username}</span>
-            {isVerified && <CheckCircle size={8} className="flex-shrink-0 text-amber-400" />}
+          <div className="rounded-lg bg-white/95 px-2 py-1.5 backdrop-blur-md shadow-sm">
+            <div className="flex items-center gap-1">
+              <span className="truncate text-[10px] font-bold text-slate-800">{listing.provider.username}</span>
+              {isVerified && <CheckCircle size={8} className="flex-shrink-0 text-pink-500" />}
+            </div>
+            <p className="line-clamp-1 text-[8px] text-slate-500 mt-0.5">{listing.title}</p>
+            <p className="mt-0.5 text-[9px] font-bold text-pink-500">{formatRate(listing.rate, listing.duration_minutes)}</p>
           </div>
-          <p className="line-clamp-1 text-[8px] text-zinc-400 mt-0.5">{listing.title}</p>
-          <p className="mt-0.5 text-[9px] font-bold text-amber-300">{formatRate(listing.rate, listing.duration_minutes)}</p>
         </div>
       </div>
     </Link>
@@ -622,22 +624,22 @@ function ListingRow({ listing }: { listing: ListingCard }) {
   return (
     <Link
       href={`/listings/${listing.id}`}
-      className="group flex items-stretch gap-3 rounded-2xl border border-white/5 bg-zinc-900 p-3 transition-all duration-200 hover:border-white/10 hover:bg-zinc-900/80 active:scale-[0.99]"
+      className="group flex items-stretch gap-3 rounded-2xl border border-gray-200 bg-white p-3 transition-all duration-200 hover:border-gray-200 hover:bg-gray-100/80 active:scale-[0.99]"
     >
       {/* Thumbnail */}
-      <div className="relative h-[88px] w-[72px] flex-shrink-0 overflow-hidden rounded-xl bg-zinc-800">
+      <div className="relative h-[88px] w-[72px] flex-shrink-0 overflow-hidden rounded-xl bg-gray-100">
         {img ? (
           <Image src={img} alt={listing.title} fill
             className="object-cover transition duration-300 group-hover:scale-105" sizes="72px" />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <span className="text-xl font-bold text-zinc-600">{listing.provider.username[0].toUpperCase()}</span>
+            <span className="text-xl font-bold text-slate-400">{listing.provider.username[0].toUpperCase()}</span>
           </div>
         )}
         {live && (
           <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-0.5 bg-emerald-500/90 py-0.5">
             <span className="h-1 w-1 animate-pulse rounded-full bg-white" />
-            <span className="text-[7px] font-bold text-white">LIVE</span>
+            <span className="text-[7px] font-bold text-slate-800">LIVE</span>
           </div>
         )}
       </div>
@@ -646,18 +648,18 @@ function ListingRow({ listing }: { listing: ListingCard }) {
       <div className="flex flex-1 flex-col justify-between min-w-0">
         <div>
           {/* Title */}
-          <p className="line-clamp-1 text-[14px] font-semibold text-white leading-snug">
+          <p className="line-clamp-1 text-[14px] font-semibold text-slate-800 leading-snug">
             {listing.title}
           </p>
 
           {/* Provider + verified + city */}
           <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
-            <span className="text-[12px] text-zinc-400">@{listing.provider.username}</span>
-            {isVerified && <CheckCircle size={11} className="text-amber-400 flex-shrink-0" />}
+            <span className="text-[12px] text-slate-500">@{listing.provider.username}</span>
+            {isVerified && <CheckCircle size={11} className="text-pink-500 flex-shrink-0" />}
             {listing.provider.city && (
               <>
-                <span className="text-zinc-700">·</span>
-                <span className="flex items-center gap-0.5 text-[11px] text-zinc-500">
+                <span className="text-slate-300">·</span>
+                <span className="flex items-center gap-0.5 text-[11px] text-slate-500">
                   <MapPin size={9} />
                   {listing.provider.city}
                 </span>
@@ -665,8 +667,8 @@ function ListingRow({ listing }: { listing: ListingCard }) {
             )}
             {listing.provider.age && (
               <>
-                <span className="text-zinc-700">·</span>
-                <span className="text-[11px] text-zinc-500">{listing.provider.age} yrs</span>
+                <span className="text-slate-300">·</span>
+                <span className="text-[11px] text-slate-500">{listing.provider.age} yrs</span>
               </>
             )}
           </div>
@@ -674,28 +676,28 @@ function ListingRow({ listing }: { listing: ListingCard }) {
 
         <div>
           {/* Rate */}
-          <p className="text-[14px] font-bold text-amber-400 leading-none">
+          <p className="text-[14px] font-bold text-pink-500 leading-none">
             {formatRate(listing.rate, listing.duration_minutes)}
           </p>
 
           {/* Bottom row: chips + time */}
           <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
             {listing.provider.incall && (
-              <span className="rounded-full border border-white/8 bg-zinc-800 px-2 py-0.5 text-[9px] font-medium text-zinc-500">
+              <span className="rounded-full border border-gray-200 bg-gray-100 px-2 py-0.5 text-[9px] font-medium text-slate-500">
                 In-call
               </span>
             )}
             {listing.provider.outcall && (
-              <span className="rounded-full border border-white/8 bg-zinc-800 px-2 py-0.5 text-[9px] font-medium text-zinc-500">
+              <span className="rounded-full border border-gray-200 bg-gray-100 px-2 py-0.5 text-[9px] font-medium text-slate-500">
                 Out-call
               </span>
             )}
             {isNew && !live && (
-              <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[9px] font-bold text-amber-400">
+              <span className="rounded-full bg-pink-50 px-2 py-0.5 text-[9px] font-bold text-pink-500">
                 NEW
               </span>
             )}
-            <span className="ml-auto flex items-center gap-0.5 text-[10px] text-zinc-700">
+            <span className="ml-auto flex items-center gap-0.5 text-[10px] text-slate-300">
               <Clock size={9} />
               {timeAgo(listing.created_at)}
             </span>
@@ -705,7 +707,7 @@ function ListingRow({ listing }: { listing: ListingCard }) {
 
       {/* Chevron */}
       <div className="flex items-center self-center">
-        <ChevronRight size={15} className="text-zinc-700 transition-colors group-hover:text-zinc-500" />
+        <ChevronRight size={15} className="text-slate-300 transition-colors group-hover:text-slate-500" />
       </div>
     </Link>
   );
@@ -721,59 +723,59 @@ function ListingGridCard({ listing }: { listing: ListingCard }) {
 
   return (
     <Link href={`/listings/${listing.id}`} className="group block">
-      <div className="overflow-hidden rounded-2xl border border-white/5 bg-zinc-900 transition-all duration-300 group-hover:border-white/10 group-hover:shadow-xl group-hover:shadow-black/50 active:scale-[0.98]">
-        <div className="relative aspect-[3/4] bg-zinc-800">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all duration-300 group-hover:border-gray-200 group-hover:shadow-xl group-hover:shadow-black/50 active:scale-[0.98]">
+        <div className="relative aspect-[3/4] bg-gray-100">
           {img ? (
             <Image src={img} alt={listing.title} fill
               className="object-cover transition duration-500 group-hover:scale-105"
               sizes="(max-width: 640px) 50vw, 200px" />
           ) : (
             <div className="flex h-full items-center justify-center">
-              <span className="text-3xl font-bold text-zinc-600">{listing.provider.username[0].toUpperCase()}</span>
+              <span className="text-3xl font-bold text-slate-400">{listing.provider.username[0].toUpperCase()}</span>
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
 
           <div className="absolute left-2 right-2 top-2.5 flex items-center justify-between">
             {live ? (
-              <div className="flex items-center gap-1 rounded-full border border-emerald-500/40 bg-black/70 px-2 py-0.5 backdrop-blur-sm">
-                <span className="h-1 w-1 animate-pulse rounded-full bg-emerald-400" />
-                <span className="text-[8px] font-bold text-emerald-400">LIVE</span>
+              <div className="flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 backdrop-blur-sm shadow-sm">
+                <span className="h-1 w-1 animate-pulse rounded-full bg-emerald-500" />
+                <span className="text-[8px] font-bold text-emerald-600">LIVE</span>
               </div>
             ) : isNew ? (
-              <div className="rounded-full bg-amber-400 px-2 py-0.5">
-                <span className="text-[8px] font-black text-zinc-950">NEW</span>
+              <div className="rounded-full bg-pink-400 px-2 py-0.5 shadow-sm">
+                <span className="text-[8px] font-black text-white">NEW</span>
               </div>
             ) : <div />}
 
             {isVerified && (
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-black/70 backdrop-blur-sm">
-                <CheckCircle size={11} className="text-amber-400" />
+              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-white/95 backdrop-blur-sm shadow-sm">
+                <CheckCircle size={11} className="text-pink-500" />
               </div>
             )}
           </div>
         </div>
 
         <div className="px-3 py-2.5">
-          <p className="line-clamp-1 text-[13px] font-semibold text-white">{listing.title}</p>
+          <p className="line-clamp-1 text-[13px] font-semibold text-slate-800">{listing.title}</p>
           <div className="mt-0.5 flex items-center gap-1">
-            <span className="text-[11px] text-zinc-500">@{listing.provider.username}</span>
+            <span className="text-[11px] text-slate-500">@{listing.provider.username}</span>
             {listing.provider.city && (
-              <span className="text-[10px] text-zinc-700 truncate">· {listing.provider.city}</span>
+              <span className="text-[10px] text-slate-300 truncate">· {listing.provider.city}</span>
             )}
           </div>
-          <div className="my-2 h-px bg-white/5" />
-          <p className="text-[13px] font-bold text-amber-400">
+          <div className="my-2 h-px bg-gray-100" />
+          <p className="text-[13px] font-bold text-pink-500">
             {formatRate(listing.rate, listing.duration_minutes)}
           </p>
           <div className="mt-1.5 flex items-center gap-1">
             {listing.provider.incall && (
-              <span className="rounded-full border border-white/8 bg-zinc-800 px-1.5 py-0.5 text-[8px] font-medium text-zinc-500">In-call</span>
+              <span className="rounded-full border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[8px] font-medium text-slate-500">In-call</span>
             )}
             {listing.provider.outcall && (
-              <span className="rounded-full border border-white/8 bg-zinc-800 px-1.5 py-0.5 text-[8px] font-medium text-zinc-500">Out-call</span>
+              <span className="rounded-full border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[8px] font-medium text-slate-500">Out-call</span>
             )}
-            <span className="ml-auto text-[9px] text-zinc-700">{timeAgo(listing.created_at)}</span>
+            <span className="ml-auto text-[9px] text-slate-300">{timeAgo(listing.created_at)}</span>
           </div>
         </div>
       </div>
@@ -787,15 +789,15 @@ function EmptyState({ onClear }: { onClear?: () => void }) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center gap-3 px-6 pt-20 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-900">
-        <Search size={26} className="text-zinc-700" />
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white">
+        <Search size={26} className="text-slate-300" />
       </div>
-      <p className="text-[15px] font-semibold text-zinc-300">{t("listings_empty")}</p>
-      <p className="text-[13px] leading-relaxed text-zinc-600">{t("listings_empty_body")}</p>
+      <p className="text-[15px] font-semibold text-slate-700">{t("listings_empty")}</p>
+      <p className="text-[13px] leading-relaxed text-slate-400">{t("listings_empty_body")}</p>
       {onClear && (
         <button
           onClick={onClear}
-          className="mt-2 rounded-full border border-white/10 px-5 py-2 text-[13px] font-medium text-zinc-300 transition hover:bg-zinc-800"
+          className="mt-2 rounded-full border border-gray-200 px-5 py-2 text-[13px] font-medium text-slate-700 transition hover:bg-gray-100"
         >
           Clear filters
         </button>
@@ -810,18 +812,18 @@ function SkeletonList() {
   return (
     <div className="space-y-2.5 px-4 pt-4">
       {Array.from({ length: 7 }).map((_, i) => (
-        <div key={i} className="flex gap-3 rounded-2xl border border-white/5 bg-zinc-900 p-3 animate-pulse">
-          <div className="h-[88px] w-[72px] flex-shrink-0 rounded-xl bg-zinc-800" />
+        <div key={i} className="flex gap-3 rounded-2xl border border-gray-200 bg-white p-3 animate-pulse">
+          <div className="h-[88px] w-[72px] flex-shrink-0 rounded-xl bg-gray-100" />
           <div className="flex flex-1 flex-col justify-between py-1">
             <div className="space-y-2">
-              <div className="h-3.5 w-3/4 rounded-full bg-zinc-800" />
-              <div className="h-2.5 w-1/2 rounded-full bg-zinc-800/60" />
+              <div className="h-3.5 w-3/4 rounded-full bg-gray-100" />
+              <div className="h-2.5 w-1/2 rounded-full bg-gray-100/60" />
             </div>
             <div className="space-y-1.5">
-              <div className="h-3.5 w-1/3 rounded-full bg-zinc-800" />
+              <div className="h-3.5 w-1/3 rounded-full bg-gray-100" />
               <div className="flex gap-1.5">
-                <div className="h-2.5 w-12 rounded-full bg-zinc-800/50" />
-                <div className="h-2.5 w-14 rounded-full bg-zinc-800/50" />
+                <div className="h-2.5 w-12 rounded-full bg-gray-100/50" />
+                <div className="h-2.5 w-14 rounded-full bg-gray-100/50" />
               </div>
             </div>
           </div>
@@ -835,12 +837,12 @@ function SkeletonGrid() {
   return (
     <div className="grid grid-cols-2 gap-3 px-4 pt-4">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="animate-pulse overflow-hidden rounded-2xl border border-white/5 bg-zinc-900">
-          <div className="aspect-[3/4] bg-zinc-800" />
+        <div key={i} className="animate-pulse overflow-hidden rounded-2xl border border-gray-200 bg-white">
+          <div className="aspect-[3/4] bg-gray-100" />
           <div className="space-y-2 px-3 py-2.5">
-            <div className="h-3 w-3/4 rounded-full bg-zinc-800" />
-            <div className="h-2.5 w-1/2 rounded-full bg-zinc-800/60" />
-            <div className="h-3 w-2/3 rounded-full bg-zinc-800/40" />
+            <div className="h-3 w-3/4 rounded-full bg-gray-100" />
+            <div className="h-2.5 w-1/2 rounded-full bg-gray-100/60" />
+            <div className="h-3 w-2/3 rounded-full bg-gray-100/40" />
           </div>
         </div>
       ))}

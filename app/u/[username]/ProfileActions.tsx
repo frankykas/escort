@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Crown, Clock, Pencil, BarChart3, Share2, Check,
-  MessageCircle, ChevronDown, UserMinus,
+  MessageCircle, ChevronDown, UserMinus, Heart, Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,9 @@ import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { useSignupPrompt } from "@/hooks/useSignupPrompt";
+import { USE_CREATOR_CONTENT } from "@/lib/features";
+import { apiFetch } from "@/lib/api-fetch";
+import TipSheet from "@/components/creator/TipSheet";
 
 type Props = {
   profileId: string;
@@ -64,10 +67,14 @@ export function ProfileActions({
   );
 
   const [hasSubscriptionTier, setHasSubscriptionTier] = useState(false);
+  const [tierId, setTierId] = useState<string | null>(null);
+  const [monthlyRate, setMonthlyRate] = useState(0);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subLoading, setSubLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [followMenuOpen, setFollowMenuOpen] = useState(false);
+  const [tipOpen, setTipOpen] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Client-side ownership check
   const isOwn = isOwnProfile || (clientUserId === profileId);
@@ -84,7 +91,11 @@ export function ProfileActions({
       .limit(1)
       .single()
       .then(({ data }) => {
-        if (data) setHasSubscriptionTier(true);
+        if (data) {
+          setHasSubscriptionTier(true);
+          setTierId(data.id);
+          setMonthlyRate(data.monthly_rate ?? 0);
+        }
       });
 
     if (clientUserId) {
@@ -93,9 +104,9 @@ export function ProfileActions({
         .select("id")
         .eq("subscriber_id", clientUserId)
         .eq("provider_id", profileId)
-        .eq("is_active", true)
+        .eq("status", "active")
         .limit(1)
-        .single()
+        .maybeSingle()
         .then(({ data }) => {
           if (data) setIsSubscribed(true);
         });
@@ -124,7 +135,7 @@ export function ProfileActions({
         <div className="flex gap-2">
           <button
             onClick={() => router.push("/profile/edit")}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-zinc-700 py-2 text-sm font-semibold text-white transition-colors hover:bg-zinc-800"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 py-2 text-sm font-semibold text-slate-800 transition-colors hover:bg-gray-100"
           >
             <Pencil size={14} />
             {t("pa_edit_profile")}
@@ -132,7 +143,7 @@ export function ProfileActions({
           {isProvider && (
             <button
               onClick={() => router.push("/profile/analytics")}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-zinc-700 py-2 text-sm font-semibold text-white transition-colors hover:bg-zinc-800"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 py-2 text-sm font-semibold text-slate-800 transition-colors hover:bg-gray-100"
             >
               <BarChart3 size={14} />
               {t("pa_analytics")}
@@ -141,7 +152,7 @@ export function ProfileActions({
         </div>
         <button
           onClick={handleShare}
-          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-zinc-700 py-2 text-sm font-semibold text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white"
+          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-200 py-2 text-sm font-semibold text-slate-500 transition-colors hover:bg-gray-100 hover:text-slate-700"
         >
           {copied ? (
             <>
@@ -191,11 +202,44 @@ export function ProfileActions({
     if (promptIfGuest("subscribe")) return;
     if (isSubscribed) return;
 
+    // Paid subscriptions: hand off to the PayRam checkout when the creator
+    // layer is enabled and the tier has a price.
+    if (USE_CREATOR_CONTENT && tierId && monthlyRate > 0) {
+      setSubLoading(true);
+      setActionError(null);
+      try {
+        const res = await apiFetch("/api/payments/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ purpose: "subscription", referenceId: tierId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.url) {
+          window.location.href = data.url as string;
+          return;
+        }
+        setActionError(data.error ?? "Could not start subscription.");
+      } catch {
+        setActionError("Network error. Please try again.");
+      } finally {
+        setSubLoading(false);
+      }
+      return;
+    }
+
+    // Free subscription (tier priced at 0) or creator layer off: create the
+    // subscription directly, no payment. Upsert so re-subscribing after a cancel
+    // reactivates the existing row.
     setSubLoading(true);
-    const { error } = await supabase.from("subscriptions").insert({
-      subscriber_id: clientUserId,
-      provider_id: profileId,
-    });
+    const { error } = await supabase.from("subscriptions").upsert(
+      {
+        subscriber_id: clientUserId,
+        provider_id: profileId,
+        tier_id: tierId,
+        status: "active",
+      },
+      { onConflict: "subscriber_id,provider_id" }
+    );
     setSubLoading(false);
 
     if (!error) setIsSubscribed(true);
@@ -231,12 +275,12 @@ export function ProfileActions({
             className={cn(
               "flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold transition-colors",
               isFollowing
-                ? "border border-zinc-700 bg-transparent text-zinc-400"
-                : "bg-white text-zinc-950 hover:bg-zinc-200"
+                ? "border border-gray-200 bg-white text-slate-500"
+                : "bg-pink-400 text-white hover:bg-pink-300"
             )}
           >
             {isFollowing ? t("post_following") : t("post_follow")}
-            {isFollowing && <ChevronDown size={13} className="text-zinc-500" />}
+            {isFollowing && <ChevronDown size={13} className="text-slate-400" />}
           </motion.button>
 
           {/* Unfollow dropdown */}
@@ -249,11 +293,11 @@ export function ProfileActions({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -4, scale: 0.95 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute left-0 right-0 top-full z-40 mt-1 overflow-hidden rounded-xl border border-white/10 bg-zinc-900 shadow-xl"
+                  className="absolute left-0 right-0 top-full z-40 mt-1 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl"
                 >
                   <button
                     onClick={handleUnfollow}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-[13px] text-red-400 transition hover:bg-zinc-800"
+                    className="flex w-full items-center gap-3 px-4 py-3 text-[13px] text-red-400 transition hover:bg-gray-100"
                   >
                     <UserMinus size={14} />
                     {t("pa_unfollow_user").replace("{username}", username)}
@@ -273,10 +317,10 @@ export function ProfileActions({
           className={cn(
             "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold transition-colors",
             isPending
-              ? "border border-zinc-700 text-zinc-500 cursor-not-allowed"
+              ? "border border-gray-200 text-slate-400 cursor-not-allowed"
               : isAccepted
-                ? "bg-amber-400 text-zinc-950 hover:bg-amber-300"
-                : "border border-zinc-700 text-white hover:bg-zinc-800"
+                ? "bg-sky-400 text-white hover:bg-sky-300"
+                : "border border-gray-200 text-slate-800 hover:bg-gray-100"
           )}
         >
           <MessageIcon size={14} />
@@ -294,13 +338,46 @@ export function ProfileActions({
           className={cn(
             "flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition-all",
             isSubscribed
-              ? "border border-amber-400/30 bg-amber-400/10 text-amber-400"
-              : "bg-gradient-to-r from-amber-400 to-amber-500 text-zinc-950 hover:from-amber-300 hover:to-amber-400"
+              ? "border border-pink-300 bg-pink-50 text-pink-500"
+              : "bg-[rgb(246,51,154)] text-white hover:brightness-105"
           )}
         >
-          <Crown size={15} strokeWidth={2.5} />
-          {isSubscribed ? t("pa_subscribed") : subLoading ? t("pa_subscribing") : t("pa_subscribe")}
+          {subLoading ? <Loader2 size={15} className="animate-spin" /> : <Crown size={15} strokeWidth={2.5} />}
+          {isSubscribed
+            ? t("pa_subscribed")
+            : subLoading
+              ? t("pa_subscribing")
+              : USE_CREATOR_CONTENT && monthlyRate > 0
+                ? `${t("pa_subscribe")} · CA$${Math.round(monthlyRate / 100)}/mo`
+                : USE_CREATOR_CONTENT && hasSubscriptionTier
+                  ? `${t("pa_subscribe")} · Free`
+                  : t("pa_subscribe")}
         </motion.button>
+      )}
+
+      {/* Tip button — creator layer only */}
+      {USE_CREATOR_CONTENT && isProvider && (
+        <button
+          onClick={() => { if (!promptIfGuest("subscribe")) setTipOpen(true); }}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-pink-200 bg-white py-2.5 text-sm font-semibold text-pink-500 transition-colors hover:bg-pink-50"
+        >
+          <Heart size={15} strokeWidth={2.5} />
+          {t("pa_send_tip")}
+        </button>
+      )}
+
+      {actionError && (
+        <p className="text-center text-[12px] text-red-500">{actionError}</p>
+      )}
+
+      {USE_CREATOR_CONTENT && (
+        <TipSheet
+          creatorId={profileId}
+          creatorName={username}
+          open={tipOpen}
+          onClose={() => setTipOpen(false)}
+          onError={(msg) => { setTipOpen(false); setActionError(msg); }}
+        />
       )}
     </div>
   );

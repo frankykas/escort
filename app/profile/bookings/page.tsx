@@ -33,11 +33,11 @@ type Booking = {
 };
 
 const STATUS = {
-  pending:   { label: "Pending",   color: "text-amber-400",   bg: "bg-amber-400/10",  icon: Clock },
-  accepted:  { label: "Accepted",  color: "text-sky-400",     bg: "bg-sky-400/10",    icon: CheckCircle },
-  declined:  { label: "Declined",  color: "text-zinc-500",    bg: "bg-zinc-700/30",   icon: XCircle },
-  completed: { label: "Completed", color: "text-emerald-400", bg: "bg-emerald-500/10",icon: Star },
-  cancelled: { label: "Cancelled", color: "text-zinc-500",    bg: "bg-zinc-700/30",   icon: XCircle },
+  pending:   { label: "Pending",   color: "text-pink-500",   bg: "bg-pink-50",  icon: Clock },
+  accepted:  { label: "Accepted",  color: "text-sky-400",     bg: "bg-sky-50",    icon: CheckCircle },
+  declined:  { label: "Declined",  color: "text-slate-500",    bg: "bg-gray-100",   icon: XCircle },
+  completed: { label: "Completed", color: "text-emerald-500", bg: "bg-emerald-50",icon: Star },
+  cancelled: { label: "Cancelled", color: "text-slate-500",    bg: "bg-gray-100",   icon: XCircle },
 };
 
 const TABS = ["pending", "accepted", "completed", "all"] as const;
@@ -119,14 +119,14 @@ export default function ProviderBookingsPage() {
   for (const b of bookings) if (b.status in counts) counts[b.status]++;
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-24">
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/5 bg-zinc-950/90 px-4 py-3 backdrop-blur-xl">
-        <button onClick={() => router.back()} className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-white">
+    <div className="min-h-screen bg-[#fafbfc] pb-24">
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-gray-200 bg-[#fafbfc]/90 px-4 py-3 backdrop-blur-xl">
+        <button onClick={() => router.back()} className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-gray-100 hover:text-slate-800">
           <ChevronLeft size={20} />
         </button>
-        <span className="text-[15px] font-semibold text-white">Bookings</span>
+        <span className="text-[15px] font-semibold text-slate-800">Bookings</span>
         {counts.pending > 0 && (
-          <span className="ml-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-bold text-zinc-950">
+          <span className="ml-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-pink-400 px-1.5 text-[11px] font-bold text-slate-800">
             {counts.pending}
           </span>
         )}
@@ -141,8 +141,8 @@ export default function ProviderBookingsPage() {
             className={cn(
               "flex-shrink-0 rounded-full px-4 py-1.5 text-[13px] font-medium transition capitalize",
               tab === t
-                ? "bg-white text-zinc-950"
-                : "bg-zinc-800/60 text-zinc-400 hover:text-zinc-200"
+                ? "bg-[rgb(246,51,154)] text-white"
+                : "bg-gray-100 text-slate-500 hover:text-slate-700"
             )}
           >
             {t}{counts[t] > 0 && t !== "all" ? ` (${counts[t]})` : t === "all" ? ` (${counts.all})` : ""}
@@ -152,15 +152,15 @@ export default function ProviderBookingsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center pt-20">
-          <Loader2 size={24} className="animate-spin text-zinc-600" />
+          <Loader2 size={24} className="animate-spin text-slate-400" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 pt-24 text-center px-8">
-          <Calendar size={32} className="text-zinc-700" />
-          <p className="text-[15px] font-semibold text-white">
+          <Calendar size={32} className="text-slate-300" />
+          <p className="text-[15px] font-semibold text-slate-800">
             {tab === "pending" ? "No pending requests" : `No ${tab} bookings`}
           </p>
-          <p className="text-[13px] text-zinc-500">
+          <p className="text-[13px] text-slate-500">
             {tab === "pending" ? "New booking requests will appear here." : "They'll show up here once created."}
           </p>
         </div>
@@ -185,7 +185,7 @@ export default function ProviderBookingsPage() {
           <motion.div
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}
             className={cn("fixed bottom-8 left-1/2 -translate-x-1/2 rounded-full px-5 py-2.5 text-[13px] font-medium shadow-xl z-50 max-w-xs text-center",
-              toast.ok ? "bg-emerald-500 text-white" : "bg-red-500 text-white")}
+              toast.ok ? "bg-emerald-500 text-slate-800" : "bg-red-500 text-slate-800")}
           >
             {toast.msg}
           </motion.div>
@@ -210,22 +210,22 @@ function BookingCard({
   const client = booking.client;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/5 bg-zinc-900">
+    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
       {/* Header: client + status */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
         <Link href={client ? `/u/${client.username}` : "#"} className="flex items-center gap-3">
-          <div className="h-9 w-9 overflow-hidden rounded-full bg-zinc-800 flex-shrink-0">
+          <div className="h-9 w-9 overflow-hidden rounded-full bg-gray-100 flex-shrink-0">
             {client?.avatar_url ? (
               <Image src={client.avatar_url} alt={client.username} width={36} height={36} className="h-full w-full object-cover" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-sm font-bold text-zinc-400">
+              <div className="flex h-full w-full items-center justify-center text-sm font-bold text-slate-500">
                 {client?.username?.[0]?.toUpperCase() ?? "?"}
               </div>
             )}
           </div>
           <div>
-            <p className="text-[13px] font-semibold text-white">@{client?.username ?? "unknown"}</p>
-            <p className="text-[11px] text-zinc-500">{timeAgo(booking.created_at)}</p>
+            <p className="text-[13px] font-semibold text-slate-800">@{client?.username ?? "unknown"}</p>
+            <p className="text-[11px] text-slate-500">{timeAgo(booking.created_at)}</p>
           </div>
         </Link>
         <span className={cn("flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold", cfg.bg, cfg.color)}>
@@ -237,33 +237,33 @@ function BookingCard({
       {/* Details */}
       <div className="px-4 py-3 space-y-2">
         {booking.listings?.title && (
-          <p className="text-[12px] font-medium text-amber-400 truncate">{booking.listings.title}</p>
+          <p className="text-[12px] font-medium text-pink-500 truncate">{booking.listings.title}</p>
         )}
         <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-          <span className="flex items-center gap-1.5 text-[13px] text-zinc-300">
-            <Calendar size={13} className="text-zinc-500" />
+          <span className="flex items-center gap-1.5 text-[13px] text-slate-600">
+            <Calendar size={13} className="text-slate-500" />
             {new Date(booking.requested_date).toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric" })}
-            {booking.requested_time && <span className="text-zinc-500">· {booking.requested_time}</span>}
+            {booking.requested_time && <span className="text-slate-500">· {booking.requested_time}</span>}
           </span>
           {booking.duration_minutes && (
-            <span className="flex items-center gap-1.5 text-[13px] text-zinc-300">
-              <Clock size={13} className="text-zinc-500" />
+            <span className="flex items-center gap-1.5 text-[13px] text-slate-600">
+              <Clock size={13} className="text-slate-500" />
               {booking.duration_minutes >= 60
                 ? `${Math.floor(booking.duration_minutes / 60)}h${booking.duration_minutes % 60 ? ` ${booking.duration_minutes % 60}m` : ""}`
                 : `${booking.duration_minutes}m`}
             </span>
           )}
           {booking.service_type && (
-            <span className="text-[13px] text-zinc-300 capitalize">{booking.service_type}</span>
+            <span className="text-[13px] text-slate-600 capitalize">{booking.service_type}</span>
           )}
           {booking.area && (
-            <span className="flex items-center gap-1 text-[13px] text-zinc-400">
-              <MapPin size={11} className="text-zinc-600" />{booking.area}
+            <span className="flex items-center gap-1 text-[13px] text-slate-500">
+              <MapPin size={11} className="text-slate-400" />{booking.area}
             </span>
           )}
         </div>
         {booking.notes && (
-          <p className="rounded-xl bg-zinc-800/50 px-3 py-2 text-[12px] text-zinc-400 leading-relaxed">
+          <p className="rounded-xl bg-gray-50 px-3 py-2 text-[12px] text-slate-500 leading-relaxed">
             {booking.notes}
           </p>
         )}
@@ -271,31 +271,31 @@ function BookingCard({
 
       {/* Actions */}
       {acting ? (
-        <div className="flex items-center justify-center border-t border-white/5 py-3">
-          <Loader2 size={18} className="animate-spin text-zinc-500" />
+        <div className="flex items-center justify-center border-t border-gray-200 py-3">
+          <Loader2 size={18} className="animate-spin text-slate-500" />
         </div>
       ) : booking.status === "pending" ? (
-        <div className="flex gap-2 border-t border-white/5 px-4 py-3">
-          <button onClick={onDecline} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/10 py-2.5 text-[13px] font-semibold text-zinc-400 transition hover:bg-zinc-800">
+        <div className="flex gap-2 border-t border-gray-200 px-4 py-3">
+          <button onClick={onDecline} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 py-2.5 text-[13px] font-semibold text-slate-500 transition hover:bg-gray-100">
             <X size={14} /> Decline
           </button>
-          <button onClick={onAccept} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white py-2.5 text-[13px] font-semibold text-zinc-950 transition hover:bg-zinc-200">
+          <button onClick={onAccept} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[rgb(246,51,154)] py-2.5 text-[13px] font-semibold text-white transition hover:brightness-105">
             <Check size={14} /> Accept
           </button>
         </div>
       ) : booking.status === "accepted" ? (
-        <div className="flex gap-2 border-t border-white/5 px-4 py-3">
-          <button onClick={onCancel} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/10 py-2.5 text-[13px] font-medium text-zinc-500 transition hover:bg-zinc-800">
+        <div className="flex gap-2 border-t border-gray-200 px-4 py-3">
+          <button onClick={onCancel} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 py-2.5 text-[13px] font-medium text-slate-500 transition hover:bg-gray-100">
             Cancel
           </button>
-          <button onClick={onComplete} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-500 py-2.5 text-[13px] font-semibold text-white transition hover:bg-emerald-400">
+          <button onClick={onComplete} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-500 py-2.5 text-[13px] font-semibold text-white transition hover:bg-emerald-600">
             <Star size={14} /> Mark Completed
           </button>
         </div>
       ) : booking.status === "completed" ? (
-        <div className="flex items-center gap-2 border-t border-white/5 px-4 py-3">
-          <CheckCircle size={14} className="text-emerald-400" />
-          <p className="text-[12px] text-zinc-500">Booking completed.</p>
+        <div className="flex items-center gap-2 border-t border-gray-200 px-4 py-3">
+          <CheckCircle size={14} className="text-emerald-500" />
+          <p className="text-[12px] text-slate-500">Booking completed.</p>
         </div>
       ) : null}
     </div>

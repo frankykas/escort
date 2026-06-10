@@ -64,10 +64,16 @@ const securityHeaders = [
   // own iframe on its own origin, so this doesn't break verification).
   {
     key: "Permissions-Policy",
+    // `camera=*` / `microphone=*` lift the policy gate so any frame may
+    // *request* camera/mic access. The browser still shows the standard
+    // user-permission prompt — this header doesn't grant access, it only
+    // controls which frames are allowed to ask. Persona's KYC iframe needs
+    // both for the ID-photo + face-match flow; setting these to `()`
+    // would block the request before the user ever saw a prompt.
     value: [
       "geolocation=(self)",
-      "camera=()",
-      "microphone=()",
+      "camera=*",
+      "microphone=*",
       "payment=()",
       "usb=()",
       "magnetometer=()",

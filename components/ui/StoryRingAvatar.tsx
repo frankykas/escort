@@ -22,8 +22,8 @@ export function StoryRingAvatar({
 }: Props) {
   const showRing = hasStory || storyViewed;
   const ringGradient = hasStory
-    ? "bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300"
-    : "bg-zinc-700";
+    ? "bg-gradient-to-tr from-pink-400 via-sky-300 to-violet-400"
+    : "bg-gray-300";
 
   return (
     <div
@@ -31,11 +31,11 @@ export function StoryRingAvatar({
         "relative flex-shrink-0",
         showRing && "rounded-full p-[2px]",
         showRing && ringGradient,
-        hasStory && "story-ring-active shadow-[0_0_12px_rgba(251,191,36,0.25)]",
+        hasStory && "story-ring-active shadow-[0_0_12px_rgba(244,114,182,0.25)]",
         className
       )}
     >
-      <div className={cn(showRing && "rounded-full p-[1.5px] bg-black")}>
+      <div className={cn(showRing && "rounded-full p-[1.5px] bg-white")}>
         {src ? (
           <div
             className="relative overflow-hidden rounded-full"
@@ -51,7 +51,7 @@ export function StoryRingAvatar({
           </div>
         ) : (
           <div
-            className="flex items-center justify-center rounded-full bg-zinc-800 font-bold text-zinc-300"
+            className="flex items-center justify-center rounded-full bg-gray-100 font-bold text-slate-600"
             style={{
               width: size,
               height: size,

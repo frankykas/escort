@@ -60,43 +60,43 @@ export default function BlockedListPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-24">
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/5 bg-zinc-950/90 px-4 py-3 backdrop-blur-xl">
+    <div className="min-h-screen bg-[#fafbfc] pb-24">
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-xl">
         <button
           onClick={() => router.back()}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-gray-100 hover:text-slate-700"
         >
           <ChevronLeft size={20} />
         </button>
-        <span className="text-[15px] font-semibold text-white">Blocked Users</span>
+        <span className="text-[15px] font-semibold text-slate-800">Blocked Users</span>
       </header>
 
       <div className="mx-auto max-w-lg px-4 pt-4">
         {loading ? (
           <div className="flex items-center justify-center pt-24">
-            <Loader2 size={24} className="animate-spin text-zinc-600" />
+            <Loader2 size={24} className="animate-spin text-slate-300" />
           </div>
         ) : blocked.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 pt-20 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-900">
-              <ShieldBan size={28} className="text-zinc-600" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white border border-gray-200">
+              <ShieldBan size={28} className="text-slate-300" />
             </div>
-            <p className="text-[15px] font-semibold text-zinc-300">No blocked users</p>
-            <p className="text-[13px] text-zinc-600">
+            <p className="text-[15px] font-semibold text-slate-600">No blocked users</p>
+            <p className="text-[13px] text-slate-300">
               Users you block won&apos;t be able to send you message requests.
             </p>
           </div>
         ) : (
           <div className="space-y-2">
-            <p className="mb-3 px-1 text-[11px] font-medium uppercase tracking-widest text-zinc-600">
+            <p className="mb-3 px-1 text-[11px] font-medium uppercase tracking-widest text-slate-300">
               {blocked.length} blocked
             </p>
             {blocked.map((b) => (
               <div
                 key={b.id}
-                className="flex items-center gap-3 rounded-2xl border border-white/5 bg-zinc-900 px-4 py-3"
+                className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3"
               >
-                <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-zinc-800">
+                <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-gray-100">
                   {b.profile.avatar_url ? (
                     <Image
                       src={b.profile.avatar_url}
@@ -106,16 +106,16 @@ export default function BlockedListPage() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-sm font-bold text-zinc-500">
+                    <div className="flex h-full w-full items-center justify-center text-sm font-bold text-slate-400">
                       {b.profile.username[0].toUpperCase()}
                     </div>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-semibold text-white truncate">
+                  <p className="text-[14px] font-semibold text-slate-800 truncate">
                     @{b.profile.username}
                   </p>
-                  <p className="text-[11px] text-zinc-600">
+                  <p className="text-[11px] text-slate-300">
                     Blocked {new Date(b.created_at).toLocaleDateString("en-CA", {
                       month: "short", day: "numeric",
                     })}
@@ -124,7 +124,7 @@ export default function BlockedListPage() {
                 <button
                   onClick={() => handleUnblock(b.blocked_id)}
                   disabled={unblocking === b.blocked_id}
-                  className="rounded-full border border-white/10 px-3.5 py-1.5 text-[12px] font-semibold text-zinc-300 transition hover:border-white/20 hover:text-white disabled:opacity-50"
+                  className="rounded-full border border-gray-200 px-3.5 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:border-gray-300 hover:text-slate-800 disabled:opacity-50"
                 >
                   {unblocking === b.blocked_id ? "..." : "Unblock"}
                 </button>

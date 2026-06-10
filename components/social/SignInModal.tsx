@@ -39,7 +39,7 @@ export function SignInModal({ onClose }: Props) {
     <>
       {/* Backdrop */}
       <motion.div
-        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -54,7 +54,7 @@ export function SignInModal({ onClose }: Props) {
         exit={{ opacity: 0 }}
       >
         <motion.div
-          className="w-full max-w-sm rounded-2xl border border-white/10 bg-zinc-900/80 p-6 shadow-2xl backdrop-blur-xl"
+          className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-2xl backdrop-blur-xl"
           initial={{ scale: 0.96, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.96, opacity: 0 }}
@@ -64,12 +64,12 @@ export function SignInModal({ onClose }: Props) {
           {/* Header */}
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h2 className="text-base font-semibold text-zinc-100">Sign in</h2>
-              <p className="mt-0.5 text-xs text-zinc-500">Provider accounts only</p>
+              <h2 className="text-base font-semibold text-slate-700">Sign in</h2>
+              <p className="mt-0.5 text-xs text-slate-400">Provider accounts only</p>
             </div>
             <button
               onClick={onClose}
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 transition-colors hover:bg-zinc-700 hover:text-zinc-200"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-slate-500 transition-colors hover:bg-gray-200 hover:text-slate-700"
             >
               <X size={14} />
             </button>
@@ -77,8 +77,8 @@ export function SignInModal({ onClose }: Props) {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             {/* Email */}
-            <div className="rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3">
-              <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+              <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-slate-400">
                 Email
               </label>
               <input
@@ -88,13 +88,13 @@ export function SignInModal({ onClose }: Props) {
                 required
                 autoComplete="email"
                 placeholder="you@example.com"
-                className="w-full bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-600"
+                className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-300"
               />
             </div>
 
             {/* Password */}
-            <div className="rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3">
-              <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+              <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-slate-400">
                 Password
               </label>
               <input
@@ -104,7 +104,7 @@ export function SignInModal({ onClose }: Props) {
                 required
                 autoComplete="current-password"
                 placeholder="••••••••"
-                className="w-full bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-600"
+                className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-300"
               />
             </div>
 
@@ -117,7 +117,7 @@ export function SignInModal({ onClose }: Props) {
             <button
               type="submit"
               disabled={isLoading}
-              className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-pink-400 py-3 text-sm font-semibold text-white transition-colors hover:bg-pink-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? (
                 <>
@@ -130,12 +130,12 @@ export function SignInModal({ onClose }: Props) {
             </button>
           </form>
 
-          <p className="mt-5 text-center text-xs text-zinc-600">
+          <p className="mt-5 text-center text-xs text-slate-300">
             Don&apos;t have an account?{" "}
             <Link
               href="/auth/signup"
               onClick={onClose}
-              className="text-zinc-400 transition-colors hover:text-zinc-200"
+              className="text-slate-500 transition-colors hover:text-slate-700"
             >
               Sign Up
             </Link>

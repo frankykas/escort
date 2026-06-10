@@ -18,7 +18,7 @@ export function CategoriesDrawer({ onClose }: Props) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
         onClick={onClose}
       />
 
@@ -28,21 +28,21 @@ export function CategoriesDrawer({ onClose }: Props) {
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-hidden rounded-t-3xl border-t border-white/10 bg-zinc-950"
+        className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-hidden rounded-t-3xl border-t border-gray-200 bg-white"
       >
         {/* Drag handle */}
         <div className="flex justify-center pt-3 pb-1">
-          <div className="h-1 w-10 rounded-full bg-zinc-700" />
+          <div className="h-1 w-10 rounded-full bg-gray-300" />
         </div>
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3">
-          <h2 className="text-[15px] font-bold tracking-tight text-white">
+          <h2 className="text-[15px] font-bold tracking-tight text-slate-800">
             Browse categories
           </h2>
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-gray-100 hover:text-slate-700"
           >
             <X size={18} />
           </button>
@@ -87,7 +87,7 @@ export function CategoriesDrawer({ onClose }: Props) {
           <Link
             href="/categories"
             onClick={onClose}
-            className="mt-5 flex items-center justify-center gap-1 rounded-full border border-white/10 bg-zinc-900 py-3 text-[12px] font-semibold text-amber-400 transition-colors hover:border-amber-400/30"
+            className="mt-5 flex items-center justify-center gap-1 rounded-full border border-gray-200 bg-gray-50 py-3 text-[12px] font-semibold text-pink-500 transition-colors hover:border-pink-300"
           >
             View full categories page
             <ChevronRight size={14} />

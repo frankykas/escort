@@ -11,8 +11,8 @@ type MessageRequest = {
   status: "pending" | "accepted" | "rejected";
   channel_id: string | null;
   created_at: string;
-  sender?: { username: string; avatar_url: string | null; verification_status: string };
-  recipient?: { username: string; avatar_url: string | null; verification_status: string };
+  sender?: { username: string; avatar_url: string | null; verification_status: string; is_provider: boolean };
+  recipient?: { username: string; avatar_url: string | null; verification_status: string; is_provider: boolean };
 };
 
 type RequestStatus = {
@@ -23,7 +23,7 @@ type RequestStatus = {
 /**
  * Fetch and manage message requests for a user.
  */
-export function useMessageRequests(userId: string | null, view: "pending" | "sent" | "all" = "pending") {
+export function useMessageRequests(userId: string | null, view: "pending" | "sent" | "all" | "all_pending" = "pending") {
   const [requests, setRequests] = useState<MessageRequest[]>([]);
   const [loading, setLoading] = useState(true);
 

@@ -31,6 +31,39 @@ export async function createLiveKitToken(userId: string, roomName: string): Prom
 }
 
 /**
+ * Creates a LiveKit access token for a live show.
+ * The host publishes audio/video; viewers subscribe only. Both may publish data
+ * (used for in-stream chat/tips signalling).
+ */
+export async function createStreamToken(
+  userId: string,
+  roomName: string,
+  isHost: boolean
+): Promise<string> {
+  const apiKey = process.env.LIVEKIT_API_KEY;
+  const apiSecret = process.env.LIVEKIT_API_SECRET;
+
+  if (!apiKey || !apiSecret) {
+    throw new Error("LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be set");
+  }
+
+  const token = new AccessToken(apiKey, apiSecret, {
+    identity: userId,
+    ttl: "4h",
+  });
+
+  token.addGrant({
+    room: roomName,
+    roomJoin: true,
+    canPublish: isHost,      // only the host sends A/V
+    canSubscribe: true,
+    canPublishData: true,
+  });
+
+  return token.toJwt();
+}
+
+/**
  * Returns the LiveKit WebSocket URL from env.
  */
 export function getLiveKitWsUrl(): string {

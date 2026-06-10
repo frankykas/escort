@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getFeedPosts, addComment } from "@/lib/feed";
 import { requireUser } from "@/lib/api-auth";
+import { isAdultEligible, isAdultBlockedRegion } from "@/lib/access";
 
 // Get feed posts with embedded comments
 export async function GET(req: NextRequest) {
@@ -10,7 +11,17 @@ export async function GET(req: NextRequest) {
   const limit = Number(searchParams.get("limit") ?? 20);
   const offset = Number(searchParams.get("offset") ?? 0);
 
-  const posts = await getFeedPosts({ countryCode, city, limit, offset });
+  // Adult content (suggestive/explicit) is only included for an authenticated
+  // viewer who is age-verified and has opted in. Anonymous = SFW only. Adult
+  // content is also withheld entirely in geo-restricted regions.
+  const region = req.headers.get("x-vercel-ip-country");
+  let allowAdult = false;
+  if (req.headers.get("authorization") && !isAdultBlockedRegion(region)) {
+    const auth = await requireUser(req);
+    if (auth.ok) allowAdult = await isAdultEligible(auth.user.id);
+  }
+
+  const posts = await getFeedPosts({ countryCode, city, limit, offset, allowAdult });
   return NextResponse.json(posts);
 }
 

@@ -60,7 +60,7 @@ export function PublishButton() {
       <motion.button
         onClick={() => setDrawerOpen(true)}
         aria-label="Create new status"
-        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-white text-zinc-950 shadow-2xl shadow-black/40 transition-colors hover:bg-zinc-100 active:scale-95"
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-pink-400 text-white shadow-2xl shadow-pink-400/30 transition-colors hover:bg-pink-500 active:scale-95"
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", damping: 20, stiffness: 300, delay: 0.4 }}

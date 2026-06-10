@@ -14,14 +14,14 @@ export function NotificationBell() {
       aria-label={count > 0 ? `${count} unread notifications` : "Notifications"}
       className="relative p-2"
     >
-      <Bell size={22} strokeWidth={1.8} className="text-zinc-400 hover:text-white transition-colors" />
+      <Bell size={22} strokeWidth={1.8} className="text-slate-500 hover:text-pink-500 transition-colors" />
       {count > 0 && (
         <span
           className={cn(
             "absolute -top-0.5 -right-0.5 flex items-center justify-center",
             "min-w-[18px] h-[18px] px-1 rounded-full",
             "bg-red-500 text-white text-[10px] font-bold",
-            "ring-2 ring-zinc-950",
+            "ring-2 ring-white",
             "animate-in fade-in zoom-in-50 duration-200"
           )}
         >

@@ -15,6 +15,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { supabase } from "@/lib/supabase/client";
 import { USE_POSTING_PACKAGES } from "@/lib/features";
 import { compressImage } from "@/lib/image";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 // ---------------------------------------------------------------------------
 // Types & constants
@@ -23,8 +24,20 @@ import { compressImage } from "@/lib/image";
 type PostType = "post" | "story";
 type Step = "editor" | "success";
 
+const ACCEPTED_MEDIA_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+];
+const ACCEPTED_MEDIA = ACCEPTED_MEDIA_TYPES.join(",");
+const MAX_MEDIA_BYTES = 80 * 1024 * 1024;
+
 export default function UploadPostPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, checked } = useSession();
   const { profile: myProfile } = useProfile();
 
@@ -83,12 +96,24 @@ export default function UploadPostPage() {
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
+    if (!ACCEPTED_MEDIA_TYPES.includes(f.type)) {
+      setError("Use a JPEG, PNG, WebP, MP4, WebM, or MOV file.");
+      e.target.value = "";
+      return;
+    }
+    if (f.size > MAX_MEDIA_BYTES) {
+      setError("Media must be under 80 MB.");
+      e.target.value = "";
+      return;
+    }
+    if (preview) URL.revokeObjectURL(preview);
     setFile(f);
     setPreview(URL.createObjectURL(f));
     setError(null);
   }
 
   function removeFile() {
+    if (preview) URL.revokeObjectURL(preview);
     setFile(null);
     setPreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -99,12 +124,12 @@ export default function UploadPostPage() {
 
     // Stories require media
     if (postType === "story" && !file) {
-      setError("Stories require a photo or video.");
+      setError(t("up_err_story_media"));
       return;
     }
     // Posts require at least a caption or photo
     if (postType === "post" && !file && !caption.trim()) {
-      setError("Add a photo or write a caption to publish.");
+      setError(t("up_err_post_empty"));
       return;
     }
 
@@ -112,10 +137,15 @@ export default function UploadPostPage() {
     setError(null);
 
     let mediaUrl: string | null = null;
+    let uploadedMediaType: "image" | "video" | "text" = "text";
 
     // 1. Upload file if present (images are compressed client-side first)
     if (file) {
-      const compressed = await compressImage(file, { maxDimension: 1600, quality: 0.82 });
+      const mediaType = file.type.startsWith("video/") ? "video" : "image";
+      uploadedMediaType = mediaType;
+      const compressed = mediaType === "image"
+        ? await compressImage(file, { maxDimension: 1600, quality: 0.82 })
+        : file;
       const ext  = compressed.name.split(".").pop() ?? "jpg";
       const path = `${user.id}/${Date.now()}.${ext}`;
       const { error: uploadErr } = await supabase.storage
@@ -123,7 +153,7 @@ export default function UploadPostPage() {
         .upload(path, compressed, { upsert: false, contentType: compressed.type });
 
       if (uploadErr) {
-        setError("Photo upload failed. Please try again.");
+        setError(t("up_err_photo"));
         setUploading(false);
         return;
       }
@@ -139,13 +169,13 @@ export default function UploadPostPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mediaUrl,
-          mediaType: "image",
+          mediaType: uploadedMediaType,
           caption: caption.trim() || undefined,
         }),
       });
       const json = await res.json();
       if (!res.ok) {
-        setError(json.error ?? "Failed to publish story.");
+        setError(json.error ?? t("up_err_story_failed"));
         setUploading(false);
         return;
       }
@@ -162,13 +192,13 @@ export default function UploadPostPage() {
           body: JSON.stringify({
             caption: caption.trim() || "",
             mediaUrl,
-            mediaType: "image",
+            mediaType: uploadedMediaType,
             postType: "post",
           }),
         });
         const json = await res.json();
         if (!res.ok) {
-          setError(json.error ?? "Failed to publish post.");
+          setError(json.error ?? t("up_err_post_failed"));
           setUploading(false);
           return;
         }
@@ -192,7 +222,7 @@ export default function UploadPostPage() {
         });
         const json = await res.json();
         if (!res.ok) {
-          setError(json.error ?? "Failed to publish post.");
+          setError(json.error ?? t("up_err_post_failed"));
           setUploading(false);
           return;
         }
@@ -226,11 +256,11 @@ export default function UploadPostPage() {
 
   if (step === "success") {
     return (
-      <div className="relative flex min-h-screen flex-col items-center justify-center bg-zinc-950 px-6 text-center pb-20">
+      <div className="relative flex min-h-screen flex-col items-center justify-center bg-[#fafbfc] px-6 text-center pb-20">
         {/* Close button */}
         <button
           onClick={() => router.back()}
-          className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800/80 text-zinc-400 transition hover:bg-zinc-700 hover:text-white"
+          className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-slate-500 transition hover:bg-gray-200 hover:text-slate-700"
           aria-label="Close"
         >
           <X size={20} />
@@ -245,14 +275,11 @@ export default function UploadPostPage() {
             <CheckCircle size={48} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">
-              {isStory ? "Story Shared!" : "Post Published!"}
+            <h1 className="text-2xl font-bold text-slate-800">
+              {isStory ? t("up_success_story") : t("up_success_post")}
             </h1>
-            <p className="mt-2 text-zinc-400">
-              {isStory
-                ? "Your story is now visible to your followers for the next 24 hours."
-                : "Your post is now live on your profile and explore feed."
-              }
+            <p className="mt-2 text-slate-500">
+              {isStory ? t("up_success_story_desc") : t("up_success_post_desc")}
             </p>
           </div>
 
@@ -266,21 +293,21 @@ export default function UploadPostPage() {
                   }).catch(() => {});
                 }
               }}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-4 text-[15px] font-bold text-zinc-950 transition hover:bg-amber-300"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-pink-400 py-4 text-[15px] font-bold text-white transition hover:bg-pink-300"
             >
-              <Share2 size={18} /> Share Update
+              <Share2 size={18} /> {t("up_share_update")}
             </button>
             <button
               onClick={() => router.push(myProfile?.username ? `/u/${myProfile.username}` : "/profile")}
-              className="w-full rounded-2xl bg-zinc-900 py-4 text-[15px] font-semibold text-zinc-300 transition hover:bg-zinc-800"
+              className="w-full rounded-2xl bg-white border border-gray-200 py-4 text-[15px] font-semibold text-slate-600 transition hover:bg-gray-50"
             >
-              View on Profile
+              {t("up_view_on_profile")}
             </button>
             <button
               onClick={() => router.push("/")}
-              className="text-[14px] font-medium text-zinc-500 hover:text-zinc-300 transition"
+              className="text-[14px] font-medium text-slate-400 hover:text-slate-600 transition"
             >
-              Go to Dashboard
+              {t("up_go_dashboard")}
             </button>
           </div>
         </motion.div>
@@ -289,17 +316,17 @@ export default function UploadPostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-20">
+    <div className="min-h-screen bg-[#fafbfc] pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-white/5 bg-zinc-950/90 px-4 py-3 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-xl">
         <button
           onClick={() => router.back()}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-gray-100 hover:text-slate-700"
         >
           <ChevronLeft size={20} />
         </button>
-        <span className="text-[15px] font-semibold text-white">
-          {isStory ? "New Story" : "New Post"}
+        <span className="text-[15px] font-semibold text-slate-800">
+          {isStory ? t("up_new_story") : t("up_new_post")}
         </span>
         <button
           onClick={handlePublish}
@@ -307,75 +334,75 @@ export default function UploadPostPage() {
           className={cn(
             "rounded-full px-4 py-1.5 text-[13px] font-semibold transition",
             canPublish && (!needsCredits || hasCredits)
-              ? "bg-amber-400 text-zinc-950 hover:bg-amber-300"
-              : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+              ? "bg-pink-400 text-white hover:bg-pink-300"
+              : "bg-gray-100 text-slate-400 cursor-not-allowed"
           )}
         >
-          {uploading ? <Loader2 size={14} className="animate-spin" /> : "Publish"}
+          {uploading ? <Loader2 size={14} className="animate-spin" /> : t("up_publish")}
         </button>
       </header>
 
       <div className="mx-auto max-w-lg space-y-0">
-        <div className="flex border-b border-white/5">
+        <div className="flex border-b border-gray-200">
           <button
             onClick={() => setPostType("post")}
             className={cn(
               "flex flex-1 items-center justify-center gap-2 py-3.5 text-[13px] font-semibold uppercase tracking-wider transition",
               postType === "post"
-                ? "text-amber-400 border-b-2 border-amber-400"
-                : "text-zinc-500 hover:text-zinc-300"
+                ? "text-pink-500 border-b-2 border-pink-400"
+                : "text-slate-400 hover:text-slate-600"
             )}
           >
             <Camera size={16} />
-            Post
+            {t("up_tab_post")}
           </button>
           <button
             onClick={() => setPostType("story")}
             className={cn(
               "flex flex-1 items-center justify-center gap-2 py-3.5 text-[13px] font-semibold uppercase tracking-wider transition",
               postType === "story"
-                ? "text-amber-400 border-b-2 border-amber-400"
-                : "text-zinc-500 hover:text-zinc-300"
+                ? "text-pink-500 border-b-2 border-pink-400"
+                : "text-slate-400 hover:text-slate-600"
             )}
           >
             <Film size={16} />
-            Story
+            {t("up_tab_story")}
           </button>
         </div>
 
         {needsCredits && (
           <div className={cn(
-            "flex items-center justify-between px-4 py-3 border-b border-white/5",
-            hasCredits ? "bg-amber-400/5" : "bg-red-500/5"
+            "flex items-center justify-between px-4 py-3 border-b border-gray-200",
+            hasCredits ? "bg-pink-50" : "bg-red-500/5"
           )}>
             <div className="flex items-center gap-2.5">
-              <Coins size={16} className={hasCredits ? "text-amber-400" : "text-red-400"} />
-              <span className="text-[13px] text-zinc-300">
+              <Coins size={16} className={hasCredits ? "text-pink-500" : "text-red-400"} />
+              <span className="text-[13px] text-slate-600">
                 {loadingCredits
-                  ? "Loading credits…"
+                  ? t("up_credits_loading")
                   : hasCredits
-                    ? `${creditBalance} post credit${creditBalance === 1 ? "" : "s"} remaining`
-                    : "No post credits remaining"
+                    ? `${creditBalance} ${creditBalance === 1 ? t("up_credits_remaining") : t("up_credits_remaining_pl")}`
+                    : t("up_credits_none")
                 }
               </span>
             </div>
             {!hasCredits && !loadingCredits && (
               <button
                 onClick={() => router.push("/profile/packages")}
-                className="flex items-center gap-1.5 rounded-full bg-amber-400 px-3 py-1 text-[11px] font-semibold text-zinc-950 hover:bg-amber-300 transition"
+                className="flex items-center gap-1.5 rounded-full bg-pink-400 px-3 py-1 text-[11px] font-semibold text-white hover:bg-pink-300 transition"
               >
                 <ShoppingBag size={12} />
-                Buy Credits
+                {t("up_buy_credits")}
               </button>
             )}
           </div>
         )}
 
         {isStory && (
-          <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/5 bg-blue-500/5">
+          <div className="flex items-center gap-2.5 px-4 py-3 border-b border-gray-200 bg-blue-500/5">
             <Film size={16} className="text-blue-400" />
-            <span className="text-[13px] text-zinc-400">
-              Stories are free and disappear after 24 hours
+            <span className="text-[13px] text-slate-500">
+              {t("up_story_info")}
             </span>
           </div>
         )}
@@ -383,14 +410,29 @@ export default function UploadPostPage() {
         <div
           onClick={() => !preview && fileInputRef.current?.click()}
           className={cn(
-            "relative w-full bg-zinc-900",
-            !preview && "flex aspect-square cursor-pointer flex-col items-center justify-center gap-3 border-b border-white/5 transition hover:bg-zinc-800/60"
+            "relative w-full bg-white",
+            !preview && "flex aspect-square cursor-pointer flex-col items-center justify-center gap-3 border-b border-gray-200 transition hover:bg-gray-50"
           )}
         >
           {preview ? (
             <>
               <div className="relative aspect-square w-full overflow-hidden">
-                <Image src={preview} alt="Preview" fill className="object-cover" />
+                {file?.type.startsWith("video/") ? (
+                  <video
+                    src={preview}
+                    className="h-full w-full object-cover"
+                    controls
+                    playsInline
+                    preload="metadata"
+                    onClick={(e) => {
+                      const video = e.currentTarget;
+                      if (video.paused) void video.play();
+                      else video.pause();
+                    }}
+                  />
+                ) : (
+                  <Image src={preview} alt="Preview" fill className="object-cover" />
+                )}
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); removeFile(); }}
@@ -401,38 +443,38 @@ export default function UploadPostPage() {
             </>
           ) : (
             <>
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-800">
-                <ImagePlus size={28} className="text-zinc-400" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
+                <ImagePlus size={28} className="text-slate-500" />
               </div>
-              <p className="text-[13px] text-zinc-400">
-                Tap to add a photo{isStory ? "" : " (optional)"}
+            <p className="text-[13px] text-slate-500">
+                Tap to add a photo or video{isStory ? "" : t("up_optional_suffix")}
               </p>
-              <p className="text-[11px] text-zinc-600">JPG, PNG, WebP · max 10 MB</p>
+              <p className="text-[11px] text-slate-300">JPEG, PNG, WebP, MP4, WebM or MOV - max 80 MB</p>
             </>
           )}
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept={ACCEPTED_MEDIA}
             className="hidden"
             onChange={handleFileChange}
           />
         </div>
 
-        <div className="border-b border-white/5 px-4 py-4">
+        <div className="border-b border-gray-200 px-4 py-4">
           <textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
-            placeholder={isStory ? "Add a caption (optional)…" : "Write a caption…"}
+            placeholder={isStory ? t("up_caption_optional") : t("up_caption_required")}
             maxLength={500}
             rows={isStory ? 2 : 3}
-            className="w-full resize-none bg-transparent text-[15px] text-white placeholder-zinc-600 outline-none"
+            className="w-full resize-none bg-transparent text-[15px] text-slate-800 placeholder-slate-300 outline-none"
           />
-          <p className="mt-1 text-right text-[11px] text-zinc-600">{caption.length}/500</p>
+          <p className="mt-1 text-right text-[11px] text-slate-300">{caption.length}/500</p>
         </div>
 
         {!isStory && (
-          <div className="border-b border-white/5 px-4 py-4">
+          <div className="border-b border-gray-200 px-4 py-4">
             <button
               onClick={() => setIsPremium((p) => !p)}
               className="flex w-full items-center justify-between"
@@ -440,18 +482,18 @@ export default function UploadPostPage() {
               <div className="flex items-center gap-3">
                 <div className={cn(
                   "flex h-9 w-9 items-center justify-center rounded-xl transition",
-                  isPremium ? "bg-amber-400/15 text-amber-400" : "bg-zinc-800 text-zinc-500"
+                  isPremium ? "bg-pink-50 text-pink-500" : "bg-gray-100 text-slate-400"
                 )}>
                   {isPremium ? <Lock size={18} /> : <Unlock size={18} />}
                 </div>
                 <div className="text-left">
-                  <p className="text-[14px] font-medium text-white">Premium content</p>
-                  <p className="text-[12px] text-zinc-500">Subscribers only, or set a pay-per-view price</p>
+                  <p className="text-[14px] font-medium text-slate-800">{t("up_premium_content")}</p>
+                  <p className="text-[12px] text-slate-400">{t("up_premium_desc")}</p>
                 </div>
               </div>
               <div className={cn(
                 "relative h-6 w-11 rounded-full transition-colors",
-                isPremium ? "bg-amber-400" : "bg-zinc-700"
+                isPremium ? "bg-pink-400" : "bg-gray-300"
               )}>
                 <div className={cn(
                   "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-md transition-all",
@@ -468,20 +510,20 @@ export default function UploadPostPage() {
                   exit={{ opacity: 0, height: 0 }}
                   className="overflow-hidden"
                 >
-                  <div className="mt-4 flex items-center gap-3 rounded-xl border border-white/10 bg-zinc-900 px-4 py-3">
-                    <span className="text-[14px] font-semibold text-amber-400">CA$</span>
+                  <div className="mt-4 flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+                    <span className="text-[14px] font-semibold text-pink-500">CA$</span>
                     <input
                       type="number"
                       min="1"
                       step="1"
-                      placeholder="Pay-per-view price (optional)"
+                      placeholder={t("up_pay_per_view_ph")}
                       value={unlockPrice}
                       onChange={(e) => setUnlockPrice(e.target.value)}
-                      className="flex-1 bg-transparent text-[14px] text-white placeholder-zinc-600 outline-none"
+                      className="flex-1 bg-transparent text-[14px] text-slate-800 placeholder-slate-300 outline-none"
                     />
                   </div>
-                  <p className="mt-2 px-1 text-[11px] text-zinc-600">
-                    Leave blank to make it subscribers-only with no unlock price.
+                  <p className="mt-2 px-1 text-[11px] text-slate-300">
+                    {t("up_pay_per_view_hint")}
                   </p>
                 </motion.div>
               )}
@@ -509,18 +551,18 @@ export default function UploadPostPage() {
             className={cn(
               "flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-[15px] font-semibold transition",
               canPublish && (!needsCredits || hasCredits)
-                ? "bg-amber-400 text-zinc-950 hover:bg-amber-300 active:scale-[0.98]"
-                : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                ? "bg-pink-400 text-white hover:bg-pink-300 active:scale-[0.98]"
+                : "bg-gray-100 text-slate-400 cursor-not-allowed"
             )}
           >
             {uploading && <Loader2 size={18} className="animate-spin" />}
             {uploading
-              ? "Publishing…"
+              ? t("up_publishing")
               : isStory
-                ? "Share Story"
+                ? t("up_share_story")
                 : needsCredits
-                  ? `Publish Post (1 credit)`
-                  : "Publish Post"
+                  ? t("up_publish_post_credit")
+                  : t("up_publish_post")
             }
           </button>
         </div>

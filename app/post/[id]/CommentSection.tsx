@@ -37,7 +37,7 @@ export function CommentSection({ postId, userId, initialComments }: Props) {
     <div>
       {/* Comment list */}
       {comments.length > 0 && (
-        <div className="divide-y divide-zinc-900">
+        <div className="divide-y divide-gray-100">
           {comments.map((comment) => (
             <div key={comment.id} className="flex items-start gap-2.5 px-3 py-3">
               {/* Avatar */}
@@ -53,7 +53,7 @@ export function CommentSection({ postId, userId, initialComments }: Props) {
                     />
                   </div>
                 ) : (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold text-zinc-300">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-pink-50 text-xs font-semibold text-pink-400">
                     {comment.profiles.username[0].toUpperCase()}
                   </div>
                 )}
@@ -62,10 +62,10 @@ export function CommentSection({ postId, userId, initialComments }: Props) {
               {/* Body */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-[13px] leading-relaxed text-zinc-100">
+                  <p className="text-[13px] leading-relaxed text-slate-700">
                     <Link
                       href={`/u/${comment.profiles.username}`}
-                      className="font-semibold text-white hover:underline mr-1.5"
+                      className="font-semibold text-slate-800 hover:underline mr-1.5"
                     >
                       {comment.profiles.username}
                     </Link>
@@ -77,7 +77,7 @@ export function CommentSection({ postId, userId, initialComments }: Props) {
                     className="mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
                   />
                 </div>
-                <p className="mt-0.5 text-[11px] text-zinc-600">
+                <p className="mt-0.5 text-[11px] text-slate-400">
                   {formatTimestamp(comment.created_at, t)}
                 </p>
               </div>
@@ -89,7 +89,7 @@ export function CommentSection({ postId, userId, initialComments }: Props) {
       {/* Sent confirmation */}
       {sent && (
         <div className="px-3 py-2">
-          <p className="text-[12px] text-emerald-400/80">
+          <p className="text-[12px] text-emerald-600">
             {t("post_comment_sent_long")}
           </p>
         </div>

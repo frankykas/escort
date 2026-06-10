@@ -12,7 +12,7 @@ export function EditProfileLink({ profileId }: { profileId: string }) {
   return (
     <Link
       href="/profile/edit"
-      className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-zinc-800"
+      className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-4 py-2 text-[13px] font-semibold text-slate-800 transition-colors hover:bg-gray-100"
     >
       <Pencil size={13} />
       Edit Profile

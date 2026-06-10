@@ -32,7 +32,7 @@ export function DeletePostButton({ postId }: { postId: string }) {
       <div className="flex items-center gap-2">
         <button
           onClick={() => setConfirming(false)}
-          className="text-[12px] font-medium text-zinc-400 hover:text-zinc-200"
+          className="text-[12px] font-medium text-slate-500 hover:text-slate-700"
         >
           {t("cancel")}
         </button>
@@ -51,7 +51,7 @@ export function DeletePostButton({ postId }: { postId: string }) {
   return (
     <button
       onClick={() => setConfirming(true)}
-      className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-800 hover:text-red-400"
+      className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-gray-100 hover:text-red-500"
       title={t("post_delete")}
     >
       <Trash2 size={16} />

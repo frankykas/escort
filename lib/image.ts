@@ -41,7 +41,15 @@ export async function compressImage(
 
   const { maxDimension, quality, mimeType } = { ...DEFAULTS, ...opts };
 
-  const bitmap = await loadImage(file);
+  // HEIC and some other formats can't be decoded by <img>. If decode fails,
+  // return the original file so the upload still goes through (Supabase
+  // Storage will accept it — the server just won't have a thumbnail).
+  let bitmap: HTMLImageElement;
+  try {
+    bitmap = await loadImage(file);
+  } catch {
+    return file;
+  }
   const { width, height } = scaleDimensions(bitmap.width, bitmap.height, maxDimension);
 
   const canvas = document.createElement("canvas");

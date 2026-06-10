@@ -93,8 +93,8 @@ export function PersonaVerification({ userId, onComplete }: Props) {
           <CheckCircle size={32} className="text-emerald-400" />
         </div>
         <div>
-          <p className="text-[16px] font-bold text-white">{t("pv_verified_title")}</p>
-          <p className="mt-1 text-[13px] text-zinc-400">
+          <p className="text-[16px] font-bold text-slate-800">{t("pv_verified_title")}</p>
+          <p className="mt-1 text-[13px] text-slate-500">
             {t("pv_verified_body")}
           </p>
         </div>
@@ -104,13 +104,13 @@ export function PersonaVerification({ userId, onComplete }: Props) {
 
   if (result === "pending") {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-2xl border border-amber-400/20 bg-amber-400/5 px-6 py-8 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-400/15">
-          <ShieldCheck size={32} className="text-amber-400" />
+      <div className="flex flex-col items-center gap-4 rounded-2xl border border-pink-200 bg-pink-50 px-6 py-8 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-pink-100">
+          <ShieldCheck size={32} className="text-pink-500" />
         </div>
         <div>
-          <p className="text-[16px] font-bold text-white">{t("pv_pending_title")}</p>
-          <p className="mt-1 text-[13px] text-zinc-400">
+          <p className="text-[16px] font-bold text-slate-800">{t("pv_pending_title")}</p>
+          <p className="mt-1 text-[13px] text-slate-500">
             {t("pv_pending_body")}
           </p>
         </div>
@@ -126,8 +126,8 @@ export function PersonaVerification({ userId, onComplete }: Props) {
         className={cn(
           "flex w-full items-center justify-center gap-2.5 rounded-2xl py-4 text-[15px] font-bold transition-all active:scale-[0.98]",
           loading
-            ? "bg-amber-400/50 text-zinc-950 cursor-wait"
-            : "bg-amber-400 text-zinc-950 hover:bg-amber-300"
+            ? "bg-pink-300 text-white cursor-wait"
+            : "bg-[rgb(246,51,154)] text-white hover:brightness-105"
         )}
       >
         {loading ? (
@@ -144,7 +144,7 @@ export function PersonaVerification({ userId, onComplete }: Props) {
       </button>
 
       {result === "error" && (
-        <p className="text-center text-[12px] text-red-400">
+        <p className="text-center text-[12px] text-red-500">
           {t("pv_error")}
         </p>
       )}

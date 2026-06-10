@@ -39,8 +39,8 @@ const CONFIG: Record<Variant, {
 }> = {
   "no-posts": {
     icon: Camera,
-    iconColor: "text-amber-400",
-    iconBg: "bg-amber-400/10 border-amber-400/20",
+    iconColor: "text-pink-500",
+    iconBg: "bg-pink-50 border-pink-200",
     titleKey: "empty_no_posts_title",
     subKey: "empty_no_posts_sub",
     ownTitleKey: "empty_no_posts_own_title",
@@ -50,7 +50,7 @@ const CONFIG: Record<Variant, {
   "no-listings": {
     icon: ShoppingBag,
     iconColor: "text-pink-400",
-    iconBg: "bg-pink-400/10 border-pink-400/20",
+    iconBg: "bg-pink-50 border-pink-200",
     titleKey: "empty_no_listings_title",
     subKey: "empty_no_listings_sub",
     ownTitleKey: "empty_no_listings_own_title",
@@ -59,38 +59,38 @@ const CONFIG: Record<Variant, {
   },
   "no-results": {
     icon: Search,
-    iconColor: "text-zinc-400",
-    iconBg: "bg-zinc-800 border-zinc-700",
+    iconColor: "text-slate-500",
+    iconBg: "bg-gray-100 border-gray-200",
     titleKey: "empty_no_results_title",
     subKey: "empty_no_results_sub",
   },
   "no-conversations": {
     icon: MessageCircle,
-    iconColor: "text-amber-400",
-    iconBg: "bg-amber-400/10 border-amber-400/20",
+    iconColor: "text-pink-500",
+    iconBg: "bg-pink-50 border-pink-200",
     titleKey: "empty_no_conversations_title",
     subKey: "empty_no_conversations_sub",
     cta: { labelKey: "empty_no_conversations_cta", href: "/explore" },
   },
   "no-requests": {
     icon: Inbox,
-    iconColor: "text-zinc-400",
-    iconBg: "bg-zinc-800 border-zinc-700",
+    iconColor: "text-slate-500",
+    iconBg: "bg-gray-100 border-gray-200",
     titleKey: "empty_no_requests_title",
     subKey: "empty_no_requests_sub",
   },
   "no-notifications": {
     icon: Bell,
-    iconColor: "text-amber-400",
-    iconBg: "bg-amber-400/10 border-amber-400/20",
+    iconColor: "text-pink-500",
+    iconBg: "bg-pink-50 border-pink-200",
     titleKey: "empty_no_notifications_title",
     subKey: "empty_no_notifications_sub",
     cta: { labelKey: "empty_no_notifications_cta", href: "/explore" },
   },
   "no-followers": {
     icon: Users,
-    iconColor: "text-amber-400",
-    iconBg: "bg-amber-400/10 border-amber-400/20",
+    iconColor: "text-pink-500",
+    iconBg: "bg-pink-50 border-pink-200",
     titleKey: "empty_no_followers_title",
     subKey: "empty_no_followers_sub",
     ownTitleKey: "empty_no_followers_own_title",
@@ -100,7 +100,7 @@ const CONFIG: Record<Variant, {
   "no-favorites": {
     icon: Heart,
     iconColor: "text-red-400",
-    iconBg: "bg-red-400/10 border-red-400/20",
+    iconBg: "bg-red-50 border-red-200",
     titleKey: "empty_no_favorites_title",
     subKey: "empty_no_favorites_sub",
     cta: { labelKey: "empty_no_favorites_cta", href: "/explore" },
@@ -138,8 +138,8 @@ export function EmptyState({ variant, isOwnProfile = false, className }: Props) 
       </motion.div>
 
       <div className="space-y-2">
-        <p className="text-[16px] font-semibold text-white">{title}</p>
-        <p className="text-[13px] leading-relaxed text-zinc-500 max-w-[260px]">
+        <p className="text-[16px] font-semibold text-slate-800">{title}</p>
+        <p className="text-[13px] leading-relaxed text-slate-400 max-w-[260px]">
           {subtitle}
         </p>
       </div>
@@ -152,7 +152,7 @@ export function EmptyState({ variant, isOwnProfile = false, className }: Props) 
         >
           <Link
             href={ctaConfig.href}
-            className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-400 px-5 py-2.5 text-[13px] font-semibold text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:bg-amber-300 active:scale-[0.97]"
+            className="mt-2 inline-flex items-center gap-2 rounded-full bg-pink-400 px-5 py-2.5 text-[13px] font-semibold text-white shadow-[0_0_20px_rgba(236,72,153,0.2)] transition-all hover:bg-pink-300 active:scale-[0.97]"
           >
             <Sparkles size={14} />
             {t(ctaConfig.labelKey)}

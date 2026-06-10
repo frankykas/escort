@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = req.nextUrl;
   const recipientId = searchParams.get("recipientId");
-  const view = searchParams.get("view") as "pending" | "sent" | "all" | null;
+  const view = searchParams.get("view") as "pending" | "sent" | "all" | "all_pending" | null;
 
   // If recipientId is provided, return status between two users
   if (recipientId) {

@@ -40,8 +40,8 @@ export function HeroCarousel({ photos, username }: { photos: Photo[]; username: 
 
   if (photos.length === 0) {
     return (
-      <div className="relative w-full aspect-[3/4] bg-gradient-to-br from-amber-900/20 via-zinc-900 to-zinc-950">
-        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-zinc-950 to-transparent" />
+      <div className="relative w-full aspect-[3/4] bg-gradient-to-br from-pink-100 via-sky-50 to-white">
+        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#fafbfc] to-transparent" />
       </div>
     );
   }
@@ -81,7 +81,7 @@ export function HeroCarousel({ photos, username }: { photos: Photo[]; username: 
         <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/50 to-transparent" />
 
         {/* Bottom gradient — blends into page bg for avatar overlap */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-52 bg-gradient-to-t from-zinc-950 via-zinc-950/70 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-52 bg-gradient-to-t from-[#fafbfc] via-[#fafbfc]/70 to-transparent" />
 
         {/* Photo counter */}
         {photos.length > 1 && (
@@ -131,7 +131,7 @@ export function HeroCarousel({ photos, username }: { photos: Photo[]; username: 
             {/* Close */}
             <button
               onClick={() => setLightboxOpen(false)}
-              className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-zinc-900/80 text-zinc-300 backdrop-blur-md hover:text-white"
+              className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white/70 backdrop-blur-md hover:text-white"
             >
               <X size={18} />
             </button>
@@ -139,7 +139,7 @@ export function HeroCarousel({ photos, username }: { photos: Photo[]; username: 
             {/* Counter */}
             {photos.length > 1 && (
               <div className="absolute left-0 right-0 top-4 flex justify-center">
-                <span className="rounded-full bg-zinc-900/80 px-3 py-1 text-[12px] text-zinc-400 backdrop-blur-md">
+                <span className="rounded-full bg-black/40 px-3 py-1 text-[12px] text-white/70 backdrop-blur-md">
                   {current + 1} / {photos.length}
                 </span>
               </div>

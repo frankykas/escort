@@ -243,13 +243,13 @@ export function ProviderDashboard() {
   const hasPending = pendingBookings.length > 0;
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-28">
+    <div className="min-h-screen bg-[#fafbfc] pb-28">
 
       {/* ── Header ── */}
-      <header className="sticky top-0 z-20 border-b border-white/5 bg-zinc-950/90 px-5 py-4 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-[#fafbfc]/90 px-5 py-4 backdrop-blur-xl">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-slate-500">
               {t(greetingKey())}
             </p>
             <div className="mt-0.5 flex items-center gap-1.5">
@@ -257,7 +257,7 @@ export function ProviderDashboard() {
                 @{profile.username}
               </h1>
               {profile.verification_status === "verified" && (
-                <CheckCircle size={15} className="fill-amber-400/20 text-amber-400" />
+                <CheckCircle size={15} className="fill-pink-100 text-pink-500" />
               )}
             </div>
           </div>
@@ -269,7 +269,7 @@ export function ProviderDashboard() {
               "flex items-center gap-2 rounded-full border px-3.5 py-2 text-[12px] font-semibold transition-all",
               stats.isAvailableNow
                 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                : "border-white/10 bg-zinc-900 text-zinc-500 hover:border-white/20 hover:text-zinc-300"
+                : "border-gray-200 bg-white text-slate-500 hover:border-gray-300 hover:text-slate-600"
             )}
           >
             {availToggling ? (
@@ -278,7 +278,7 @@ export function ProviderDashboard() {
               <span
                 className={cn(
                   "h-2 w-2 rounded-full",
-                  stats.isAvailableNow ? "animate-pulse bg-emerald-400" : "bg-zinc-600"
+                  stats.isAvailableNow ? "animate-pulse bg-emerald-400" : "bg-slate-300"
                 )}
               />
             )}
@@ -293,24 +293,24 @@ export function ProviderDashboard() {
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between rounded-2xl border border-amber-400/15 bg-gradient-to-r from-amber-400/5 to-transparent px-4 py-3.5"
+          className="flex items-center justify-between rounded-2xl border border-pink-200 bg-gradient-to-r from-pink-50 to-transparent px-4 py-3.5"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400/10">
-              <Coins size={18} className="text-amber-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-pink-50">
+              <Coins size={18} className="text-pink-500" />
             </div>
             <div>
               <p className="text-[13px] font-semibold text-white">
-                {stats.postCredits} {stats.postCredits === 1 ? "Credit" : "Credits"}
+                {stats.postCredits} {stats.postCredits === 1 ? t("credits_credit") : t("credits_credits")}
               </p>
-              <p className="text-[11px] text-zinc-500">For posts &amp; listings</p>
+              <p className="text-[11px] text-slate-500">{t("credits_for_promotions")}</p>
             </div>
           </div>
           <Link
             href="/profile/packages"
-            className="rounded-full bg-amber-400 px-4 py-2 text-[12px] font-bold text-zinc-950 transition hover:bg-amber-300 active:scale-[0.97]"
+            className="rounded-full bg-pink-400 px-4 py-2 text-[12px] font-bold text-white transition hover:bg-pink-500 active:scale-[0.97]"
           >
-            Buy More
+            {t("credits_buy_more")}
           </Link>
         </motion.div>
 
@@ -322,7 +322,7 @@ export function ProviderDashboard() {
           >
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[10px] font-bold text-zinc-950">
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-pink-400 px-1.5 text-[10px] font-bold text-white">
                   {stats.pendingCount}
                 </span>
                 <p className="text-[13px] font-semibold text-white">
@@ -331,7 +331,7 @@ export function ProviderDashboard() {
               </div>
               <Link
                 href="/profile/bookings"
-                className="text-[12px] text-zinc-500 hover:text-zinc-300 transition-colors"
+                className="text-[12px] text-slate-500 hover:text-slate-600 transition-colors"
               >
                 {t("dash_view_all")}
               </Link>
@@ -352,7 +352,7 @@ export function ProviderDashboard() {
 
         {/* ── Performance stats ── */}
         <section>
-          <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-zinc-600">
+          <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-slate-400">
             {t("dash_overview")}
           </p>
           <div className="grid grid-cols-2 gap-2.5">
@@ -399,7 +399,7 @@ export function ProviderDashboard() {
 
         {/* ── Quick actions ── */}
         <section>
-          <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-zinc-600">
+          <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-slate-400">
             {t("dash_quick_actions")}
           </p>
           <div className="grid grid-cols-2 gap-2.5">
@@ -416,8 +416,8 @@ export function ProviderDashboard() {
               label={t("dash_manage")}
               sub={t("dash_manage_sub")}
               href="/profile/listings"
-              iconColor="text-amber-400"
-              iconBg="bg-amber-400/10"
+              iconColor="text-pink-500"
+              iconBg="bg-pink-50"
             />
             <QuickAction
               icon={MessageCircle}
@@ -444,16 +444,16 @@ export function ProviderDashboard() {
               label={t("dash_view_profile")}
               sub={t("dash_view_profile_sub")}
               href={`/u/${profile.username}`}
-              iconColor="text-zinc-400"
-              iconBg="bg-zinc-800"
+              iconColor="text-slate-500"
+              iconBg="bg-gray-100"
             />
             <QuickAction
               icon={CreditCard}
               label="Buy Credits"
               sub={`${stats.postCredits} remaining`}
               href="/profile/packages"
-              iconColor="text-amber-400"
-              iconBg="bg-amber-400/10"
+              iconColor="text-pink-500"
+              iconBg="bg-pink-50"
             />
           </div>
         </section>
@@ -461,14 +461,14 @@ export function ProviderDashboard() {
         {/* ── Messages shortcut ── */}
         <Link
           href="/messages"
-          className="flex items-center gap-3 rounded-2xl border border-white/5 bg-zinc-900 px-4 py-4 transition-all hover:border-white/10 active:scale-[0.99]"
+          className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-4 transition-all hover:border-gray-200 active:scale-[0.99]"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400/10">
-            <MessageCircle size={18} className="text-amber-400" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-pink-50">
+            <MessageCircle size={18} className="text-pink-500" />
           </div>
           <div className="flex-1">
             <p className="text-[14px] font-semibold text-white">{t("dash_messages")}</p>
-            <p className="text-[12px] text-zinc-500">
+            <p className="text-[12px] text-slate-500">
               {stats.unreadMessages > 0
                 ? `${stats.unreadMessages} unread message${stats.unreadMessages !== 1 ? "s" : ""}`
                 : t("dash_inbox")
@@ -476,31 +476,31 @@ export function ProviderDashboard() {
             </p>
           </div>
           {stats.unreadMessages > 0 && (
-            <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-bold text-zinc-950">
+            <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-pink-400 px-1.5 text-[11px] font-bold text-white">
               {stats.unreadMessages > 99 ? "99+" : stats.unreadMessages}
             </span>
           )}
-          <ChevronRight size={16} className="text-zinc-600" />
+          <ChevronRight size={16} className="text-slate-400" />
         </Link>
 
         {/* ── Empty state nudge ── */}
         {stats.postsCount === 0 && stats.listingsCount === 0 && (
-          <div className="rounded-2xl border border-white/5 bg-zinc-900/50 px-4 py-6 text-center">
-            <TrendingUp size={24} className="mx-auto mb-2 text-zinc-700" />
+          <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-6 text-center">
+            <TrendingUp size={24} className="mx-auto mb-2 text-slate-300" />
             <p className="text-[15px] font-semibold text-white">Get started</p>
-            <p className="mt-1 text-[12px] text-zinc-500">
+            <p className="mt-1 text-[12px] text-slate-500">
               Create your first post or listing to start getting noticed.
             </p>
             <div className="mt-4 flex justify-center gap-3">
               <Link
                 href="/profile/upload"
-                className="rounded-full bg-amber-400 px-5 py-2.5 text-[13px] font-semibold text-zinc-950 transition hover:bg-amber-300"
+                className="rounded-full bg-pink-400 px-5 py-2.5 text-[13px] font-semibold text-white transition hover:bg-pink-500"
               >
                 Create Post
               </Link>
               <Link
                 href="/profile/listings"
-                className="rounded-full border border-white/10 px-5 py-2.5 text-[13px] font-semibold text-zinc-300 transition hover:border-white/20"
+                className="rounded-full border border-gray-200 px-5 py-2.5 text-[13px] font-semibold text-slate-600 transition hover:border-gray-300"
               >
                 Add Listing
               </Link>
@@ -527,9 +527,9 @@ function PendingBookingCard({
   const client = booking.client;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-amber-400/20 bg-zinc-900">
-      <div className="flex items-center gap-3 border-b border-white/5 px-4 py-3">
-        <div className="h-9 w-9 flex-shrink-0 overflow-hidden rounded-full bg-zinc-800">
+    <div className="overflow-hidden rounded-2xl border border-pink-200 bg-white">
+      <div className="flex items-center gap-3 border-b border-gray-200 px-4 py-3">
+        <div className="h-9 w-9 flex-shrink-0 overflow-hidden rounded-full bg-gray-100">
           {client?.avatar_url ? (
             <Image
               src={client.avatar_url}
@@ -538,7 +538,7 @@ function PendingBookingCard({
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-sm font-bold text-zinc-400">
+            <div className="flex h-full w-full items-center justify-center text-sm font-bold text-slate-500">
               {client?.username?.[0]?.toUpperCase() ?? "?"}
             </div>
           )}
@@ -547,52 +547,52 @@ function PendingBookingCard({
           <p className="text-[13px] font-semibold text-white truncate">
             @{client?.username ?? "unknown"}
           </p>
-          <p className="text-[11px] text-zinc-500">{timeAgo(booking.created_at)}</p>
+          <p className="text-[11px] text-slate-500">{timeAgo(booking.created_at)}</p>
         </div>
-        <div className="flex items-center gap-1 rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-1">
-          <Clock size={10} className="text-amber-400" />
-          <span className="text-[10px] font-semibold text-amber-400">{t("dash_pending_badge")}</span>
+        <div className="flex items-center gap-1 rounded-full border border-pink-300 bg-pink-50 px-2.5 py-1">
+          <Clock size={10} className="text-pink-500" />
+          <span className="text-[10px] font-semibold text-pink-500">{t("dash_pending_badge")}</span>
         </div>
       </div>
 
       <div className="px-4 py-3">
         <div className="flex flex-wrap gap-x-4 gap-y-1">
-          <span className="flex items-center gap-1.5 text-[12px] text-zinc-300">
-            <Calendar size={11} className="text-zinc-500" />
+          <span className="flex items-center gap-1.5 text-[12px] text-slate-600">
+            <Calendar size={11} className="text-slate-500" />
             {formatDate(booking.requested_date)}
             {booking.requested_time && (
-              <span className="text-zinc-500">· {booking.requested_time}</span>
+              <span className="text-slate-500">· {booking.requested_time}</span>
             )}
           </span>
           {booking.service_type && (
-            <span className="text-[12px] capitalize text-zinc-400">{booking.service_type}</span>
+            <span className="text-[12px] capitalize text-slate-500">{booking.service_type}</span>
           )}
           {booking.area && (
-            <span className="text-[12px] text-zinc-500">{booking.area}</span>
+            <span className="text-[12px] text-slate-500">{booking.area}</span>
           )}
         </div>
         {booking.notes && (
-          <p className="mt-2 line-clamp-2 rounded-xl bg-zinc-800/50 px-3 py-2 text-[11px] leading-relaxed text-zinc-400">
+          <p className="mt-2 line-clamp-2 rounded-xl bg-gray-100 px-3 py-2 text-[11px] leading-relaxed text-slate-500">
             {booking.notes}
           </p>
         )}
       </div>
 
       {acting ? (
-        <div className="flex items-center justify-center border-t border-white/5 py-3">
-          <Loader2 size={16} className="animate-spin text-zinc-500" />
+        <div className="flex items-center justify-center border-t border-gray-200 py-3">
+          <Loader2 size={16} className="animate-spin text-slate-500" />
         </div>
       ) : (
-        <div className="flex gap-2 border-t border-white/5 px-4 py-3">
+        <div className="flex gap-2 border-t border-gray-200 px-4 py-3">
           <button
             onClick={onDecline}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/10 py-2.5 text-[12px] font-semibold text-zinc-400 transition hover:bg-zinc-800"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 py-2.5 text-[12px] font-semibold text-slate-500 transition hover:bg-gray-100"
           >
             <X size={13} /> {t("dash_decline")}
           </button>
           <button
             onClick={onAccept}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white py-2.5 text-[12px] font-semibold text-zinc-950 transition hover:bg-zinc-200"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[rgb(246,51,154)] py-2.5 text-[12px] font-semibold text-white transition hover:brightness-105"
           >
             <Check size={13} /> {t("dash_accept")}
           </button>
@@ -617,15 +617,15 @@ function StatCard({
   return (
     <Link
       href={href}
-      className="group flex flex-col gap-1 rounded-2xl border border-white/5 bg-zinc-900 px-4 py-4 transition-all hover:border-white/10 active:scale-[0.98]"
+      className="group flex flex-col gap-1 rounded-2xl border border-gray-200 bg-white px-4 py-4 transition-all hover:border-gray-200 active:scale-[0.98]"
     >
       <div className="flex items-center justify-between">
         <Icon size={14} className={color} />
-        <ChevronRight size={12} className="text-zinc-700 transition group-hover:text-zinc-500" />
+        <ChevronRight size={12} className="text-slate-300 transition group-hover:text-slate-500" />
       </div>
       <p className="mt-1 text-[24px] font-bold leading-none text-white">{value}</p>
-      <p className="text-[11px] font-medium text-zinc-500">{label}</p>
-      <p className="text-[10px] text-zinc-700">{sub}</p>
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+      <p className="text-[10px] text-slate-300">{sub}</p>
     </Link>
   );
 }
@@ -646,17 +646,17 @@ function QuickAction({
   return (
     <Link
       href={href}
-      className="relative flex items-center gap-3 rounded-2xl border border-white/5 bg-zinc-900 px-4 py-4 transition-all hover:border-white/10 active:scale-[0.98]"
+      className="relative flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-4 transition-all hover:border-gray-200 active:scale-[0.98]"
     >
       <div className={cn("flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl", iconBg)}>
         <Icon size={16} className={iconColor} />
       </div>
       <div className="min-w-0">
         <p className="text-[13px] font-semibold text-white leading-tight">{label}</p>
-        <p className="mt-0.5 text-[11px] text-zinc-500 leading-tight">{sub}</p>
+        <p className="mt-0.5 text-[11px] text-slate-500 leading-tight">{sub}</p>
       </div>
       {badge != null && badge > 0 && (
-        <span className="absolute top-2 right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-zinc-950">
+        <span className="absolute top-2 right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-pink-400 px-1 text-[10px] font-bold text-white">
           {badge}
         </span>
       )}
@@ -668,21 +668,21 @@ function QuickAction({
 
 function DashboardSkeleton() {
   return (
-    <div className="min-h-screen bg-zinc-950 pb-28 animate-pulse">
-      <div className="border-b border-white/5 px-5 py-4">
-        <div className="h-3 w-24 rounded-full bg-zinc-800" />
-        <div className="mt-2 h-6 w-36 rounded-full bg-zinc-800" />
+    <div className="min-h-screen bg-[#fafbfc] pb-28 animate-pulse">
+      <div className="border-b border-gray-200 px-5 py-4">
+        <div className="h-3 w-24 rounded-full bg-gray-100" />
+        <div className="mt-2 h-6 w-36 rounded-full bg-gray-100" />
       </div>
       <div className="space-y-6 px-4 pt-5">
-        <div className="h-16 rounded-2xl bg-zinc-900" />
+        <div className="h-16 rounded-2xl bg-white" />
         <div className="grid grid-cols-3 gap-2.5">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-28 rounded-2xl bg-zinc-900" />
+            <div key={i} className="h-28 rounded-2xl bg-white" />
           ))}
         </div>
         <div className="grid grid-cols-2 gap-2.5">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-20 rounded-2xl bg-zinc-900" />
+            <div key={i} className="h-20 rounded-2xl bg-white" />
           ))}
         </div>
       </div>

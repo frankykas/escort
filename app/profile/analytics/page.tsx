@@ -150,8 +150,8 @@ export default function AnalyticsPage() {
 
   if (loading || !overview) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-950">
-        <Loader2 size={24} className="animate-spin text-zinc-600" />
+      <div className="flex min-h-screen items-center justify-center bg-[#fafbfc]">
+        <Loader2 size={24} className="animate-spin text-slate-300" />
       </div>
     );
   }
@@ -161,32 +161,32 @@ export default function AnalyticsPage() {
     { label: "Total Likes", value: formatCount(overview.totalLikes), icon: Heart, color: "text-rose-400", bg: "bg-rose-500/10" },
     { label: "Total Comments", value: formatCount(overview.totalComments), icon: MessageCircle, color: "text-teal-400", bg: "bg-teal-500/10" },
     { label: "Total Views", value: formatCount(overview.totalViews), icon: Eye, color: "text-blue-400", bg: "bg-blue-500/10" },
-    { label: "Followers", value: formatCount(overview.totalFollowers), icon: Users, color: "text-amber-400", bg: "bg-amber-500/10" },
+    { label: "Followers", value: formatCount(overview.totalFollowers), icon: Users, color: "text-pink-500", bg: "bg-pink-500/10" },
     { label: "Avg Likes/Post", value: `${overview.avgLikesPerPost}`, icon: TrendingUp, color: "text-emerald-400", bg: "bg-emerald-500/10" },
     { label: "Avg Comments/Post", value: `${overview.avgCommentsPerPost}`, icon: TrendingUp, color: "text-sky-400", bg: "bg-sky-500/10" },
     { label: "Engagement Rate", value: `${overview.engagementRate}%`, icon: Flame, color: "text-orange-400", bg: "bg-orange-500/10" },
   ];
 
   return (
-    <main className="min-h-screen bg-zinc-950 pb-24">
+    <main className="min-h-screen bg-[#fafbfc] pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/5 bg-zinc-950/90 px-4 py-3 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-xl">
         <button
           onClick={() => router.back()}
-          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-gray-100 hover:text-slate-700"
         >
           <ChevronLeft size={20} />
         </button>
         <div className="flex items-center gap-2">
-          <BarChart3 size={16} className="text-amber-400" />
-          <span className="text-[15px] font-bold text-white">Analytics</span>
+          <BarChart3 size={16} className="text-pink-500" />
+          <span className="text-[15px] font-bold text-slate-800">Analytics</span>
         </div>
       </header>
 
       <div className="mx-auto max-w-2xl px-4 py-6 space-y-8">
         {/* Overview cards */}
         <section>
-          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500 mb-3">
+          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-3">
             Overview
           </h2>
           <div className="grid grid-cols-2 gap-3">
@@ -195,15 +195,15 @@ export default function AnalyticsPage() {
               return (
                 <div
                   key={card.label}
-                  className="rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 p-4 shadow-md"
+                  className="rounded-2xl border border-gray-200 bg-gradient-to-b from-white to-gray-50 p-4 shadow-md"
                 >
                   <div className="flex items-center gap-2.5">
                     <div className={cn("flex h-9 w-9 items-center justify-center rounded-xl", card.bg)}>
                       <Icon size={16} className={card.color} />
                     </div>
                     <div>
-                      <p className="text-[20px] font-bold leading-none text-white">{card.value}</p>
-                      <p className="text-[10px] text-zinc-500 mt-0.5">{card.label}</p>
+                      <p className="text-[20px] font-bold leading-none text-slate-800">{card.value}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">{card.label}</p>
                     </div>
                   </div>
                 </div>
@@ -215,16 +215,16 @@ export default function AnalyticsPage() {
         {/* Top performing post */}
         {topPost && (
           <section>
-            <h2 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500 mb-3">
+            <h2 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-3">
               Top Post
             </h2>
             <Link
               href={`/post/${topPost.id}`}
-              className="block rounded-2xl border border-amber-400/20 bg-gradient-to-b from-zinc-900 to-zinc-950 overflow-hidden shadow-md transition hover:border-amber-400/40"
+              className="block rounded-2xl border border-pink-200 bg-gradient-to-b from-white to-gray-50 overflow-hidden shadow-md transition hover:border-pink-300"
             >
               <div className="flex gap-4 p-4">
                 {topPost.media_url && (
-                  <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-zinc-800">
+                  <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100">
                     <Image
                       src={topPost.media_url}
                       alt=""
@@ -236,11 +236,11 @@ export default function AnalyticsPage() {
                 )}
                 <div className="flex-1 min-w-0">
                   {topPost.caption && (
-                    <p className="text-[13px] text-zinc-300 line-clamp-2 leading-relaxed">
+                    <p className="text-[13px] text-slate-600 line-clamp-2 leading-relaxed">
                       {topPost.caption}
                     </p>
                   )}
-                  <div className="mt-2 flex items-center gap-4 text-[12px] text-zinc-500">
+                  <div className="mt-2 flex items-center gap-4 text-[12px] text-slate-400">
                     <span className="flex items-center gap-1">
                       <Heart size={12} className="text-rose-400" />
                       {formatCount(topPost.likes_count)}
@@ -254,7 +254,7 @@ export default function AnalyticsPage() {
                       {formatCount(topPost.views_count)}
                     </span>
                   </div>
-                  <p className="mt-1 text-[10px] text-zinc-600">{timeAgo(topPost.created_at)}</p>
+                  <p className="mt-1 text-[10px] text-slate-300">{timeAgo(topPost.created_at)}</p>
                 </div>
               </div>
             </Link>
@@ -264,7 +264,7 @@ export default function AnalyticsPage() {
         {/* All posts breakdown */}
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
+            <h2 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
               Post Performance
             </h2>
             <div className="flex gap-1">
@@ -275,8 +275,8 @@ export default function AnalyticsPage() {
                   className={cn(
                     "rounded-full px-2.5 py-1 text-[10px] font-semibold transition",
                     sortBy === s
-                      ? "bg-amber-400/15 text-amber-400"
-                      : "text-zinc-600 hover:text-zinc-400"
+                      ? "bg-pink-50 text-pink-500"
+                      : "text-slate-300 hover:text-slate-500"
                   )}
                 >
                   {s === "likes" ? "Likes" : s === "comments" ? "Comments" : s === "views" ? "Views" : "Recent"}
@@ -286,22 +286,22 @@ export default function AnalyticsPage() {
           </div>
 
           {sortedPosts.length === 0 ? (
-            <div className="rounded-2xl border border-white/5 bg-zinc-900 py-12 text-center">
-              <ImageIcon size={24} className="mx-auto text-zinc-700 mb-2" />
-              <p className="text-[13px] text-zinc-600">{t("analytics_no_posts")}</p>
+            <div className="rounded-2xl border border-gray-200 bg-white py-12 text-center">
+              <ImageIcon size={24} className="mx-auto text-slate-300 mb-2" />
+              <p className="text-[13px] text-slate-300">{t("analytics_no_posts")}</p>
             </div>
           ) : (
-            <div className="rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-md overflow-hidden divide-y divide-white/5">
+            <div className="rounded-2xl border border-gray-200 bg-gradient-to-b from-white to-gray-50 shadow-md overflow-hidden divide-y divide-gray-100">
               {sortedPosts.map((post, i) => (
                 <Link
                   key={post.id}
                   href={`/post/${post.id}`}
-                  className="flex items-center gap-3 px-4 py-3 transition hover:bg-zinc-800/40"
+                  className="flex items-center gap-3 px-4 py-3 transition hover:bg-gray-50"
                 >
-                  <span className="w-6 text-center text-[12px] font-bold text-zinc-600">
+                  <span className="w-6 text-center text-[12px] font-bold text-slate-300">
                     {i + 1}
                   </span>
-                  <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-lg bg-zinc-800">
+                  <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
                     {post.media_url ? (
                       <Image
                         src={post.media_url}
@@ -312,26 +312,26 @@ export default function AnalyticsPage() {
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center">
-                        <ImageIcon size={14} className="text-zinc-700" />
+                        <ImageIcon size={14} className="text-slate-300" />
                       </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] text-zinc-400 truncate">
+                    <p className="text-[12px] text-slate-500 truncate">
                       {post.caption || "No caption"}
                     </p>
-                    <p className="text-[10px] text-zinc-600 mt-0.5">{timeAgo(post.created_at)}</p>
+                    <p className="text-[10px] text-slate-300 mt-0.5">{timeAgo(post.created_at)}</p>
                   </div>
                   <div className="flex items-center gap-3 text-[11px] flex-shrink-0">
-                    <span className="flex items-center gap-1 text-zinc-500">
+                    <span className="flex items-center gap-1 text-slate-400">
                       <Heart size={11} className="text-rose-400/70" />
                       {post.likes_count}
                     </span>
-                    <span className="flex items-center gap-1 text-zinc-500">
+                    <span className="flex items-center gap-1 text-slate-400">
                       <MessageCircle size={11} className="text-teal-400/70" />
                       {post.comments_count}
                     </span>
-                    <span className="flex items-center gap-1 text-zinc-500">
+                    <span className="flex items-center gap-1 text-slate-400">
                       <Eye size={11} className="text-blue-400/70" />
                       {post.views_count}
                     </span>

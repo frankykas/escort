@@ -11,14 +11,14 @@ export function FeedTabs() {
   const activeTab = searchParams.get("tab") === "favorites" ? "favorites" : "for-you";
 
   return (
-    <div className="flex items-center justify-center border-b border-white/5 bg-zinc-950/70 backdrop-blur-xl backdrop-saturate-150">
+    <div className="flex items-center justify-center border-b border-gray-200 bg-white/70 backdrop-blur-xl backdrop-saturate-150">
       <Link
         href="/"
         className={cn(
           "flex-1 max-w-[160px] py-3 text-center text-[13px] font-semibold transition-colors",
           activeTab === "for-you"
-            ? "text-white border-b-2 border-white -mb-px"
-            : "text-zinc-600 hover:text-zinc-400"
+            ? "text-pink-500 border-b-2 border-pink-400 -mb-px"
+            : "text-slate-400 hover:text-slate-600"
         )}
       >
         {t("home_for_you")}
@@ -28,8 +28,8 @@ export function FeedTabs() {
         className={cn(
           "flex-1 max-w-[160px] py-3 text-center text-[13px] font-semibold transition-colors",
           activeTab === "favorites"
-            ? "text-white border-b-2 border-white -mb-px"
-            : "text-zinc-600 hover:text-zinc-400"
+            ? "text-pink-500 border-b-2 border-pink-400 -mb-px"
+            : "text-slate-400 hover:text-slate-600"
         )}
       >
         {t("home_favorites")}

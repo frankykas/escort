@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Eye, EyeOff, UserX, Bell, Loader2 } from "lucide-react";
+import { ChevronLeft, Eye, EyeOff, UserX, Bell, Loader2, Flame } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { USE_CREATOR_CONTENT } from "@/lib/features";
 
 function Toggle({
   checked,
@@ -20,7 +21,7 @@ function Toggle({
       onClick={() => onChange(!checked)}
       className={cn(
         "relative h-6 w-11 rounded-full transition-colors",
-        checked ? "bg-amber-400" : "bg-zinc-700"
+        checked ? "bg-[rgb(246,51,154)]" : "bg-gray-200"
       )}
     >
       <div
@@ -39,7 +40,7 @@ function Row({
   description,
   checked,
   onChange,
-  iconColor = "text-zinc-400",
+  iconColor = "text-slate-500",
 }: {
   icon: React.ElementType;
   title: string;
@@ -50,12 +51,12 @@ function Row({
 }) {
   return (
     <div className="flex items-center gap-4 px-4 py-4">
-      <div className={cn("flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-zinc-800", iconColor)}>
+      <div className={cn("flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100", iconColor)}>
         <Icon size={18} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[14px] font-medium text-white">{title}</p>
-        <p className="text-[12px] text-zinc-500 leading-snug mt-0.5">{description}</p>
+        <p className="text-[14px] font-medium text-slate-800">{title}</p>
+        <p className="text-[12px] text-slate-500 leading-snug mt-0.5">{description}</p>
       </div>
       <Toggle checked={checked} onChange={onChange} />
     </div>
@@ -69,6 +70,8 @@ export default function PrivacyPage() {
   const [isPrivate, setIsPrivate]         = useState(false);
   const [hideOnline, setHideOnline]       = useState(false);
   const [hideActivity, setHideActivity]   = useState(false);
+  const [adultOptIn, setAdultOptIn]       = useState(false);
+  const [ageVerified, setAgeVerified]     = useState(false);
   const [loaded, setLoaded]               = useState(false);
   const [saving, setSaving]               = useState(false);
   const [toast, setToast]                 = useState<{ msg: string; ok: boolean } | null>(null);
@@ -78,7 +81,7 @@ export default function PrivacyPage() {
     if (!user) { router.replace("/auth/signin"); return; }
     supabase
       .from("profiles")
-      .select("is_private, hide_online_status, hide_activity")
+      .select("is_private, hide_online_status, hide_activity, adult_content_opt_in, yoti_age_verified")
       .eq("id", user.id)
       .single()
       .then(({ data }) => {
@@ -86,10 +89,22 @@ export default function PrivacyPage() {
           setIsPrivate(data.is_private ?? false);
           setHideOnline(data.hide_online_status ?? false);
           setHideActivity(data.hide_activity ?? false);
+          setAdultOptIn(data.adult_content_opt_in ?? false);
+          setAgeVerified(data.yoti_age_verified ?? false);
         }
         setLoaded(true);
       });
   }, [user, checked]);
+
+  function handleAdultToggle(v: boolean) {
+    // Opting in requires age verification.
+    if (v && !ageVerified) {
+      showToast("Verify your age first (Profile → ID verification)", false);
+      return;
+    }
+    setAdultOptIn(v);
+    save("adult_content_opt_in", v);
+  }
 
   async function save(field: string, value: boolean) {
     if (!user) return;
@@ -112,33 +127,33 @@ export default function PrivacyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-20">
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/5 bg-zinc-950/90 px-4 py-3 backdrop-blur-xl">
+    <div className="min-h-screen bg-[#fafbfc] pb-20">
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-gray-200 bg-[#fafbfc]/90 px-4 py-3 backdrop-blur-xl">
         <button
           onClick={() => router.back()}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-gray-100 hover:text-slate-800"
         >
           <ChevronLeft size={20} />
         </button>
-        <span className="text-[15px] font-semibold text-white">Privacy &amp; Safety</span>
-        {saving && <Loader2 size={14} className="ml-auto animate-spin text-zinc-500" />}
+        <span className="text-[15px] font-semibold text-slate-800">Privacy &amp; Safety</span>
+        {saving && <Loader2 size={14} className="ml-auto animate-spin text-slate-400" />}
       </header>
 
       {!loaded ? (
         <div className="flex items-center justify-center pt-24">
-          <Loader2 size={24} className="animate-spin text-zinc-600" />
+          <Loader2 size={24} className="animate-spin text-slate-400" />
         </div>
       ) : (
         <div className="mx-auto max-w-lg space-y-2 pt-4 px-4">
           {/* Profile Visibility */}
-          <p className="px-1 pb-1 text-[11px] font-medium uppercase tracking-widest text-zinc-600">Profile</p>
-          <div className="overflow-hidden rounded-2xl bg-zinc-900 border border-white/5 divide-y divide-white/5">
+          <p className="px-1 pb-1 text-[11px] font-medium uppercase tracking-widest text-slate-400">Profile</p>
+          <div className="overflow-hidden rounded-2xl bg-white border border-gray-200 divide-y divide-gray-200">
             <Row
               icon={isPrivate ? EyeOff : Eye}
               title="Private profile"
               description="Hidden from search, Explore, and the public feed. Only direct link visitors can see you."
               checked={isPrivate}
-              iconColor={isPrivate ? "text-amber-400" : "text-zinc-400"}
+              iconColor={isPrivate ? "text-pink-500" : "text-slate-500"}
               onChange={(v) => { setIsPrivate(v); save("is_private", v); }}
             />
             <Row
@@ -158,7 +173,26 @@ export default function PrivacyPage() {
           </div>
 
 
-          <p className="px-1 pt-4 text-[12px] leading-relaxed text-zinc-600">
+          {/* Adult content opt-in */}
+          {USE_CREATOR_CONTENT && (
+            <>
+              <p className="px-1 pb-1 pt-4 text-[11px] font-medium uppercase tracking-widest text-slate-400">Content</p>
+              <div className="overflow-hidden rounded-2xl bg-white border border-gray-200">
+                <Row
+                  icon={Flame}
+                  title="Show adult content"
+                  description={ageVerified
+                    ? "Display suggestive and explicit posts in your feed. You must be 18+."
+                    : "Requires age verification before it can be enabled."}
+                  checked={adultOptIn}
+                  iconColor={adultOptIn ? "text-pink-500" : "text-slate-500"}
+                  onChange={handleAdultToggle}
+                />
+              </div>
+            </>
+          )}
+
+          <p className="px-1 pt-4 text-[12px] leading-relaxed text-slate-500">
             Private mode does not affect existing followers or subscribers. Your profile remains accessible to anyone with a direct link.
           </p>
         </div>

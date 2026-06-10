@@ -23,6 +23,8 @@ import type { FeedPostData } from "@/components/social/SocialHome";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/ui/PullToRefresh";
 import { ScrollReveal } from "@/components/ui/AmbientEffects";
+import { SearchModal } from "@/components/social/SearchModal";
+import { ActivityIndicator } from "@/components/ui/ActivityIndicator";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,6 +41,7 @@ type BumpedListing = {
   provider_verified: string;
   provider_city: string | null;
   provider_age: number | null;
+  provider_last_seen_at: string | null;
   bump_tier: number;
   bump_expires_at: string;
   images: ListingImageEntry[];
@@ -56,6 +59,7 @@ type StarredListing = {
   provider_verified: string;
   provider_city: string | null;
   provider_age: number | null;
+  provider_last_seen_at: string | null;
   star_expires_at: string;
   images: ListingImageEntry[];
 };
@@ -75,6 +79,7 @@ type ExploreListing = {
   provider_verified: string;
   provider_city: string | null;
   provider_age: number | null;
+  provider_last_seen_at: string | null;
   is_bumped: boolean;
   bump_tier: number;
   images: ListingImageEntry[];
@@ -82,9 +87,6 @@ type ExploreListing = {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-// LeoList-inspired categories — service-type buckets that match how clients
-// actually search. Order: discovery filters first, then experience types
-// (GFE/PSE are the two most-searched), then specialties.
 const CATEGORY_CHIPS = [
   { id: "all",          label: "All" },
   { id: "available",    label: "Available Now" },
@@ -136,16 +138,16 @@ function BumpedBar({ bumps }: { bumps: BumpedListing[] }) {
   if (bumps.length === 0) return null;
 
   return (
-    <div className="border-b border-white/5 bg-black">
+    <div className="bg-white pt-1 pb-2">
       {/* Section header */}
-      <div className="flex items-center gap-2 px-4 pt-3 pb-1">
-        <Sparkles size={12} className="text-amber-400" />
-        <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-amber-400/80">
+      <div className="flex items-center gap-2 px-4 pt-2 pb-0.5">
+        <Sparkles size={12} className="text-pink-400 fill-pink-400/30" />
+        <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-pink-400">
           {t("explore_featured")}
         </span>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto px-4 py-2.5 scrollbar-hide">
+      <div className="flex gap-2.5 overflow-x-auto px-4 pt-1.5 pb-2 scrollbar-hide">
         {bumps.map((bump) => {
           const isVerified = bump.provider_verified === "verified";
 
@@ -155,75 +157,66 @@ function BumpedBar({ bumps }: { bumps: BumpedListing[] }) {
               href={`/listings/${bump.listing_id}`}
               className="group relative flex-shrink-0 focus:outline-none"
             >
-              <div className="relative h-[200px] w-[140px] overflow-hidden rounded-2xl ring-1 ring-amber-400/20 transition-all group-hover:ring-amber-400/40">
-                {/* Photo — listing image first, then provider avatar */}
-                {(bump.images?.[0]?.url ?? bump.provider_avatar) ? (
-                  <Image
-                    src={bump.images?.[0]?.url ?? bump.provider_avatar!}
-                    alt={bump.provider_username}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    sizes="140px"
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center bg-zinc-800">
-                    <span className="text-3xl font-bold text-zinc-500">
-                      {bump.provider_username[0]?.toUpperCase()}
-                    </span>
-                  </div>
-                )}
-
-                {/* Dark gradient overlay */}
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10" />
-
-                {/* Bump tier badge — top right */}
-                <div className="absolute top-2 right-2">
-                  <span className={cn(
-                    "flex items-center gap-0.5 rounded-full px-2 py-[3px] text-[8px] font-bold uppercase tracking-wider backdrop-blur-sm",
-                    bump.bump_tier === 3
-                      ? "bg-amber-400/20 text-amber-300 ring-1 ring-amber-400/30"
-                      : bump.bump_tier === 2
-                      ? "bg-violet-400/20 text-violet-300 ring-1 ring-violet-400/30"
-                      : "bg-sky-400/20 text-sky-300 ring-1 ring-sky-400/30"
-                  )}>
-                    <Crown size={8} />
-                    {bump.bump_tier === 3 ? "VIP" : bump.bump_tier === 2 ? "PRO" : "HOT"}
-                  </span>
-                </div>
-
-                {/* Bottom info */}
-                <div className="absolute inset-x-0 bottom-0 px-2.5 pb-2.5 space-y-1">
-                  {/* Name + verified */}
-                  <div className="flex items-center gap-1">
-                    <p className="text-[12px] font-bold text-white leading-tight truncate">
-                      {bump.provider_username}
-                      {bump.provider_age && (
-                        <span className="font-normal text-white/60">, {bump.provider_age}</span>
-                      )}
-                    </p>
-                    {isVerified && (
-                      <CheckCircle size={10} className="flex-shrink-0 text-amber-400 fill-amber-400/20" />
-                    )}
-                  </div>
-
-                  {/* City */}
-                  {bump.provider_city && (
-                    <p className="flex items-center gap-0.5 text-[9px] font-medium text-zinc-400 truncate">
-                      <MapPin size={7} />
-                      {bump.provider_city}
-                    </p>
+              {/* Pink frame + glow */}
+              <div className="rounded-[16px] bg-gradient-to-b from-pink-200 to-pink-100 p-[1.5px] shadow-[0_6px_16px_-6px_rgba(244,114,182,0.45)] transition-all group-hover:shadow-[0_8px_20px_-4px_rgba(244,114,182,0.55)]">
+                <div className="relative h-[150px] w-[110px] overflow-hidden rounded-[14px] bg-white">
+                  {(bump.images?.[0]?.url ?? bump.provider_avatar) ? (
+                    <Image
+                      src={bump.images?.[0]?.url ?? bump.provider_avatar!}
+                      alt={bump.provider_username}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      sizes="110px"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-pink-50">
+                      <span className="text-2xl font-bold text-pink-300">
+                        {bump.provider_username[0]?.toUpperCase()}
+                      </span>
+                    </div>
                   )}
 
-                  {/* Rate pill */}
-                  <div className="flex items-center gap-1.5">
-                    <span className="rounded-full bg-amber-400/15 px-2 py-[2px] text-[10px] font-bold text-amber-400">
-                      {formatRate(bump.listing_rate)}
+                  {/* Dark gradient overlay */}
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+                  {/* Bump tier badge */}
+                  <div className="absolute top-1.5 right-1.5">
+                    <span className={cn(
+                      "flex items-center gap-0.5 rounded-full px-1.5 py-[2px] text-[8px] font-bold uppercase tracking-wider shadow-sm",
+                      bump.bump_tier === 3
+                        ? "bg-gradient-to-r from-pink-500 to-pink-400 text-white"
+                        : bump.bump_tier === 2
+                        ? "bg-gradient-to-r from-violet-500 to-pink-400 text-white"
+                        : "bg-gradient-to-r from-sky-400 to-pink-400 text-white"
+                    )}>
+                      <Crown size={8} className="fill-white" />
+                      {bump.bump_tier === 3 ? "VIP" : bump.bump_tier === 2 ? "PRO" : "HOT"}
                     </span>
-                    {bump.service_type && (
-                      <span className="truncate text-[9px] text-zinc-500">
-                        {bump.service_type}
+                  </div>
+
+                  {/* Bottom info */}
+                  <div className="absolute inset-x-0 bottom-0 px-2 pb-2 space-y-0.5">
+                    <div className="flex items-center gap-0.5">
+                      <p className="text-[12px] font-bold text-white leading-tight truncate">
+                        {bump.provider_username}
+                      </p>
+                      {isVerified && (
+                        <CheckCircle size={10} className="flex-shrink-0 text-pink-300 fill-pink-300/30" />
+                      )}
+                    </div>
+
+                    <ActivityIndicator
+                      lastSeenAt={bump.provider_last_seen_at}
+                      compact
+                      labelMode="short"
+                      className="border-0 bg-transparent px-0 py-0 text-[9px] font-bold text-white"
+                    />
+
+                    <div className="flex items-center gap-1">
+                      <span className="rounded-full bg-pink-500 px-1.5 py-[2px] text-[10px] font-bold text-white shadow-sm">
+                        {formatRate(bump.listing_rate)}
                       </span>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -238,10 +231,10 @@ function BumpedBar({ bumps }: { bumps: BumpedListing[] }) {
 
 function BumpedBarSkeleton() {
   return (
-    <div className="border-b border-white/5 bg-black px-4 py-3">
-      <div className="flex gap-3 overflow-hidden">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-[200px] w-[140px] flex-shrink-0 rounded-2xl bg-zinc-800/60 shimmer" />
+    <div className="bg-white px-4 pt-2 pb-3">
+      <div className="flex gap-2.5 overflow-hidden">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-[154px] w-[114px] flex-shrink-0 rounded-[16px] bg-gray-100 shimmer" />
         ))}
       </div>
     </div>
@@ -250,11 +243,39 @@ function BumpedBarSkeleton() {
 
 // ─── StarredBar — premium star listings carousel ─────────────────────────────
 
+function SponsoredAdBanner() {
+  return (
+    <div className="border-y border-pink-100 bg-white px-4 py-3">
+      <a
+        href="https://secretbenefits.ca"
+        target="_blank"
+        rel="noreferrer sponsored"
+        className="group block overflow-hidden rounded-2xl border border-pink-100 bg-gradient-to-r from-[#fff7fb] via-white to-[#fff1f8] p-4 shadow-sm transition hover:border-pink-200 hover:shadow-md"
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <div className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-pink-50 px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-pink-500">
+              <Sparkles size={10} className="fill-pink-100" />
+              Sponsored
+            </div>
+            <p className="truncate text-[15px] font-black text-slate-800">SecretBenefits.ca</p>
+            <p className="mt-1 text-[12px] leading-5 text-slate-500">
+              Premium dating connections for adults.
+            </p>
+          </div>
+          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-pink-500 text-white transition group-hover:bg-pink-400">
+            <ChevronRight size={18} />
+          </span>
+        </div>
+      </a>
+    </div>
+  );
+}
+
 function StarredBar({ stars }: { stars: StarredListing[] }) {
   const { t } = useTranslation();
   const [, setTick] = useState(0);
 
-  // Update countdown every 60s
   useEffect(() => {
     const iv = setInterval(() => setTick((n) => n + 1), 60000);
     return () => clearInterval(iv);
@@ -271,16 +292,16 @@ function StarredBar({ stars }: { stars: StarredListing[] }) {
   }
 
   return (
-    <div className="border-b border-amber-400/10 bg-black">
+    <div className="bg-gradient-to-b from-pink-50/60 to-white pt-1 pb-2">
       {/* Section header */}
-      <div className="flex items-center gap-2 px-4 pt-3 pb-1">
-        <Star size={12} className="text-amber-400 fill-amber-400" />
-        <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-amber-400">
+      <div className="flex items-center gap-2 px-4 pt-2 pb-0.5">
+        <Star size={13} className="text-pink-500 fill-pink-500" />
+        <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-pink-500">
           {t("star_featured_section")}
         </span>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto px-4 py-2.5 scrollbar-hide">
+      <div className="flex gap-3 overflow-x-auto px-4 pt-2 pb-2.5 scrollbar-hide">
         {stars.map((star) => {
           const isVerified = star.provider_verified === "verified";
           const countdown = starCountdown(star.star_expires_at);
@@ -291,81 +312,85 @@ function StarredBar({ stars }: { stars: StarredListing[] }) {
               href={`/listings/${star.listing_id}`}
               className="group relative flex-shrink-0 focus:outline-none"
             >
-              <div className="relative h-[240px] w-[180px] overflow-hidden rounded-2xl ring-2 ring-amber-400/40 shadow-[0_0_20px_rgba(251,191,36,0.15)] transition-all group-hover:ring-amber-400/60 group-hover:shadow-[0_0_30px_rgba(251,191,36,0.25)]">
-                {/* Photo */}
-                {(star.images?.[0]?.url ?? star.provider_avatar) ? (
-                  <Image
-                    src={star.images?.[0]?.url ?? star.provider_avatar!}
-                    alt={star.provider_username}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    sizes="180px"
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center bg-zinc-800">
-                    <span className="text-3xl font-bold text-zinc-500">
-                      {star.provider_username[0]?.toUpperCase()}
-                    </span>
-                  </div>
-                )}
-
-                {/* Dark gradient overlay */}
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10" />
-
-                {/* Animated shimmer overlay */}
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-amber-400/5 to-transparent animate-[shimmer_3s_ease-in-out_infinite]" />
-
-                {/* STAR badge — top right */}
-                <div className="absolute top-2 right-2">
-                  <span className="flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 px-2.5 py-[3px] text-[8px] font-bold uppercase tracking-wider text-zinc-950 shadow-lg shadow-amber-400/30">
-                    <Star size={8} className="fill-zinc-950" />
-                    {t("star_badge")}
-                  </span>
-                </div>
-
-                {/* Countdown — top left */}
-                {countdown && (
-                  <div className="absolute top-2 left-2">
-                    <span className="flex items-center gap-1 rounded-full bg-black/60 px-2 py-[3px] text-[9px] font-medium text-amber-400 backdrop-blur-sm">
-                      <Clock size={8} />
-                      {countdown}
-                    </span>
-                  </div>
-                )}
-
-                {/* Bottom info */}
-                <div className="absolute inset-x-0 bottom-0 px-3 pb-3 space-y-1">
-                  {/* Name + verified */}
-                  <div className="flex items-center gap-1">
-                    <p className="text-[13px] font-bold text-white leading-tight truncate">
-                      {star.provider_username}
-                      {star.provider_age && (
-                        <span className="font-normal text-white/60">, {star.provider_age}</span>
-                      )}
-                    </p>
-                    {isVerified && (
-                      <CheckCircle size={11} className="flex-shrink-0 text-amber-400 fill-amber-400/20" />
-                    )}
-                  </div>
-
-                  {/* City */}
-                  {star.provider_city && (
-                    <p className="flex items-center gap-0.5 text-[10px] font-medium text-zinc-400 truncate">
-                      <MapPin size={8} />
-                      {star.provider_city}
-                    </p>
+              {/* Pink frame + drop glow */}
+              <div className="rounded-[20px] bg-gradient-to-b from-pink-300 to-pink-200 p-[2.5px] shadow-[0_10px_22px_-8px_rgba(244,114,182,0.55)] transition-all group-hover:shadow-[0_14px_28px_-6px_rgba(244,114,182,0.7)]">
+                <div className="relative h-[220px] w-[160px] overflow-hidden rounded-[18px] bg-white">
+                  {(star.images?.[0]?.url ?? star.provider_avatar) ? (
+                    <Image
+                      src={star.images?.[0]?.url ?? star.provider_avatar!}
+                      alt={star.provider_username}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      sizes="160px"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-pink-50">
+                      <span className="text-4xl font-bold text-pink-300">
+                        {star.provider_username[0]?.toUpperCase()}
+                      </span>
+                    </div>
                   )}
 
-                  {/* Rate pill */}
-                  <div className="flex items-center gap-1.5">
-                    <span className="rounded-full bg-amber-400/20 px-2.5 py-[2px] text-[11px] font-bold text-amber-400">
-                      {formatRate(star.listing_rate)}
-                    </span>
-                    {star.service_type && (
-                      <span className="truncate text-[9px] text-zinc-500">
-                        {star.service_type}
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+
+                  {/* Animated shimmer overlay */}
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-[shimmer_3s_ease-in-out_infinite]" />
+
+                  {/* Countdown — top-left */}
+                  {countdown && (
+                    <div className="absolute top-2 left-2">
+                      <span className="flex items-center gap-1 rounded-full bg-white/90 px-2 py-[3px] text-[10px] font-semibold text-slate-700 backdrop-blur-md shadow-sm">
+                        <Clock size={10} className="text-slate-500" />
+                        {countdown}
                       </span>
+                    </div>
+                  )}
+
+                  {/* VEDETTE badge — top-right */}
+                  <div className="absolute top-2 right-2">
+                    <span className="flex items-center gap-1 rounded-full bg-gradient-to-r from-pink-500 to-pink-400 px-2 py-[3px] text-[9px] font-bold uppercase tracking-wider text-white shadow-md shadow-pink-500/40">
+                      <Star size={9} className="fill-white" />
+                      {t("star_badge")}
+                    </span>
+                  </div>
+
+                  {/* Bottom info */}
+                  <div className="absolute inset-x-0 bottom-0 px-3 pb-3 space-y-1">
+                    <div className="flex items-center gap-1">
+                      <p className="text-[15px] font-bold text-white leading-tight truncate">
+                        {star.provider_username}
+                        {star.provider_age && (
+                          <span className="font-normal text-white/60">, {star.provider_age}</span>
+                        )}
+                      </p>
+                      {isVerified && (
+                        <CheckCircle size={12} className="flex-shrink-0 text-pink-300 fill-pink-300/30" />
+                      )}
+                    </div>
+
+                    {star.provider_city && (
+                      <p className="flex items-center gap-1 text-[11px] font-medium text-white/80 truncate">
+                        <MapPin size={10} />
+                        {star.provider_city}
+                      </p>
                     )}
+
+                    <ActivityIndicator
+                      lastSeenAt={star.provider_last_seen_at}
+                      labelMode="short"
+                      className="border-white/20 bg-white/15 px-2 py-[2px] text-[9px] font-bold text-white backdrop-blur-md"
+                    />
+
+                    <div className="flex items-center gap-1.5 pt-0.5">
+                      <span className="rounded-full bg-pink-500 px-2 py-[3px] text-[11px] font-bold text-white shadow-sm">
+                        {formatRate(star.listing_rate)}
+                      </span>
+                      {star.service_type && (
+                        <span className="truncate text-[10px] font-medium text-white/85">
+                          {star.service_type}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -422,10 +447,10 @@ function ImageGallery({
     return (
       <Link
         href={`/listings/${listingId}`}
-        className="block relative aspect-[4/5] w-full bg-zinc-900 overflow-hidden"
+        className="block relative aspect-[4/5] w-full bg-gray-50 overflow-hidden"
       >
-        <div className="absolute inset-0 flex items-center justify-center bg-zinc-800">
-          <span className="text-6xl font-bold text-zinc-600">{fallbackInitial}</span>
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+          <span className="text-6xl font-bold text-gray-300">{fallbackInitial}</span>
         </div>
       </Link>
     );
@@ -433,7 +458,7 @@ function ImageGallery({
 
   return (
     <div
-      className="relative aspect-[4/5] w-full overflow-hidden bg-zinc-900"
+      className="relative aspect-[4/5] w-full overflow-hidden bg-gray-50"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -458,10 +483,8 @@ function ImageGallery({
         </div>
       </Link>
 
-      {/* Bottom gradient */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
 
-      {/* Dot indicators */}
       {count > 1 && (
         <div className="absolute top-3 inset-x-0 flex justify-center gap-1 pointer-events-none">
           {images.map((_, i) => (
@@ -477,31 +500,27 @@ function ImageGallery({
         </div>
       )}
 
-      {/* Verified badge — bottom left */}
       {isVerified && (
         <div className="absolute bottom-3 left-3 pointer-events-none">
-          <span className="flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-semibold text-amber-400 backdrop-blur-md border border-amber-400/20">
-            <CheckCircle size={10} className="fill-amber-400/20" />
+          <span className="flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-pink-500 backdrop-blur-md border border-pink-200">
+            <CheckCircle size={10} className="fill-pink-100" />
             {t("explore_verified")}
           </span>
         </div>
       )}
 
-      {/* Age badge — bottom right */}
       {providerAge && (
-        <div className="absolute bottom-3 right-3 rounded-full bg-black/50 px-2 py-0.5 text-[11px] font-semibold text-white/90 backdrop-blur-md pointer-events-none">
+        <div className="absolute bottom-3 right-3 rounded-full bg-white/80 px-2 py-0.5 text-[11px] font-semibold text-slate-700 backdrop-blur-md pointer-events-none">
           {providerAge} {t("explore_yrs")}
         </div>
       )}
 
-      {/* Image counter */}
       {count > 1 && (
-        <div className="absolute top-3 right-3 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white/80 backdrop-blur-sm pointer-events-none">
+        <div className="absolute top-3 right-3 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-semibold text-white/80 backdrop-blur-sm pointer-events-none">
           {current + 1}/{count}
         </div>
       )}
 
-      {/* Tap zones for desktop (left/right click areas) */}
       {count > 1 && (
         <>
           <button
@@ -521,9 +540,6 @@ function ImageGallery({
 }
 
 // ─── Taxonomy helpers ────────────────────────────────────────────────────────
-// Curated signals derived from structured data. No freeform marketing copy —
-// no neighborhood names ("Gastown"), no vague qualifiers ("Cultured
-// conversation"). Every chip here comes from a known vocabulary.
 
 function formatDuration(mins: number | null): string | null {
   if (!mins) return null;
@@ -533,9 +549,6 @@ function formatDuration(mins: number | null): string | null {
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
-// Infer call-type (incall / outcall / both) from the listing's perks array
-// using only the canonical keywords. Any other perks text is ignored — we
-// never surface freeform tags on the card.
 function inferCallType(perks: string[] | null | undefined): "incall" | "outcall" | "both" | null {
   if (!perks || perks.length === 0) return null;
   const joined = perks.join(" ").toLowerCase();
@@ -547,16 +560,7 @@ function inferCallType(perks: string[] | null | undefined): "incall" | "outcall"
   return null;
 }
 
-// ─── ListingFeedCard — editorial / Tryst-inspired layout ──────────────────────
-//
-// Design intent:
-//   • Image dominates. Name, age, city overlay the photo like a magazine spread
-//   • Premium states earn real emphasis: bumped cards get a gold gradient frame
-//     and a VIP ribbon; verified providers get a gold checkmark
-//   • Below-image strip is minimal: title + rate + a single row of taxonomy
-//     chips (service type, duration, call-type). No freeform perks, no
-//     duplicated CTAs, no header avatar row
-//   • Whole card is clickable → listing detail
+// ─── ListingFeedCard ──────────────────────────────────────────────────────────
 
 function ListingFeedCard({ listing }: { listing: ExploreListing }) {
   const { t } = useTranslation();
@@ -573,47 +577,42 @@ function ListingFeedCard({ listing }: { listing: ExploreListing }) {
 
   return (
     <article className="relative px-3 pt-3 pb-5">
-      {/* Premium frame for bumped listings — subtle gold gradient border */}
       <div
         className={cn(
-          "relative overflow-hidden rounded-[20px] bg-zinc-950",
+          "relative overflow-hidden rounded-[20px] bg-white",
           isBumped
-            ? "p-[1.5px] bg-gradient-to-br from-amber-300/60 via-amber-500/20 to-amber-300/40"
-            : "ring-1 ring-white/5"
+            ? "p-[1.5px] bg-gradient-to-br from-pink-300/60 via-sky-300/30 to-pink-300/40"
+            : "ring-1 ring-gray-200 shadow-sm"
         )}
       >
-        <div className="relative overflow-hidden rounded-[19px] bg-zinc-950">
-          {/* ── Image gallery with overlaid identity card ── */}
+        <div className="relative overflow-hidden rounded-[19px] bg-white">
           <div className="relative">
             <ImageGallery
               images={allImages}
               listingId={listing.listing_id}
               fallbackInitial={listing.provider_username[0]?.toUpperCase() ?? "?"}
-              isVerified={false /* rendered in overlay below */}
-              providerAge={null /* rendered in overlay below */}
+              isVerified={false}
+              providerAge={null}
             />
 
-            {/* VIP ribbon — top right, only for bumped */}
             {isBumped && (
               <div className="pointer-events-none absolute top-3 right-3 z-10">
-                <span className="flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-300 px-2.5 py-[5px] text-[9px] font-black uppercase tracking-[0.12em] text-black shadow-[0_2px_12px_rgba(251,191,36,0.35)]">
+                <span className="flex items-center gap-1 rounded-full bg-gradient-to-r from-pink-500 to-sky-400 px-2.5 py-[5px] text-[9px] font-black uppercase tracking-[0.12em] text-white shadow-lg">
                   <Crown size={9} className="stroke-[2.5]" />
                   VIP
                 </span>
               </div>
             )}
 
-            {/* Service type — top left, subtle */}
             {listing.service_type && (
               <div className="pointer-events-none absolute top-3 left-3 z-10">
-                <span className="rounded-full bg-black/55 px-2.5 py-[5px] text-[10px] font-semibold uppercase tracking-wider text-white/90 backdrop-blur-md ring-1 ring-white/10">
+                <span className="rounded-full bg-white/85 px-2.5 py-[5px] text-[10px] font-semibold uppercase tracking-wider text-slate-700 backdrop-blur-md ring-1 ring-gray-200">
                   {listing.service_type}
                 </span>
               </div>
             )}
 
-            {/* Identity overlay — bottom of image, magazine-style */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-4 pb-3.5 pt-10 bg-gradient-to-t from-black/95 via-black/60 to-transparent">
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-4 pb-3.5 pt-10 bg-gradient-to-t from-black/85 via-black/50 to-transparent">
               <Link
                 href={`/u/${listing.provider_username}`}
                 className="pointer-events-auto inline-block"
@@ -630,66 +629,68 @@ function ListingFeedCard({ listing }: { listing: ExploreListing }) {
                   {isVerified && (
                     <CheckCircle
                       size={14}
-                      className="ml-0.5 translate-y-[1px] text-amber-400 fill-amber-400/30 drop-shadow-[0_1px_4px_rgba(251,191,36,0.4)]"
+                      className="ml-0.5 translate-y-[1px] text-pink-300 fill-pink-300/30 drop-shadow-[0_1px_4px_rgba(244,114,182,0.5)]"
                     />
                   )}
                 </div>
                 {listing.provider_city && (
                   <p className="mt-1 flex items-center gap-1 text-[11px] font-medium uppercase tracking-[0.14em] text-white/75">
-                    <MapPin size={10} className="text-amber-400/80" />
+                    <MapPin size={10} className="text-pink-300" />
                     {listing.provider_city}
                   </p>
                 )}
+                <ActivityIndicator
+                  lastSeenAt={listing.provider_last_seen_at}
+                  labelMode="short"
+                  className="mt-1.5 border-white/20 bg-white/15 px-2 py-[2px] text-[10px] font-bold text-white backdrop-blur-md"
+                />
               </Link>
             </div>
           </div>
 
-          {/* ── Below-image strip ── */}
           <Link href={`/listings/${listing.listing_id}`} className="block">
             <div className="px-4 pt-3.5 pb-4">
-              {/* Title + rate */}
               <div className="flex items-start justify-between gap-3">
-                <h3 className="flex-1 text-[15px] font-bold text-white leading-snug line-clamp-1 tracking-tight">
+                <h3 className="flex-1 text-[15px] font-bold text-slate-800 leading-snug line-clamp-1 tracking-tight">
                   {listing.listing_title}
                 </h3>
                 <div className="flex-shrink-0 flex items-baseline gap-1 leading-none">
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-zinc-500">
+                  <span className="text-[10px] font-medium uppercase tracking-widest text-slate-400">
                     from
                   </span>
-                  <span className="text-[18px] font-black text-amber-400 tabular-nums">
+                  <span className="text-[18px] font-black text-pink-500 tabular-nums">
                     ${(listing.listing_rate / 100).toFixed(0)}
                   </span>
                 </div>
               </div>
 
-              {/* Taxonomy row — service type already in overlay; show duration + call-type */}
               {(duration || callType) && (
                 <div className="mt-2.5 flex items-center gap-1.5 flex-wrap">
                   {duration && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-[3px] text-[10.5px] font-medium text-zinc-300">
-                      <Clock size={9.5} className="text-zinc-500" />
+                    <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-[3px] text-[10.5px] font-medium text-slate-600">
+                      <Clock size={9.5} className="text-slate-400" />
                       {duration}
                     </span>
                   )}
                   {callType === "incall" && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-[3px] text-[10.5px] font-medium text-zinc-300">
-                      <Home size={9.5} className="text-zinc-500" />
+                    <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-[3px] text-[10.5px] font-medium text-slate-600">
+                      <Home size={9.5} className="text-slate-400" />
                       {t("explore_incall")}
                     </span>
                   )}
                   {callType === "outcall" && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-[3px] text-[10.5px] font-medium text-zinc-300">
-                      <Car size={9.5} className="text-zinc-500" />
+                    <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-[3px] text-[10.5px] font-medium text-slate-600">
+                      <Car size={9.5} className="text-slate-400" />
                       {t("explore_outcall")}
                     </span>
                   )}
                   {callType === "both" && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-[3px] text-[10.5px] font-medium text-zinc-300">
-                      <Home size={9.5} className="text-zinc-500" />
+                    <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-[3px] text-[10.5px] font-medium text-slate-600">
+                      <Home size={9.5} className="text-slate-400" />
                       {t("explore_incall_outcall")}
                     </span>
                   )}
-                  <span className="ml-auto text-[10px] font-medium uppercase tracking-wider text-zinc-600">
+                  <span className="ml-auto text-[10px] font-medium uppercase tracking-wider text-slate-300">
                     {timeAgo(listing.listing_created_at)}
                   </span>
                 </div>
@@ -709,7 +710,6 @@ export function ExploreClient() {
   const { user } = useSession();
   const { isProvider, profile } = useProfile();
   const router = useRouter();
-  const [searchQuery, setSearchQuery]     = useState("");
   const [cityQuery, setCityQuery]         = useState("");
   const [filters, setFilters]             = useState<Filters>(DEFAULT_FILTERS);
   const [activeChip, setActiveChip]       = useState("all");
@@ -725,7 +725,8 @@ export function ExploreClient() {
   const [loadingMore, setLoadingMore]     = useState(false);
   const [hasMore, setHasMore]             = useState(true);
   const [geoLoading, setGeoLoading]       = useState(false);
-  const [searchFocused, setSearchFocused] = useState(false);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [toolsOpen, setToolsOpen]             = useState(false);
   const [, setUserCity]                   = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -738,19 +739,12 @@ export function ExploreClient() {
     },
   });
 
-  // Fetch bumped listings for the premium bar.
-  // Bumps are paid premium placements — always show them nationwide unless
-  // the user has *explicitly* filtered by city in the search bar. Do NOT fall
-  // back to the viewer's own profile city (that would hide bumps from nearby
-  // cities — e.g. a Quebec City client would never see Montreal bumps).
   const fetchBumps = useCallback(async (city: string) => {
     const cityTrimmed = city.trim() || null;
-
     const { data, error } = await supabase.rpc("get_bumped_listings", {
       p_city: cityTrimmed,
       p_limit: 20,
     });
-
     if (error) {
       console.error("Bumps error:", error.message);
       setBumpedListings([]);
@@ -759,16 +753,13 @@ export function ExploreClient() {
     }
   }, []);
 
-  // Fetch starred listings for the premium "En vedette" carousel
   const fetchStars = useCallback(async (city: string) => {
     const cityTrimmed = city.trim() || null;
-
     const { data, error } = await supabase.rpc("get_starred_listings", {
       p_city: cityTrimmed,
       p_seed: sessionSeed,
       p_limit: 6,
     });
-
     if (error) {
       console.error("Stars error:", error.message);
       setStarredListings([]);
@@ -777,13 +768,10 @@ export function ExploreClient() {
     }
   }, [sessionSeed]);
 
-  // Fetch social feed posts for the main feed
   const fetchPosts = useCallback(async (city: string) => {
     setLoading(true);
     setHasMore(true);
-
     const cityTrimmed = city.trim() || null;
-
     const { data, error } = await supabase.rpc("get_feed_posts", {
       p_country_code: null,
       p_city: cityTrimmed,
@@ -791,7 +779,6 @@ export function ExploreClient() {
       p_offset: 0,
       p_comments_per_post: 3,
     });
-
     if (error) {
       console.error("Feed posts error:", error.message);
       setFeedPosts([]);
@@ -801,11 +788,9 @@ export function ExploreClient() {
       setFeedPosts(results);
       if (results.length < PAGE_SIZE) setHasMore(false);
     }
-
     setLoading(false);
   }, []);
 
-  // Load engagement state (likes + follows) for current posts
   useEffect(() => {
     if (!user || feedPosts.length === 0) {
       setLikedPostIds(new Set());
@@ -814,7 +799,6 @@ export function ExploreClient() {
     }
     const postIds = feedPosts.map((p) => p.post_id);
     const profileIds = [...new Set(feedPosts.map((p) => p.provider_id))];
-
     Promise.all([
       supabase
         .from("likes")
@@ -832,13 +816,10 @@ export function ExploreClient() {
     });
   }, [user, feedPosts]);
 
-  // Load next page of posts
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore || loading) return;
     setLoadingMore(true);
-
     const cityTrimmed = cityQuery.trim() || null;
-
     const { data, error } = await supabase.rpc("get_feed_posts", {
       p_country_code: null,
       p_city: cityTrimmed,
@@ -846,7 +827,6 @@ export function ExploreClient() {
       p_offset: feedPosts.length,
       p_comments_per_post: 3,
     });
-
     if (error) {
       console.error("Load more error:", error.message);
       setHasMore(false);
@@ -854,7 +834,6 @@ export function ExploreClient() {
       const newPosts = (data ?? []) as FeedPostData[];
       const existingIds = new Set(feedPosts.map((p) => p.post_id));
       const fresh = newPosts.filter((p) => !existingIds.has(p.post_id));
-
       if (fresh.length === 0) {
         setHasMore(false);
       } else {
@@ -862,11 +841,9 @@ export function ExploreClient() {
         if (newPosts.length < PAGE_SIZE) setHasMore(false);
       }
     }
-
     setLoadingMore(false);
   }, [feedPosts, loadingMore, hasMore, loading, cityQuery]);
 
-  // Fetch user's city for geo-targeted bumps
   useEffect(() => {
     if (!user) return;
     supabase
@@ -879,14 +856,12 @@ export function ExploreClient() {
       });
   }, [user]);
 
-  // Initial load
   useEffect(() => {
     fetchPosts("");
     fetchBumps("");
     fetchStars("");
   }, [fetchPosts, fetchBumps, fetchStars]);
 
-  // Debounced city changes
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
@@ -897,7 +872,6 @@ export function ExploreClient() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [cityQuery, fetchPosts, fetchBumps, fetchStars]);
 
-  // Infinite scroll observer
   useEffect(() => {
     if (!sentinelRef.current || !hasMore || loading) return;
     const observer = new IntersectionObserver(
@@ -922,7 +896,7 @@ export function ExploreClient() {
           );
           const data = await res.json();
           const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || "";
-          if (city) { setCityQuery(city); setSearchQuery(""); }
+          if (city) setCityQuery(city);
         } catch { /* ignore */ }
         setGeoLoading(false);
       },
@@ -937,48 +911,30 @@ export function ExploreClient() {
 
   const activeCount = countActiveFilters(filters);
 
-  // Client-side search filter on posts
-  const displayPosts = (() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return feedPosts;
-    return feedPosts.filter((p) =>
-      p.provider_username?.toLowerCase().includes(q) ||
-      p.caption?.toLowerCase().includes(q)
-    );
-  })();
+  const displayPosts = feedPosts;
 
   // ══════════════════════════════════════════════════════════════════════════
-  // PROVIDER VIEW — simplified, shows their own listings + bumps preview
+  // PROVIDER VIEW
   // ══════════════════════════════════════════════════════════════════════════
 
   if (isProvider) {
     return (
-      <div className="min-h-screen bg-black pb-24">
-        <header className="sticky top-0 z-20 border-b border-white/5 bg-black/95 backdrop-blur-xl">
-          <div className="flex items-center justify-center px-4 py-[13px]">
-            <span className="text-[17px] font-bold tracking-tight text-[#FCBA03]">{t("feed_title")}</span>
-          </div>
-        </header>
-
+      <div className="min-h-screen bg-[#fafbfc] pb-24 pt-[calc(env(safe-area-inset-top,0px)+28px)]">
         <PullToRefreshIndicator pulling={pulling} refreshing={refreshing} pullDistance={pullDistance} progress={progress} />
 
-        {/* Starred listings — premium "En vedette" section */}
         {!loading && <StarredBar stars={starredListings} />}
-
-        {/* Bumped listings preview */}
         {loading ? <BumpedBarSkeleton /> : <BumpedBar bumps={bumpedListings} />}
+        {!loading && <SponsoredAdBanner />}
 
-        {/* Feed header */}
         {!loading && feedPosts.length > 0 && (
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5">
-            <div className="h-1 w-1 rounded-full bg-[#FCBA03]" />
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-zinc-600">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
+            <div className="h-1 w-1 rounded-full bg-pink-400" />
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
               {t("explore_latest")}
             </span>
           </div>
         )}
 
-        {/* Social feed */}
         {loading ? (
           <FeedSkeleton />
         ) : feedPosts.length === 0 ? (
@@ -998,96 +954,64 @@ export function ExploreClient() {
             ))}
             <div ref={sentinelRef} className="h-1" />
             {loadingMore && (
-              <div className="flex items-center justify-center py-6 text-zinc-500">
+              <div className="flex items-center justify-center py-6 text-slate-400">
                 <Loader2 size={18} className="animate-spin" />
               </div>
             )}
             {!hasMore && feedPosts.length > 0 && (
-              <div className="py-8 text-center text-[11px] uppercase tracking-widest text-zinc-700">
+              <div className="py-8 text-center text-[11px] uppercase tracking-widest text-slate-300">
                 {t("explore_all_caught_up")}
               </div>
             )}
           </div>
         )}
+
+        <ExploreToolsFab
+          activeCount={activeCount}
+          cityActive={!!cityQuery}
+          onClick={() => setToolsOpen(true)}
+          label={t("explore_tools_title")}
+        />
+
+        <ExploreToolsSheet
+          open={toolsOpen}
+          onClose={() => setToolsOpen(false)}
+          cityQuery={cityQuery}
+          setCityQuery={setCityQuery}
+          handleNearMe={handleNearMe}
+          geoLoading={geoLoading}
+          onOpenSearch={() => setSearchModalOpen(true)}
+          onOpenFilters={() => setDrawerOpen(true)}
+          activeCount={activeCount}
+          t={t}
+        />
+
+        <AnimatePresence>
+          {drawerOpen && (
+            <FilterDrawer
+              filters={filters}
+              onApply={(f) => { setFilters(f); setDrawerOpen(false); setActiveChip("all"); }}
+              onClose={() => setDrawerOpen(false)}
+            />
+          )}
+        </AnimatePresence>
+
+        <SearchModal open={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
       </div>
     );
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // CLIENT VIEW — full discovery UI
+  // CLIENT VIEW
   // ══════════════════════════════════════════════════════════════════════════
 
   return (
-    <div className="min-h-screen bg-black pb-24">
-
-      {/* ── Sticky header ── */}
-      <header className="sticky top-0 z-20 border-b border-white/5 bg-black/95 backdrop-blur-xl">
-        <div className="flex items-center justify-center px-4 py-[13px]">
-          <span className="text-[17px] font-bold tracking-tight text-[#FCBA03]">
-            {t("explore_title")}
-          </span>
-        </div>
-      </header>
-
-      {/* ── Pull to refresh ── */}
+    <div className="min-h-screen overflow-x-hidden bg-[#fafbfc] pb-24 pt-[calc(env(safe-area-inset-top,0px)+28px)]">
       <PullToRefreshIndicator pulling={pulling} refreshing={refreshing} pullDistance={pullDistance} progress={progress} />
 
-      {/* ── Starred listings — premium "En vedette" section ── */}
       {!loading && <StarredBar stars={starredListings} />}
-
-      {/* ── Bumped listings bar (premium spot) ── */}
       {loading ? <BumpedBarSkeleton /> : <BumpedBar bumps={bumpedListings} />}
-
-      {/* ── Control strip: Near Me | Search | Filters ── */}
-      <div className="flex items-center gap-2 border-b border-white/5 bg-black px-4 py-3">
-        <button
-          onClick={handleNearMe}
-          disabled={geoLoading}
-          className={cn(
-            "flex flex-shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-[12px] font-medium transition-all disabled:opacity-40",
-            cityQuery
-              ? "border-amber-400/40 bg-amber-400/10 text-amber-400"
-              : "border-white/10 bg-zinc-900 text-zinc-400 hover:border-amber-400/30 hover:text-amber-400"
-          )}
-        >
-          <MapPin size={13} />
-          {geoLoading ? "…" : cityQuery ? cityQuery : t("explore_near_you")}
-          {cityQuery && (
-            <span
-              role="button"
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCityQuery(""); }}
-              className="ml-0.5 text-amber-400/60 hover:text-amber-400"
-            >
-              <X size={11} />
-            </span>
-          )}
-        </button>
-
-        <div className="relative flex-1">
-          <Search size={14} className={cn(
-            "absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors",
-            searchFocused || searchQuery ? "text-amber-400" : "text-zinc-500"
-          )} />
-          <input
-            type="text"
-            placeholder={t("explore_search_ph")}
-            value={searchQuery}
-            onChange={(e) => { setSearchQuery(e.target.value); if (e.target.value) setCityQuery(""); }}
-            onFocus={() => setSearchFocused(true)}
-            onBlur={() => setSearchFocused(false)}
-            className={cn(
-              "w-full rounded-full border bg-zinc-900 py-2 pl-8 pr-7 text-[13px] text-zinc-100 placeholder-zinc-600 outline-none transition-all",
-              searchFocused || searchQuery ? "border-amber-400/30 ring-1 ring-amber-400/10" : "border-white/10"
-            )}
-          />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
-              <X size={13} />
-            </button>
-          )}
-        </div>
-
-      </div>
+      {!loading && <SponsoredAdBanner />}
 
       {/* ── Social feed ── */}
       {loading ? (
@@ -1108,24 +1032,39 @@ export function ExploreClient() {
             </ScrollReveal>
           ))}
 
-          {/* Pagination sentinel + loader */}
-          {!searchQuery.trim() && (
-            <>
-              <div ref={sentinelRef} className="h-1" />
-              {loadingMore && (
-                <div className="flex items-center justify-center py-6 text-zinc-500">
-                  <Loader2 size={18} className="animate-spin" />
-                </div>
-              )}
-              {!hasMore && feedPosts.length > 0 && (
-                <div className="py-8 text-center text-[11px] uppercase tracking-widest text-zinc-700">
-                  {t("explore_all_caught_up")}
-                </div>
-              )}
-            </>
+          <div ref={sentinelRef} className="h-1" />
+          {loadingMore && (
+            <div className="flex items-center justify-center py-6 text-slate-400">
+              <Loader2 size={18} className="animate-spin" />
+            </div>
+          )}
+          {!hasMore && feedPosts.length > 0 && (
+            <div className="py-8 text-center text-[11px] uppercase tracking-widest text-slate-300">
+              {t("explore_all_caught_up")}
+            </div>
           )}
         </div>
       )}
+
+      <ExploreToolsFab
+        activeCount={activeCount}
+        cityActive={!!cityQuery}
+        onClick={() => setToolsOpen(true)}
+        label={t("explore_tools_title")}
+      />
+
+      <ExploreToolsSheet
+        open={toolsOpen}
+        onClose={() => setToolsOpen(false)}
+        cityQuery={cityQuery}
+        setCityQuery={setCityQuery}
+        handleNearMe={handleNearMe}
+        geoLoading={geoLoading}
+        onOpenSearch={() => setSearchModalOpen(true)}
+        onOpenFilters={() => setDrawerOpen(true)}
+        activeCount={activeCount}
+        t={t}
+      />
 
       <AnimatePresence>
         {drawerOpen && (
@@ -1140,6 +1079,8 @@ export function ExploreClient() {
       <AnimatePresence>
         {categoriesOpen && <CategoriesDrawer onClose={() => setCategoriesOpen(false)} />}
       </AnimatePresence>
+
+      <SearchModal open={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
     </div>
   );
 }
@@ -1151,21 +1092,173 @@ function FeedSkeleton() {
     <div>
       {Array.from({ length: 3 }).map((_, i) => (
         <div key={i} className="px-3 pt-3 pb-5">
-          <div className="overflow-hidden rounded-[20px] ring-1 ring-white/5 bg-zinc-950">
-            <div className="aspect-[4/5] w-full bg-zinc-800 shimmer" />
+          <div className="overflow-hidden rounded-[20px] ring-1 ring-gray-200 bg-white shadow-sm">
+            <div className="aspect-[4/5] w-full bg-gray-100 shimmer" />
             <div className="px-4 pt-3.5 pb-4 space-y-2.5">
               <div className="flex items-center justify-between gap-3">
-                <div className="h-4 w-48 rounded-full bg-zinc-800 shimmer" />
-                <div className="h-4 w-14 rounded-full bg-zinc-800 shimmer" />
+                <div className="h-4 w-48 rounded-full bg-gray-100 shimmer" />
+                <div className="h-4 w-14 rounded-full bg-gray-100 shimmer" />
               </div>
               <div className="flex gap-1.5">
-                <div className="h-5 w-14 rounded-full bg-zinc-800/60 shimmer" />
-                <div className="h-5 w-20 rounded-full bg-zinc-800/60 shimmer" />
+                <div className="h-5 w-14 rounded-full bg-gray-50 shimmer" />
+                <div className="h-5 w-20 rounded-full bg-gray-50 shimmer" />
               </div>
             </div>
           </div>
         </div>
       ))}
     </div>
+  );
+}
+
+// ─── ExploreToolsFab — floating pink button that opens the tools sheet ────────
+
+function ExploreToolsFab({
+  activeCount,
+  cityActive,
+  onClick,
+  label,
+}: {
+  activeCount: number;
+  cityActive: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  const total = activeCount + (cityActive ? 1 : 0);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="fixed right-4 bottom-[calc(60px+env(safe-area-inset-bottom,0px)+14px)] z-30 flex h-12 w-12 items-center justify-center rounded-full bg-[rgb(246,51,154)] text-white shadow-[0_12px_28px_-8px_rgba(246,51,154,0.75)] transition-transform active:scale-95"
+    >
+      <SlidersHorizontal size={18} />
+      {total > 0 && (
+        <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold text-pink-500 shadow ring-1 ring-pink-200">
+          {total}
+        </span>
+      )}
+    </button>
+  );
+}
+
+// ─── ExploreToolsSheet — bottom-sheet with Near-me / Search / Filters rows ────
+
+function ExploreToolsSheet({
+  open,
+  onClose,
+  cityQuery,
+  setCityQuery,
+  handleNearMe,
+  geoLoading,
+  onOpenSearch,
+  onOpenFilters,
+  activeCount,
+  t,
+}: {
+  open: boolean;
+  onClose: () => void;
+  cityQuery: string;
+  setCityQuery: (v: string) => void;
+  handleNearMe: () => void;
+  geoLoading: boolean;
+  onOpenSearch: () => void;
+  onOpenFilters: () => void;
+  activeCount: number;
+  t: (key: import("@/lib/i18n/en").TranslationKey) => string;
+}) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
+          />
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 32, stiffness: 320 }}
+            className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl bg-white pb-[calc(env(safe-area-inset-bottom,0px)+22px)] shadow-[0_-14px_40px_-10px_rgba(0,0,0,0.22)]"
+          >
+            <div className="mx-auto my-2 h-1 w-10 rounded-full bg-gray-200" />
+            <div className="px-5 pt-2 pb-1">
+              <h3 className="text-[15px] font-bold text-slate-800">{t("explore_tools_title")}</h3>
+              <p className="text-[12px] text-slate-400">{t("explore_tools_subtitle")}</p>
+            </div>
+            <div className="space-y-2 px-5 pt-3">
+              <button
+                type="button"
+                onClick={() => handleNearMe()}
+                disabled={geoLoading}
+                className={cn(
+                  "flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-[13px] font-medium transition-colors disabled:opacity-40",
+                  cityQuery
+                    ? "border-pink-300 bg-pink-50 text-pink-600"
+                    : "border-gray-200 bg-gray-50 text-slate-600 hover:border-pink-200"
+                )}
+              >
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <MapPin size={15} className="flex-shrink-0 text-pink-500" />
+                  <span className="truncate">
+                    {geoLoading ? "…" : cityQuery ? cityQuery : t("explore_near_you")}
+                  </span>
+                </span>
+                {cityQuery ? (
+                  <span
+                    role="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCityQuery(""); }}
+                    className="flex-shrink-0 text-pink-400 hover:text-pink-500"
+                  >
+                    <X size={15} />
+                  </span>
+                ) : (
+                  <ChevronRight size={15} className="flex-shrink-0 text-slate-300" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { onClose(); onOpenSearch(); }}
+                className="flex w-full items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-[13px] font-medium text-slate-600 transition-colors hover:border-pink-200"
+              >
+                <span className="flex items-center gap-2.5">
+                  <Search size={15} className="text-pink-500" />
+                  <span className="truncate">{t("explore_search_ph")}</span>
+                </span>
+                <ChevronRight size={15} className="flex-shrink-0 text-slate-300" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { onClose(); onOpenFilters(); }}
+                className={cn(
+                  "flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-[13px] font-medium transition-colors",
+                  activeCount > 0
+                    ? "border-pink-300 bg-pink-50 text-pink-600"
+                    : "border-gray-200 bg-gray-50 text-slate-600 hover:border-pink-200"
+                )}
+              >
+                <span className="flex items-center gap-2.5">
+                  <SlidersHorizontal size={15} className="text-pink-500" />
+                  {t("explore_filters")}
+                </span>
+                {activeCount > 0 ? (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-pink-500 px-1.5 text-[10px] font-bold text-white">
+                    {activeCount}
+                  </span>
+                ) : (
+                  <ChevronRight size={15} className="flex-shrink-0 text-slate-300" />
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }

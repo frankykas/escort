@@ -66,7 +66,7 @@ export function FilterDrawer({ filters, onApply, onClose }: Props) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
         onClick={onClose}
       />
 
@@ -77,25 +77,25 @@ export function FilterDrawer({ filters, onApply, onClose }: Props) {
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="fixed inset-x-0 bottom-0 z-50 flex max-h-[88vh] flex-col overflow-hidden rounded-t-3xl border-t border-white/5 bg-zinc-950"
+        className="fixed inset-x-0 bottom-0 z-50 flex max-h-[88vh] flex-col overflow-hidden rounded-t-3xl border-t border-gray-200 bg-white"
       >
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="h-1 w-10 rounded-full bg-zinc-700" />
+          <div className="h-1 w-10 rounded-full bg-gray-300" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 flex-shrink-0 border-b border-white/5">
+        <div className="flex items-center justify-between px-5 py-3 flex-shrink-0 border-b border-gray-100">
           <button
             onClick={() => setLocal(DEFAULT_FILTERS)}
-            className="text-[13px] text-zinc-500 hover:text-zinc-200 transition-colors"
+            className="text-[13px] text-slate-400 hover:text-slate-700 transition-colors"
           >
             Reset
           </button>
-          <span className="text-[15px] font-semibold text-white">Filters</span>
+          <span className="text-[15px] font-semibold text-slate-800">Filters</span>
           <button
             onClick={onClose}
-            className="text-zinc-500 hover:text-zinc-200 transition-colors"
+            className="text-slate-400 hover:text-slate-700 transition-colors"
             aria-label="Close"
           >
             <X size={18} />
@@ -103,7 +103,7 @@ export function FilterDrawer({ filters, onApply, onClose }: Props) {
         </div>
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-8">
+        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-7">
           {/* Availability */}
           <section>
             <SectionTitle>Availability</SectionTitle>
@@ -165,7 +165,7 @@ export function FilterDrawer({ filters, onApply, onClose }: Props) {
                 min={0}
                 max={5000}
               />
-              <div className="h-px w-4 bg-zinc-700 flex-shrink-0" />
+              <div className="h-px w-4 bg-gray-300 flex-shrink-0" />
               <NumberInput
                 label="Max"
                 prefix="CA$"
@@ -188,7 +188,7 @@ export function FilterDrawer({ filters, onApply, onClose }: Props) {
                 min={18}
                 max={70}
               />
-              <div className="h-px w-4 bg-zinc-700 flex-shrink-0" />
+              <div className="h-px w-4 bg-gray-300 flex-shrink-0" />
               <NumberInput
                 label="Max"
                 value={local.maxAge}
@@ -204,7 +204,7 @@ export function FilterDrawer({ filters, onApply, onClose }: Props) {
             <div className="flex items-center justify-between">
               <div>
                 <SectionTitle>Verified only</SectionTitle>
-                <p className="text-[12px] text-zinc-600 mt-0.5">Show ID-verified providers only</p>
+                <p className="text-[12px] text-slate-400 mt-0.5">Show ID-verified providers only</p>
               </div>
               <Toggle
                 active={local.verifiedOnly}
@@ -215,10 +215,10 @@ export function FilterDrawer({ filters, onApply, onClose }: Props) {
         </div>
 
         {/* Apply */}
-        <div className="flex-shrink-0 border-t border-white/5 bg-zinc-950 px-5 pt-4 pb-[max(env(safe-area-inset-bottom,0px),20px)]">
+        <div className="flex-shrink-0 border-t border-gray-100 bg-white px-5 pt-4 pb-[max(env(safe-area-inset-bottom,0px),20px)]">
           <button
             onClick={() => onApply(local)}
-            className="w-full rounded-2xl bg-amber-400 py-3.5 text-[15px] font-semibold text-zinc-950 transition-all active:scale-[0.98] hover:bg-amber-300"
+            className="w-full rounded-2xl bg-[rgb(246,51,154)] py-3.5 text-[15px] font-semibold text-white transition-all active:scale-[0.98] hover:brightness-105"
           >
             Apply filters
           </button>
@@ -230,7 +230,7 @@ export function FilterDrawer({ filters, onApply, onClose }: Props) {
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500">{children}</p>
+    <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">{children}</p>
   );
 }
 
@@ -249,8 +249,8 @@ function PillToggle({
       className={cn(
         "rounded-full border px-3.5 py-2 text-[12px] font-medium transition-all",
         active
-          ? "border-amber-400/50 bg-amber-400/10 text-amber-400"
-          : "border-white/5 bg-zinc-900 text-zinc-400 hover:border-white/10 hover:text-zinc-200"
+          ? "border-pink-300 bg-pink-50 text-pink-500"
+          : "border-gray-200 bg-gray-50 text-slate-500 hover:border-pink-200 hover:text-slate-700"
       )}
     >
       {label}
@@ -275,16 +275,16 @@ function NumberInput({
 }) {
   return (
     <div className="flex-1">
-      <p className="mb-1.5 text-[10px] uppercase tracking-wide text-zinc-600">{label}</p>
-      <div className="flex items-center rounded-xl border border-white/5 bg-zinc-900 px-3 py-2.5">
-        {prefix && <span className="mr-1 text-[13px] text-zinc-500">{prefix}</span>}
+      <p className="mb-1.5 text-[10px] uppercase tracking-wide text-slate-400">{label}</p>
+      <div className="flex items-center rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
+        {prefix && <span className="mr-1 text-[13px] text-slate-400">{prefix}</span>}
         <input
           type="number"
           value={value}
           onChange={(e) =>
             onChange(Math.max(min, Math.min(max, Number(e.target.value))))
           }
-          className="w-full bg-transparent text-[13px] text-zinc-100 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          className="w-full bg-transparent text-[13px] text-slate-800 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         />
       </div>
     </div>
@@ -298,7 +298,7 @@ function Toggle({ active, onClick }: { active: boolean; onClick: () => void }) {
       aria-pressed={active}
       className={cn(
         "relative h-7 w-12 flex-shrink-0 rounded-full transition-colors duration-200",
-        active ? "bg-amber-400" : "bg-zinc-700"
+        active ? "bg-pink-400" : "bg-gray-300"
       )}
     >
       <span

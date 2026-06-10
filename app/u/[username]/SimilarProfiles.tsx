@@ -98,11 +98,11 @@ export function SimilarProfiles({ profileId, city, serviceCategories }: Props) {
     return (
       <div className="mt-6 px-4 pb-2">
         <div className="mb-4 flex items-center gap-2">
-          <div className="h-3 w-32 rounded-full bg-zinc-800 shimmer" />
+          <div className="h-3 w-32 rounded-full bg-gray-100 shimmer" />
         </div>
         <div className="flex gap-3 overflow-hidden">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-[200px] w-[150px] flex-shrink-0 rounded-2xl bg-zinc-800 shimmer" />
+            <div key={i} className="h-[200px] w-[150px] flex-shrink-0 rounded-2xl bg-gray-100 shimmer" />
           ))}
         </div>
       </div>
@@ -116,14 +116,14 @@ export function SimilarProfiles({ profileId, city, serviceCategories }: Props) {
       {/* Section header */}
       <div className="mb-4 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <Sparkles size={14} className="text-amber-400" />
-          <h3 className="text-[13px] font-bold uppercase tracking-widest text-zinc-400">
+          <Sparkles size={14} className="text-pink-500" />
+          <h3 className="text-[13px] font-bold uppercase tracking-widest text-slate-500">
             You might also like
           </h3>
         </div>
         <Link
           href="/explore"
-          className="flex items-center gap-0.5 text-[12px] font-medium text-amber-400 transition-colors hover:text-amber-300"
+          className="flex items-center gap-0.5 text-[12px] font-medium text-pink-500 transition-colors hover:text-pink-400"
         >
           See all
           <ChevronRight size={14} />
@@ -147,7 +147,7 @@ export function SimilarProfiles({ profileId, city, serviceCategories }: Props) {
                 href={`/u/${p.username}`}
                 className="group block flex-shrink-0"
               >
-                <div className="relative h-[220px] w-[155px] overflow-hidden rounded-2xl bg-zinc-800">
+                <div className="relative h-[220px] w-[155px] overflow-hidden rounded-2xl border border-gray-200 bg-white">
                   {/* Full-bleed photo */}
                   {p.avatar_url ? (
                     <Image
@@ -158,7 +158,7 @@ export function SimilarProfiles({ profileId, city, serviceCategories }: Props) {
                       sizes="155px"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900 text-3xl font-bold text-zinc-600">
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 text-3xl font-bold text-slate-300">
                       {p.username[0].toUpperCase()}
                     </div>
                   )}
@@ -168,17 +168,17 @@ export function SimilarProfiles({ profileId, city, serviceCategories }: Props) {
 
                   {/* Promoted badge — top left */}
                   {p.is_promoted && (
-                    <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-amber-400/90 px-1.5 py-0.5 shadow-md">
-                      <Sparkles size={8} className="text-zinc-900" />
-                      <span className="text-[8px] font-bold text-zinc-900 uppercase tracking-wide">Ad</span>
+                    <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-pink-400/90 px-1.5 py-0.5 shadow-md">
+                      <Sparkles size={8} className="text-white" />
+                      <span className="text-[8px] font-bold text-white uppercase tracking-wide">Ad</span>
                     </div>
                   )}
 
                   {/* Verified badge — top right */}
                   {isVerified && (
                     <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/40 px-1.5 py-0.5 backdrop-blur-md">
-                      <CheckCircle size={10} className="fill-amber-400/20 text-amber-400" />
-                      <span className="text-[9px] font-semibold text-amber-400">Verified</span>
+                      <CheckCircle size={10} className="fill-pink-100 text-pink-500" />
+                      <span className="text-[9px] font-semibold text-pink-400">Verified</span>
                     </div>
                   )}
 

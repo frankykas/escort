@@ -49,8 +49,8 @@ export default async function PostPage({ params }: Props) {
 
   if (!supabase) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-black">
-        <p className="text-sm text-zinc-500">Supabase not configured.</p>
+      <main className="flex min-h-screen items-center justify-center bg-[#fafbfc]">
+        <p className="text-sm text-slate-400">Supabase not configured.</p>
       </main>
     );
   }
@@ -98,43 +98,43 @@ export default async function PostPage({ params }: Props) {
   const { username, avatar_url, verification_status, id: profileId } = post.profiles;
   const isVerified = verification_status === "verified";
   return (
-    <main className="min-h-screen bg-black">
+    <main className="min-h-screen bg-[#fafbfc]">
       <div className="mx-auto max-w-lg">
         {/* ── Header ── */}
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-800 bg-black/80 px-4 py-3 backdrop-blur-md">
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white/90 px-4 py-3 backdrop-blur-md">
           <div className="flex items-center gap-3">
             <BackButton />
-            <span className="text-sm font-semibold text-white">{t("post_label")}</span>
+            <span className="text-sm font-semibold text-slate-800">{t("post_label")}</span>
           </div>
           <PostMenu postId={post.id} ownerId={profileId} />
         </header>
 
         {/* ── Post author row ── */}
-        <Link href={`/u/${username}`} className="flex items-center gap-2.5 px-3 py-3 hover:bg-zinc-900/50 transition-colors">
-          <div className="rounded-full p-[2px] bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 flex-shrink-0">
-            <div className="rounded-full p-[1.5px] bg-black">
+        <Link href={`/u/${username}`} className="flex items-center gap-2.5 px-3 py-3 hover:bg-gray-100/50 transition-colors">
+          <div className="rounded-full p-[2px] bg-gradient-to-tr from-pink-400 via-sky-300 to-violet-400 flex-shrink-0">
+            <div className="rounded-full p-[1.5px] bg-white">
               {avatar_url ? (
                 <div className="relative h-9 w-9 overflow-hidden rounded-full">
                   <Image src={avatar_url} alt={username} fill className="object-cover" sizes="36px" />
                 </div>
               ) : (
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold text-zinc-300">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-pink-50 text-xs font-semibold text-pink-400">
                   {username[0].toUpperCase()}
                 </div>
               )}
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-[13px] font-semibold text-white">{username}</span>
+            <span className="text-[13px] font-semibold text-slate-800">{username}</span>
             {isVerified && (
-              <CheckCircle size={12} className="text-amber-400 fill-amber-400/20 flex-shrink-0" />
+              <CheckCircle size={12} className="text-pink-400 fill-pink-100 flex-shrink-0" />
             )}
           </div>
         </Link>
 
         {/* ── Full image ── */}
         {post.media_url && (
-          <div className="relative aspect-square w-full bg-zinc-900">
+          <div className="relative aspect-square w-full bg-gray-50">
             <Image
               src={post.media_url}
               alt={post.caption ?? "Post"}
@@ -157,10 +157,10 @@ export default async function PostPage({ params }: Props) {
         {/* ── Caption ── */}
         {post.caption && (
           <div className="px-3 pt-1 pb-2">
-            <p className="text-[13px] leading-relaxed text-zinc-100">
+            <p className="text-[13px] leading-relaxed text-slate-700">
               <Link
                 href={`/u/${username}`}
-                className="font-semibold text-white hover:underline mr-1.5"
+                className="font-semibold text-slate-800 hover:underline mr-1.5"
               >
                 {username}
               </Link>
@@ -171,12 +171,12 @@ export default async function PostPage({ params }: Props) {
 
         {/* ── Timestamp ── */}
         <div className="flex items-center justify-between px-3 pb-3">
-          <p className="text-[11px] text-zinc-600">{formatTimestamp(post.created_at, t)}</p>
+          <p className="text-[11px] text-slate-400">{formatTimestamp(post.created_at, t)}</p>
           <ReportButton targetType="post" targetId={post.id} />
         </div>
 
         {/* ── Comments section ── */}
-        <div className="border-t border-zinc-800">
+        <div className="border-t border-gray-200">
           <CommentSection
             postId={post.id}
             userId={currentUserId}

@@ -50,12 +50,12 @@ export function StoriesBar() {
 
   if (loading) {
     return (
-      <div className="border-b border-white/5 bg-zinc-950/70 backdrop-blur-xl backdrop-saturate-150">
+      <div className="border-b border-gray-200 bg-white/70 backdrop-blur-xl backdrop-saturate-150">
         <div className="flex gap-7 overflow-x-auto px-4 py-3">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="flex flex-col items-center gap-1.5 flex-shrink-0">
-              <div className="h-14 w-14 rounded-full bg-zinc-800 animate-pulse" />
-              <div className="h-2 w-12 rounded-full bg-zinc-800 animate-pulse" />
+              <div className="h-14 w-14 rounded-full bg-gray-100 animate-pulse" />
+              <div className="h-2 w-12 rounded-full bg-gray-100 animate-pulse" />
             </div>
           ))}
         </div>
@@ -67,7 +67,7 @@ export function StoriesBar() {
 
   return (
     <>
-      <div className="border-b border-white/5 bg-zinc-950/70 backdrop-blur-xl backdrop-saturate-150">
+      <div className="border-b border-gray-200 bg-white/70 backdrop-blur-xl backdrop-saturate-150">
         <div
           className="flex gap-7 overflow-x-auto px-4 py-3"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
@@ -82,14 +82,14 @@ export function StoriesBar() {
                 className="flex flex-col items-center gap-1.5 flex-shrink-0 focus:outline-none"
                 aria-label={`View ${username}'s story`}
               >
-                {/* Amber gradient ring with unseen indicator */}
+                {/* Gradient ring with unseen indicator */}
                 <div className={cn(
                   "rounded-full p-[1px] bg-gradient-to-tr transition-opacity hover:opacity-80",
-                  has_unseen 
-                    ? "from-amber-500 via-amber-400 to-yellow-300" 
-                    : "from-zinc-600 via-zinc-500 to-zinc-400"
+                  has_unseen
+                    ? "from-pink-400 via-sky-300 to-violet-400"
+                    : "from-gray-300 via-gray-200 to-gray-300"
                 )}>
-                  <div className="rounded-full p-[2px] bg-black">
+                  <div className="rounded-full p-[2px] bg-white">
                     {avatar_url ? (
                       <div className="relative h-14 w-14 overflow-hidden rounded-full">
                         <Image
@@ -101,13 +101,13 @@ export function StoriesBar() {
                         />
                       </div>
                     ) : (
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-zinc-300">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-slate-600">
                         {username[0].toUpperCase()}
                       </div>
                     )}
                   </div>
                 </div>
-                <span className="max-w-[60px] truncate text-[10px] text-zinc-400">
+                <span className="max-w-[60px] truncate text-[10px] text-slate-500">
                   {username}
                 </span>
               </button>

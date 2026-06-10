@@ -182,9 +182,9 @@ export function EnquireBar({
       icon: MessageCircle,
       label: t("el_send_a_message"),
       sub: t("el_private_in_app").replace("{username}", username),
-      color: "text-amber-400",
-      iconBg: "bg-amber-400/15",
-      border: "border-amber-400/20",
+      color: "text-pink-500",
+      iconBg: "bg-pink-50",
+      border: "border-pink-200",
       action: () => {
         if (!user) { router.push("/auth/signin"); return; }
         setStep("compose");
@@ -198,13 +198,13 @@ export function EnquireBar({
       {signupModal}
       {/* ── Sticky bar ── */}
       <div
-        className="fixed inset-x-0 bottom-[57px] z-30 border-t border-white/5 bg-zinc-950/95 px-4 backdrop-blur-xl"
+        className="fixed inset-x-0 bottom-[57px] z-30 border-t border-gray-200 bg-white/95 px-4 backdrop-blur-xl"
         style={{ paddingBottom: "12px", paddingTop: "12px" }}
       >
         <div className="mx-auto flex max-w-lg items-center gap-4">
           <div className="flex flex-col">
-            <span className="text-[22px] font-bold leading-none text-amber-400">{formatRate(rate)}</span>
-            {duration && <span className="mt-0.5 text-[10px] text-zinc-500">{formatDuration(duration)}</span>}
+            <span className="text-[22px] font-bold leading-none text-pink-500">{formatRate(rate)}</span>
+            {duration && <span className="mt-0.5 text-[10px] text-slate-400">{formatDuration(duration)}</span>}
           </div>
           <div className="flex flex-1 items-center gap-2">
             {hasWhatsapp && (
@@ -218,7 +218,7 @@ export function EnquireBar({
             )}
             <button
               onClick={handleMainCta}
-              className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 shadow-[0_0_28px_rgba(251,191,36,0.4)] transition-all hover:bg-amber-300 active:scale-[0.98]"
+              className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-pink-400 py-3.5 text-[14px] font-bold text-white shadow-[0_0_28px_rgba(244,114,182,0.4)] transition-all hover:bg-pink-300 active:scale-[0.98]"
             >
               <MessageCircle size={17} strokeWidth={2.5} />
               {t("el_message")}
@@ -251,26 +251,26 @@ export function EnquireBar({
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm"
+              className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
               onClick={closeSheet}
             />
             <motion.div
               initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-white/10 bg-zinc-950 px-5"
+              className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-gray-200 bg-white px-5"
               style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" }}
             >
               {/* Handle */}
               <div className="flex justify-center pt-3 pb-1">
-                <div className="h-1 w-10 rounded-full bg-zinc-700" />
+                <div className="h-1 w-10 rounded-full bg-gray-200" />
               </div>
 
               {/* Header */}
-              <div className="flex items-center gap-3 py-4 border-b border-white/5">
+              <div className="flex items-center gap-3 py-4 border-b border-gray-200">
                 {step === "compose" && hasExternalContact && (
                   <button
                     onClick={() => setStep("options")}
-                    className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                    className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 text-slate-500 hover:text-slate-700"
                   >
                     <ChevronRight size={14} className="rotate-180" />
                   </button>
@@ -278,23 +278,23 @@ export function EnquireBar({
                 <div className="flex-1">
                   {step === "options" && (
                     <>
-                      <p className="text-[16px] font-semibold text-white">{t("eb_contact")}</p>
-                      <p className="mt-0.5 text-[12px] text-zinc-500">{t("eb_reach_out").replace("{username}", username)}</p>
+                      <p className="text-[16px] font-semibold text-slate-800">{t("eb_contact")}</p>
+                      <p className="mt-0.5 text-[12px] text-slate-400">{t("eb_reach_out").replace("{username}", username)}</p>
                     </>
                   )}
                   {step === "compose" && (
                     <>
-                      <p className="text-[16px] font-semibold text-white">{t("el_new_message")}</p>
-                      <p className="mt-0.5 text-[12px] text-zinc-500">{t("el_to_user").replace("{username}", username)}</p>
+                      <p className="text-[16px] font-semibold text-slate-800">{t("el_new_message")}</p>
+                      <p className="mt-0.5 text-[12px] text-slate-400">{t("el_to_user").replace("{username}", username)}</p>
                     </>
                   )}
                   {step === "sent" && (
-                    <p className="text-[16px] font-semibold text-white">{t("el_message_sent")}</p>
+                    <p className="text-[16px] font-semibold text-slate-800">{t("el_message_sent")}</p>
                   )}
                 </div>
                 <button
                   onClick={closeSheet}
-                  className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                  className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 text-slate-500 hover:text-slate-700"
                 >
                   <X size={14} />
                 </button>
@@ -314,18 +314,18 @@ export function EnquireBar({
                       <button
                         key={label}
                         onClick={action}
-                        className={`flex w-full items-center gap-4 rounded-2xl border ${border} bg-zinc-900/60 px-4 py-4 text-left transition-all active:scale-[0.99] hover:opacity-90`}
+                        className={`flex w-full items-center gap-4 rounded-2xl border ${border} bg-gray-50 px-4 py-4 text-left transition-all active:scale-[0.99] hover:opacity-90`}
                       >
                         <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${iconBg} ${color}`}>
                           <Icon size={19} />
                         </div>
                         <div className="flex-1">
                           <p className={`text-[14px] font-semibold ${color}`}>{label}</p>
-                          <p className="text-[12px] text-zinc-500">{sub}</p>
+                          <p className="text-[12px] text-slate-400">{sub}</p>
                         </div>
                         {external
-                          ? <ExternalLink size={14} className="flex-shrink-0 text-zinc-600" />
-                          : <ChevronRight size={15} className="flex-shrink-0 text-zinc-600" />
+                          ? <ExternalLink size={14} className="flex-shrink-0 text-slate-300" />
+                          : <ChevronRight size={15} className="flex-shrink-0 text-slate-300" />
                         }
                       </button>
                     ))}
@@ -342,15 +342,15 @@ export function EnquireBar({
                   >
                     {/* Listing context badge */}
                     {listingTitle && (
-                      <div className="mb-3 flex items-center gap-2 rounded-xl border border-amber-400/10 bg-amber-400/5 px-3 py-2">
-                        <Tag size={12} className="flex-shrink-0 text-amber-400/60" />
-                        <p className="text-[11px] text-zinc-400 truncate">
-                          Re: <span className="text-zinc-300">{listingTitle}</span>
+                      <div className="mb-3 flex items-center gap-2 rounded-xl border border-pink-100 bg-pink-50 px-3 py-2">
+                        <Tag size={12} className="flex-shrink-0 text-pink-300" />
+                        <p className="text-[11px] text-slate-500 truncate">
+                          Re: <span className="text-slate-600">{listingTitle}</span>
                         </p>
                       </div>
                     )}
 
-                    <div className="rounded-2xl border border-white/5 bg-zinc-900/50 p-1">
+                    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-1">
                       <textarea
                         autoFocus
                         placeholder={t("el_compose_placeholder").replace("{username}", username)}
@@ -358,11 +358,11 @@ export function EnquireBar({
                         onChange={(e) => setMessage(e.target.value)}
                         maxLength={500}
                         rows={4}
-                        className="w-full resize-none rounded-xl bg-transparent px-3 py-3 text-[14px] text-zinc-100 placeholder-zinc-600 outline-none"
+                        className="w-full resize-none rounded-xl bg-transparent px-3 py-3 text-[14px] text-slate-700 placeholder-slate-300 outline-none"
                       />
                       <div className="flex items-center justify-between px-3 pb-2">
-                        <p className="text-[10px] text-zinc-600">{message.length}/500</p>
-                        <p className="text-[10px] text-zinc-600">{t("eb_private_secure")}</p>
+                        <p className="text-[10px] text-slate-300">{message.length}/500</p>
+                        <p className="text-[10px] text-slate-300">{t("eb_private_secure")}</p>
                       </div>
                     </div>
 
@@ -373,7 +373,7 @@ export function EnquireBar({
                     <button
                       onClick={handleSend}
                       disabled={!message.trim() || submitting}
-                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:bg-amber-300 active:scale-[0.99] disabled:opacity-40"
+                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-pink-400 py-3.5 text-[14px] font-bold text-white shadow-[0_0_20px_rgba(244,114,182,0.2)] transition-all hover:bg-pink-300 active:scale-[0.99] disabled:opacity-40"
                     >
                       {submitting
                         ? <><Loader2 size={15} className="animate-spin" /> {t("el_sending")}</>
@@ -391,25 +391,25 @@ export function EnquireBar({
                     transition={{ duration: 0.2 }}
                     className="flex flex-col items-center gap-4 py-10 text-center"
                   >
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-400/10">
-                      <CheckCircle size={32} className="text-amber-400" />
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-pink-50">
+                      <CheckCircle size={32} className="text-pink-500" />
                     </div>
                     <div>
-                      <p className="text-[17px] font-semibold text-white">{t("el_message_sent")}</p>
-                      <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500">
+                      <p className="text-[17px] font-semibold text-slate-800">{t("el_message_sent")}</p>
+                      <p className="mt-1.5 text-[13px] leading-relaxed text-slate-400">
                         {t("el_inbox_message").replace("{username}", username)}
                       </p>
                     </div>
                     <div className="flex gap-3">
                       <button
                         onClick={() => router.push(`/messages/${username}`)}
-                        className="rounded-full bg-amber-400/10 px-5 py-2.5 text-[13px] font-medium text-amber-400 transition-all hover:bg-amber-400/20"
+                        className="rounded-full bg-pink-50 px-5 py-2.5 text-[13px] font-medium text-pink-500 transition-all hover:bg-pink-100"
                       >
                         {t("el_view_conversation")}
                       </button>
                       <button
                         onClick={closeSheet}
-                        className="rounded-full border border-white/10 px-5 py-2.5 text-[13px] font-medium text-zinc-300 transition-all hover:border-white/20 hover:text-white"
+                        className="rounded-full border border-gray-200 bg-gray-50 px-5 py-2.5 text-[13px] font-medium text-slate-700 transition-all hover:border-gray-300 hover:text-slate-800"
                       >
                         {t("eb_close")}
                       </button>

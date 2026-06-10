@@ -26,6 +26,11 @@ export type ChatMessage = {
   createdAt: string;
   attachmentUrl?: string;
   attachmentType?: "image" | "file";
+  isLocked?: boolean;
+  unlockPrice?: number;
+  /** Whether THIS viewer may see the locked media (sender or paid). */
+  unlocked?: boolean;
+  hasLockedAttachment?: boolean;
 };
 
 type ChatContextValue = {
@@ -33,6 +38,7 @@ type ChatContextValue = {
   messages: ChatMessage[];
   sendMessage: (text: string) => Promise<void>;
   sendAttachment: (file: File, caption?: string) => Promise<void>;
+  sendLockedAttachment: (file: File, priceCents: number, caption?: string) => Promise<void>;
   uploading: boolean;
   markRead: () => Promise<void>;
 };
@@ -42,6 +48,7 @@ const ChatCtx = createContext<ChatContextValue>({
   messages: [],
   sendMessage: async () => {},
   sendAttachment: async () => {},
+  sendLockedAttachment: async () => {},
   uploading: false,
   markRead: async () => {},
 });
@@ -77,6 +84,8 @@ export function ChatProvider({
           (history ?? []).map((m: {
             id: string; sender_id: string; text: string; created_at: string;
             attachment_url?: string; attachment_type?: "image" | "file";
+            is_locked?: boolean; unlock_price?: number | null;
+            unlocked?: boolean; has_locked_attachment?: boolean;
           }) => ({
             id: m.id,
             text: m.text ?? "",
@@ -84,6 +93,12 @@ export function ChatProvider({
             createdAt: m.created_at,
             ...(m.attachment_url && { attachmentUrl: m.attachment_url }),
             ...(m.attachment_type && { attachmentType: m.attachment_type }),
+            ...(m.is_locked && {
+              isLocked: true,
+              unlockPrice: m.unlock_price ?? undefined,
+              unlocked: m.unlocked,
+              hasLockedAttachment: m.has_locked_attachment,
+            }),
           }))
         );
       }
@@ -255,6 +270,76 @@ export function ChatProvider({
     [user, channelId]
   );
 
+  // ── Send locked (pay-per-view) attachment ────────────────────────────────
+  const sendLockedAttachment = useCallback(
+    async (file: File, priceCents: number, caption?: string) => {
+      if (!user || !channelId) return;
+
+      setUploading(true);
+      try {
+        // 1. Upload to the PRIVATE bucket (never public). Owner folder for RLS.
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `${user.id}/dm/${Date.now()}-${safeName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("premium-content")
+          .upload(path, file, { upsert: false, contentType: file.type });
+
+        if (uploadError) {
+          console.error("[ChatProvider] Locked upload failed:", uploadError);
+          return;
+        }
+
+        const attachmentType: "image" | "file" = file.type.startsWith("image/") ? "image" : "file";
+        const text = caption?.trim() || "";
+        const id = crypto.randomUUID();
+        const createdAt = new Date().toISOString();
+
+        // 2. Optimistic UI — the sender always sees their own content.
+        setMessages((prev) => [
+          ...prev,
+          {
+            id, text, senderId: user.id, createdAt, attachmentType,
+            isLocked: true, unlockPrice: priceCents, unlocked: true, hasLockedAttachment: true,
+          },
+        ]);
+
+        // 3. Broadcast only a LOCKED PLACEHOLDER over the data channel — never
+        //    the media. Recipients see a locked bubble until they pay.
+        const room = roomRef.current;
+        if (room?.localParticipant) {
+          try {
+            const placeholder: ChatMessage = {
+              id, text, senderId: user.id, createdAt, attachmentType,
+              isLocked: true, unlockPrice: priceCents, unlocked: false, hasLockedAttachment: true,
+            };
+            const payload = new TextEncoder().encode(JSON.stringify(placeholder));
+            await room.localParticipant.publishData(payload, { reliable: true });
+          } catch (e) {
+            console.error("[ChatProvider] DataChannel send failed:", e);
+          }
+        }
+
+        // 4. Persist (private path, not a URL).
+        apiFetch("/api/chat/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            channelId,
+            text: text || null,
+            isLocked: true,
+            unlockPrice: priceCents,
+            attachmentPath: path,
+            attachmentType,
+          }),
+        }).catch((e) => console.error("[ChatProvider] Persist failed:", e));
+      } finally {
+        setUploading(false);
+      }
+    },
+    [user, channelId]
+  );
+
   // ── Mark read ────────────────────────────────────────────────────────────
   const markRead = useCallback(async () => {
     if (!user || !channelId) return;
@@ -266,7 +351,7 @@ export function ChatProvider({
   }, [user, channelId]);
 
   return (
-    <ChatCtx.Provider value={{ ready, messages, sendMessage, sendAttachment, uploading, markRead }}>
+    <ChatCtx.Provider value={{ ready, messages, sendMessage, sendAttachment, sendLockedAttachment, uploading, markRead }}>
       {children}
     </ChatCtx.Provider>
   );

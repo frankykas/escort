@@ -43,8 +43,8 @@ export default function AdminLayout({
 
   if (!checked || checking || !authorized) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-950">
-        <Loader2 size={24} className="animate-spin text-zinc-600" />
+      <div className="flex min-h-screen items-center justify-center bg-[#fafbfc]">
+        <Loader2 size={24} className="animate-spin text-slate-400" />
       </div>
     );
   }

@@ -95,19 +95,19 @@ export default function AvailabilityPage() {
   const activeDaysCount = Object.values(avail.schedule).filter((s) => s && s.length > 0).length;
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-24">
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/5 bg-zinc-950/90 px-4 py-3 backdrop-blur-xl">
+    <div className="min-h-screen bg-[#fafbfc] pb-24">
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-gray-200 bg-[#fafbfc]/90 px-4 py-3 backdrop-blur-xl">
         <button
           onClick={() => router.back()}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-gray-100 hover:text-slate-800"
         >
           <ChevronLeft size={20} />
         </button>
-        <span className="text-[15px] font-semibold text-white">Availability</span>
+        <span className="text-[15px] font-semibold text-slate-800">Availability</span>
         <button
           onClick={save}
           disabled={saving}
-          className="ml-auto flex items-center gap-1.5 rounded-full bg-amber-400 px-4 py-1.5 text-[13px] font-semibold text-zinc-950 transition hover:bg-amber-300 disabled:opacity-50"
+          className="ml-auto flex items-center gap-1.5 rounded-full bg-[rgb(246,51,154)] px-4 py-1.5 text-[13px] font-semibold text-white transition hover:brightness-105 disabled:opacity-50"
         >
           {saving && <Loader2 size={12} className="animate-spin" />}
           Save
@@ -116,31 +116,31 @@ export default function AvailabilityPage() {
 
       {!loaded ? (
         <div className="flex items-center justify-center pt-24">
-          <Loader2 size={24} className="animate-spin text-zinc-600" />
+          <Loader2 size={24} className="animate-spin text-slate-400" />
         </div>
       ) : (
         <div className="mx-auto max-w-lg px-4 pt-4 space-y-6">
           {/* Available Now */}
-          <div className="overflow-hidden rounded-2xl border border-white/5 bg-zinc-900">
+          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
             <button
               onClick={() => toggleAvailableNow(!avail.available_now)}
               className="flex w-full items-center gap-4 px-4 py-4"
             >
               <div className={cn(
                 "flex h-10 w-10 items-center justify-center rounded-xl transition",
-                avail.available_now ? "bg-emerald-500/15 text-emerald-400" : "bg-zinc-800 text-zinc-500"
+                avail.available_now ? "bg-emerald-100 text-emerald-500" : "bg-gray-100 text-slate-500"
               )}>
                 <Zap size={20} />
               </div>
               <div className="flex-1 text-left">
-                <p className="text-[15px] font-semibold text-white">Available Now</p>
-                <p className="text-[12px] text-zinc-500">
+                <p className="text-[15px] font-semibold text-slate-800">Available Now</p>
+                <p className="text-[12px] text-slate-500">
                   {avail.available_now ? "You appear as available to clients right now" : "Toggle on to show you're available immediately"}
                 </p>
               </div>
               <div className={cn(
                 "relative h-6 w-11 rounded-full transition-colors",
-                avail.available_now ? "bg-emerald-500" : "bg-zinc-700"
+                avail.available_now ? "bg-emerald-500" : "bg-gray-200"
               )}>
                 <div className={cn(
                   "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-md transition-all",
@@ -151,21 +151,21 @@ export default function AvailabilityPage() {
           </div>
 
           {/* Timezone */}
-          <div className="overflow-hidden rounded-2xl border border-white/5 bg-zinc-900">
+          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
             <div className="flex items-center gap-4 px-4 py-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/15 text-sky-400">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-500">
                 <Globe size={20} />
               </div>
               <div className="flex-1">
-                <p className="text-[15px] font-semibold text-white">Timezone</p>
-                <p className="text-[12px] text-zinc-500">Shown alongside your schedule</p>
+                <p className="text-[15px] font-semibold text-slate-800">Timezone</p>
+                <p className="text-[12px] text-slate-500">Shown alongside your schedule</p>
               </div>
             </div>
-            <div className="border-t border-white/5 px-4 py-3">
+            <div className="border-t border-gray-200 px-4 py-3">
               <select
                 value={avail.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone}
                 onChange={(e) => setAvail((prev) => ({ ...prev, timezone: e.target.value }))}
-                className="w-full rounded-xl border border-white/10 bg-zinc-800 px-3 py-2.5 text-[14px] text-white outline-none focus:border-amber-400/30 appearance-none"
+                className="w-full rounded-xl border border-gray-200 bg-gray-100 px-3 py-2.5 text-[14px] text-slate-800 outline-none focus:border-pink-400/30 appearance-none"
               >
                 {[
                   "America/Toronto", "America/Montreal", "America/Vancouver",
@@ -185,9 +185,9 @@ export default function AvailabilityPage() {
           {/* Weekly schedule */}
           <div>
             <div className="mb-3 flex items-center justify-between px-1">
-              <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-600">Weekly Schedule</p>
+              <p className="text-[11px] font-medium uppercase tracking-widest text-slate-400">Weekly Schedule</p>
               {activeDaysCount > 0 && (
-                <p className="text-[12px] text-amber-400">{activeDaysCount} day{activeDaysCount !== 1 ? "s" : ""} active</p>
+                <p className="text-[12px] text-pink-500">{activeDaysCount} day{activeDaysCount !== 1 ? "s" : ""} active</p>
               )}
             </div>
 
@@ -201,7 +201,7 @@ export default function AvailabilityPage() {
                     key={day}
                     className={cn(
                       "overflow-hidden rounded-2xl border transition",
-                      dayActive ? "border-amber-400/20 bg-zinc-900" : "border-white/5 bg-zinc-900/50"
+                      dayActive ? "border-pink-200 bg-white" : "border-gray-200 bg-gray-50"
                     )}
                   >
                     <button
@@ -210,23 +210,23 @@ export default function AvailabilityPage() {
                     >
                       <span className={cn(
                         "text-[14px] font-semibold w-12 text-left",
-                        dayActive ? "text-white" : "text-zinc-500"
+                        dayActive ? "text-slate-800" : "text-slate-500"
                       )}>
                         {day}
                       </span>
                       <div className="flex flex-1 flex-wrap gap-1.5 justify-end pr-2">
                         {dayActive && daySlots.map((s) => (
-                          <span key={s} className="rounded-full bg-amber-400/15 px-2.5 py-0.5 text-[11px] font-medium text-amber-400">
+                          <span key={s} className="rounded-full bg-pink-100 px-2.5 py-0.5 text-[11px] font-medium text-pink-500">
                             {s}
                           </span>
                         ))}
                         {!dayActive && (
-                          <span className="text-[12px] text-zinc-600">Off</span>
+                          <span className="text-[12px] text-slate-400">Off</span>
                         )}
                       </div>
                       <div className={cn(
                         "relative h-5 w-9 rounded-full transition-colors flex-shrink-0",
-                        dayActive ? "bg-amber-400" : "bg-zinc-700"
+                        dayActive ? "bg-[rgb(246,51,154)]" : "bg-gray-200"
                       )}>
                         <div className={cn(
                           "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all",
@@ -241,7 +241,7 @@ export default function AvailabilityPage() {
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: "auto", opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          className="overflow-hidden border-t border-white/5"
+                          className="overflow-hidden border-t border-gray-200"
                         >
                           <div className="flex gap-2 px-4 py-3 flex-wrap">
                             {SLOTS.map((slot) => {
@@ -253,8 +253,8 @@ export default function AvailabilityPage() {
                                   className={cn(
                                     "rounded-full border px-3 py-1.5 text-[12px] font-medium transition",
                                     on
-                                      ? "border-amber-400 bg-amber-400/10 text-amber-400"
-                                      : "border-white/10 text-zinc-400 hover:border-white/20 hover:text-zinc-200"
+                                      ? "border-pink-400 bg-pink-50 text-pink-500"
+                                      : "border-gray-200 text-slate-500 hover:border-gray-300 hover:text-slate-700"
                                   )}
                                 >
                                   {slot}
@@ -271,7 +271,7 @@ export default function AvailabilityPage() {
             </div>
           </div>
 
-          <p className="px-1 text-[12px] text-zinc-600">
+          <p className="px-1 text-[12px] text-slate-400">
             Your schedule is shown on your public profile so clients know when to reach out.
           </p>
 
@@ -279,7 +279,7 @@ export default function AvailabilityPage() {
           <button
             onClick={save}
             disabled={saving}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-4 text-[15px] font-semibold text-zinc-950 transition hover:bg-amber-300 active:scale-[0.98] disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[rgb(246,51,154)] py-4 text-[15px] font-semibold text-white transition hover:brightness-105 active:scale-[0.98] disabled:opacity-50"
           >
             {saving && <Loader2 size={18} className="animate-spin" />}
             {saving ? "Saving…" : "Save Availability"}
@@ -295,7 +295,7 @@ export default function AvailabilityPage() {
             exit={{ opacity: 0, y: 16 }}
             className={cn(
               "fixed bottom-24 left-1/2 -translate-x-1/2 rounded-full px-5 py-2.5 text-[13px] font-medium shadow-xl",
-              toast.ok ? "bg-emerald-500 text-white" : "bg-red-500 text-white"
+              toast.ok ? "bg-emerald-500 text-slate-800" : "bg-red-500 text-slate-800"
             )}
           >
             {toast.msg}

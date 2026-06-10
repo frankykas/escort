@@ -46,7 +46,7 @@ export function ListingActions({ listingId, title }: Props) {
         className="flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition hover:bg-black/70"
         aria-label="Share"
       >
-        <Share2 size={16} className={cn(shareFlash && "text-amber-400")} />
+        <Share2 size={16} className={cn(shareFlash && "text-pink-400")} />
       </button>
       <button
         onClick={toggleSave}

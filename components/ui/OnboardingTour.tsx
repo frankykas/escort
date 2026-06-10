@@ -8,6 +8,7 @@
  * mounts itself only after onboarding has completed.
  */
 
+import { usePathname } from "next/navigation";
 import { SpotlightTour, type TourStep } from "./SpotlightTour";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useTranslation } from "@/lib/i18n/useTranslation";
@@ -15,6 +16,7 @@ import { useTranslation } from "@/lib/i18n/useTranslation";
 export function OnboardingTour() {
   const { profile, isProvider, loading } = useProfile();
   const { t } = useTranslation();
+  const pathname = usePathname();
 
   const PROVIDER_STEPS: TourStep[] = [
     { target: "nav-u",        title: t("tour_p_welcome_title"),  body: t("tour_p_welcome_body") },
@@ -34,6 +36,12 @@ export function OnboardingTour() {
   // Don't run until profile is loaded and onboarding is complete
   if (loading || !profile) return null;
   if (!profile.onboarding_completed) return null;
+
+  // Defer the tour until the user lands on the main app — the BottomNav
+  // targets (`nav-home`, `nav-explore`, etc.) don't exist on the onboarding
+  // or auth screens, and triggering the spotlight on the "You're live!" step
+  // overlaps the success card.
+  if (pathname?.startsWith("/onboarding") || pathname?.startsWith("/auth")) return null;
 
   // Scope the storage key by user id so a brand-new account always gets the
   // tour, even if another account on the same browser already completed it.

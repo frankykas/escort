@@ -10,16 +10,16 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { caption, mediaUrl, mediaType, countryCode, postType = "post" } = body;
 
-  if (!caption) {
+  if (!caption?.trim() && !mediaUrl) {
     return NextResponse.json(
-      { error: "caption is required" },
+      { error: "caption or mediaUrl is required" },
       { status: 400 }
     );
   }
 
   const result = await createPost({
     providerId,
-    caption,
+    caption: caption?.trim() ?? "",
     mediaUrl,
     mediaType,
     postType,

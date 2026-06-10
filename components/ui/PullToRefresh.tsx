@@ -21,7 +21,7 @@ export function PullToRefreshIndicator({ pulling, refreshing, pullDistance, prog
       <div
         className={cn(
           "flex h-8 w-8 items-center justify-center rounded-full",
-          "border border-amber-400/30 bg-amber-400/10",
+          "border border-pink-300 bg-pink-50",
           refreshing && "ptr-spinner"
         )}
         style={{
@@ -29,7 +29,7 @@ export function PullToRefreshIndicator({ pulling, refreshing, pullDistance, prog
           transform: `rotate(${progress * 360}deg)`,
         }}
       >
-        <RefreshCw size={14} className="text-amber-400" />
+        <RefreshCw size={14} className="text-pink-500" />
       </div>
     </div>
   );

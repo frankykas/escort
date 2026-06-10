@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,6 +27,7 @@ type PostData = {
   id: string;
   caption: string | null;
   media_url: string | null;
+  media_type: string | null;
   created_at: string;
   likes_count: number;
   comments_count: number;
@@ -45,7 +46,20 @@ type Props = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function timeAgo(iso: string, t?: (k: import("@/lib/i18n/en").TranslationKey) => string): string {
+function cleanCaption(caption: string | null): string | null {
+  if (!caption) return null;
+  return caption
+    .replace(/\s*\[seed:search\]\s*/gi, " ")
+    .replace(/\s+\d+\)\s*$/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim() || null;
+}
+
+function timeAgo(
+  iso: string,
+  locale: "en" | "fr",
+  t?: (k: import("@/lib/i18n/en").TranslationKey) => string,
+): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return t ? t("time_just_now") : "Just now";
@@ -56,13 +70,36 @@ function timeAgo(iso: string, t?: (k: import("@/lib/i18n/en").TranslationKey) =>
   return `${days}${t ? t("time_d_ago") : "d ago"}`;
 }
 
+function TapToToggleVideo({ src }: { src: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  function togglePlayback() {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) void video.play();
+    else video.pause();
+  }
+
+  return (
+    <video
+      ref={videoRef}
+      src={src}
+      className="h-full w-full object-cover"
+      controls
+      playsInline
+      preload="metadata"
+      onClick={togglePlayback}
+    />
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Modal
 // ---------------------------------------------------------------------------
 
 export function PostModal({ postId, onClose }: Props) {
   const { user } = useSession();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [post, setPost] = useState<PostData | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,7 +118,7 @@ export function PostModal({ postId, onClose }: Props) {
         supabase
           .from("status_updates")
           .select(`
-            id, caption, media_url, created_at, likes_count, comments_count, provider_id,
+            id, caption, media_url, media_type, created_at, likes_count, comments_count, provider_id,
             profiles!status_updates_provider_id_fkey(username, avatar_url, verification_status)
           `)
           .eq("id", postId)
@@ -102,6 +139,7 @@ export function PostModal({ postId, onClose }: Props) {
           id: p.id as string,
           caption: p.caption as string | null,
           media_url: p.media_url as string | null,
+          media_type: p.media_type as string | null,
           created_at: p.created_at as string,
           likes_count: p.likes_count as number,
           comments_count: p.comments_count as number,
@@ -191,6 +229,7 @@ export function PostModal({ postId, onClose }: Props) {
   }
 
   const isOwnPost = !!(user && post && post.provider_id === user.id);
+  const displayCaption = cleanCaption(post?.caption ?? null);
 
   return (
     <motion.div
@@ -198,7 +237,7 @@ export function PostModal({ postId, onClose }: Props) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
@@ -207,7 +246,7 @@ export function PostModal({ postId, onClose }: Props) {
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-lg max-h-[92vh] overflow-hidden rounded-t-3xl sm:rounded-3xl border border-white/10 bg-zinc-950 shadow-2xl flex flex-col"
+        className="relative w-full max-w-lg max-h-[92vh] overflow-hidden rounded-t-3xl sm:rounded-3xl border border-gray-200 bg-white shadow-2xl flex flex-col"
       >
         {/* Top-right buttons */}
         <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
@@ -222,14 +261,14 @@ export function PostModal({ postId, onClose }: Props) {
               {menuOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => { setMenuOpen(false); setDeleteConfirm(false); }} />
-                  <div className="absolute right-0 top-10 z-20 w-44 overflow-hidden rounded-xl border border-white/10 bg-zinc-900 shadow-xl">
+                  <div className="absolute right-0 top-10 z-20 w-44 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
                     {deleteConfirm ? (
                       <div className="p-3 space-y-2">
-                        <p className="text-[12px] text-zinc-300 text-center">{t("post_delete_confirm")}</p>
+                        <p className="text-[12px] text-slate-600 text-center">{t("post_delete_confirm")}</p>
                         <div className="flex gap-2">
                           <button
                             onClick={() => setDeleteConfirm(false)}
-                            className="flex-1 rounded-lg border border-white/10 py-1.5 text-[12px] font-medium text-zinc-400 hover:bg-zinc-800"
+                            className="flex-1 rounded-lg border border-gray-200 py-1.5 text-[12px] font-medium text-slate-500 hover:bg-gray-100"
                           >
                             {t("cancel")}
                           </button>
@@ -246,7 +285,7 @@ export function PostModal({ postId, onClose }: Props) {
                     ) : (
                       <button
                         onClick={() => setDeleteConfirm(true)}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-[13px] text-red-400 transition hover:bg-zinc-800"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-[13px] text-red-400 transition hover:bg-gray-100"
                       >
                         <Trash2 size={14} />
                         {t("post_delete")}
@@ -267,21 +306,21 @@ export function PostModal({ postId, onClose }: Props) {
 
         {loading || !post ? (
           <div className="flex items-center justify-center py-24">
-            <Loader2 size={24} className="animate-spin text-zinc-600" />
+            <Loader2 size={24} className="animate-spin text-slate-300" />
           </div>
         ) : (
           <>
             {/* Header */}
-            <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/5">
+            <div className="flex items-center gap-2.5 px-4 py-3 border-b border-gray-200">
               <Link href={`/u/${post.username}`} onClick={onClose} className="flex items-center gap-2.5">
-                <div className="rounded-full p-[2px] bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 flex-shrink-0">
-                  <div className="rounded-full p-[1.5px] bg-zinc-950">
+                <div className="rounded-full p-[2px] bg-gradient-to-tr from-pink-400 via-sky-300 to-violet-400 flex-shrink-0">
+                  <div className="rounded-full p-[1.5px] bg-white">
                     {post.avatar_url ? (
                       <div className="relative h-8 w-8 overflow-hidden rounded-full">
                         <Image src={post.avatar_url} alt={post.username} fill className="object-cover" sizes="32px" />
                       </div>
                     ) : (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold text-zinc-300">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-slate-600">
                         {post.username[0].toUpperCase()}
                       </div>
                     )}
@@ -289,29 +328,33 @@ export function PostModal({ postId, onClose }: Props) {
                 </div>
                 <div>
                   <div className="flex items-center gap-1">
-                    <span className="text-[13px] font-semibold text-white">{post.username}</span>
+                    <span className="text-[13px] font-semibold text-slate-800">{post.username}</span>
                     {post.verification_status === "verified" && (
-                      <CheckCircle size={11} className="text-amber-400 fill-amber-400/20" />
+                      <CheckCircle size={11} className="text-pink-500 fill-pink-500/20" />
                     )}
                   </div>
-                  <span className="text-[10px] text-zinc-500">{timeAgo(post.created_at, t)}</span>
+                  <span className="text-[10px] text-slate-400">{timeAgo(post.created_at, locale, t)}</span>
                 </div>
               </Link>
             </div>
 
             {/* Scrollable content */}
             <div className="flex-1 overflow-y-auto">
-              {/* Image */}
+              {/* Media */}
               {post.media_url && (
-                <div className="relative aspect-square w-full bg-zinc-900">
-                  <Image
-                    src={post.media_url}
-                    alt={post.caption ?? "Post"}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 512px) 100vw, 512px"
-                    priority
-                  />
+                <div className="relative aspect-square w-full bg-gray-50">
+                  {post.media_type === "video" ? (
+                    <TapToToggleVideo src={post.media_url} />
+                  ) : (
+                    <Image
+                      src={post.media_url}
+                      alt={displayCaption ?? "Post"}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 512px) 100vw, 512px"
+                      priority
+                    />
+                  )}
                 </div>
               )}
 
@@ -324,25 +367,25 @@ export function PostModal({ postId, onClose }: Props) {
               />
 
               {/* Caption */}
-              {post.caption && (
+              {displayCaption && (
                 <div className="px-4 pb-2">
-                  <p className="text-[13px] leading-relaxed text-zinc-100">
-                    <Link href={`/u/${post.username}`} onClick={onClose} className="font-semibold text-white hover:underline mr-1.5">
+                  <p className="text-[13px] leading-relaxed text-slate-700">
+                    <Link href={`/u/${post.username}`} onClick={onClose} className="font-semibold text-slate-800 hover:underline mr-1.5">
                       {post.username}
                     </Link>
-                    {post.caption}
+                    {displayCaption}
                   </p>
                 </div>
               )}
 
               {/* Comments */}
-              <div className="border-t border-white/5">
+              <div className="border-t border-gray-200">
                 {comments.length === 0 ? (
                   <div className="px-4 py-6 text-center">
-                    <p className="text-[13px] text-zinc-600">{t("post_no_comments")}</p>
+                    <p className="text-[13px] text-slate-300">{t("post_no_comments")}</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-white/5">
+                  <div className="divide-y divide-gray-100">
                     {comments.map((c) => (
                       <div key={c.id} className="flex items-start gap-2.5 px-4 py-3">
                         <Link href={`/u/${c.username}`} onClick={onClose} className="flex-shrink-0">
@@ -351,19 +394,19 @@ export function PostModal({ postId, onClose }: Props) {
                               <Image src={c.avatar_url} alt={c.username} fill className="object-cover" sizes="32px" />
                             </div>
                           ) : (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold text-zinc-300">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-slate-600">
                               {c.username[0].toUpperCase()}
                             </div>
                           )}
                         </Link>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] leading-relaxed text-zinc-100">
-                            <Link href={`/u/${c.username}`} onClick={onClose} className="font-semibold text-white hover:underline mr-1.5">
+                          <p className="text-[13px] leading-relaxed text-slate-700">
+                            <Link href={`/u/${c.username}`} onClick={onClose} className="font-semibold text-slate-800 hover:underline mr-1.5">
                               {c.username}
                             </Link>
                             {c.body}
                           </p>
-                          <p className="mt-0.5 text-[11px] text-zinc-600">{timeAgo(c.created_at, t)}</p>
+                          <p className="mt-0.5 text-[11px] text-slate-300">{timeAgo(c.created_at, locale, t)}</p>
                         </div>
                       </div>
                     ))}
@@ -374,7 +417,7 @@ export function PostModal({ postId, onClose }: Props) {
 
             {/* Comment input */}
             {user && (
-              <div className="border-t border-white/5 px-4 py-3">
+              <div className="border-t border-gray-200 px-4 py-3">
                 {commentSent && (
                   <p className="mb-2 text-[12px] text-emerald-400/80">{t("post_comment_sent")}</p>
                 )}
@@ -386,12 +429,12 @@ export function PostModal({ postId, onClose }: Props) {
                     onKeyDown={(e) => e.key === "Enter" && handleComment()}
                     placeholder={t("post_add_comment")}
                     maxLength={500}
-                    className="flex-1 bg-transparent text-[14px] text-white placeholder-zinc-600 outline-none"
+                    className="flex-1 bg-transparent text-[14px] text-slate-800 placeholder-slate-300 outline-none"
                   />
                   <button
                     onClick={handleComment}
                     disabled={!commentText.trim() || submitting}
-                    className="text-[13px] font-semibold text-amber-400 transition hover:text-amber-300 disabled:opacity-40"
+                    className="text-[13px] font-semibold text-pink-500 transition hover:text-pink-400 disabled:opacity-40"
                   >
                     {submitting ? "..." : t("post_send_comment")}
                   </button>
@@ -442,11 +485,11 @@ function PostModalLikeBar({
             size={24}
             className={cn(
               "transition-colors",
-              isLiked ? "fill-red-500 text-red-500" : "text-zinc-100"
+              isLiked ? "fill-red-500 text-red-500" : "text-slate-700"
             )}
           />
         </motion.button>
-        <span className="text-[13px] font-semibold text-white">
+        <span className="text-[13px] font-semibold text-slate-800">
           {likesCount.toLocaleString()} {likesCount === 1 ? t("post_like") : t("post_likes")}
         </span>
       </div>
