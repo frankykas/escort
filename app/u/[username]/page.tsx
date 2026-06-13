@@ -17,6 +17,7 @@ import {
   ShareStrip,
 } from "./ProfileSections";
 import { ProfileCategoryStrip } from "./ProfileCategoryStrip";
+import { ActivityIndicator } from "@/components/ui/ActivityIndicator";
 import { USE_BOOKINGS } from "@/lib/features";
 import { cn, formatLastSeen } from "@/lib/utils";
 import { getServerT } from "@/lib/i18n";
@@ -42,8 +43,8 @@ export default async function ProfilePage({ params }: Props) {
 
   if (!supabase) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-950">
-        <p className="text-sm text-zinc-500">Supabase not configured.</p>
+      <main className="flex min-h-screen items-center justify-center bg-[#fafbfc]">
+        <p className="text-sm text-slate-400">Supabase not configured.</p>
       </main>
     );
   }
@@ -58,6 +59,8 @@ export default async function ProfilePage({ params }: Props) {
        completed_bookings_count,
        service_categories, hourly_rate,
        contact_whatsapp, contact_telegram, contact_phone,
+       website_url, tiktok_url, snapchat_url, instagram_url, onlyfans_url, twitter_url, facebook_url,
+       show_contact_details, show_social_links, hip_size, bust_size, bra_cup_size,
        gender, pronouns, caters_to, availability_schedule, tagline,
        created_at, last_seen_at`
     )
@@ -115,17 +118,17 @@ export default async function ProfilePage({ params }: Props) {
 
   if (isBlockedByProfile) {
     return (
-      <main className="min-h-screen bg-zinc-950 pb-24">
-        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/5 bg-zinc-950/70 px-4 py-3 backdrop-blur-xl backdrop-saturate-150">
+      <main className="min-h-screen bg-[#fafbfc] pb-24">
+        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-gray-200 bg-white/90 px-4 py-3 backdrop-blur-xl backdrop-saturate-150">
           <BackButton />
-          <span className="text-sm font-semibold text-white">{profile.username}</span>
+          <span className="text-sm font-semibold text-slate-800">{profile.username}</span>
         </header>
         <div className="flex flex-col items-center justify-center gap-4 px-8 pt-32 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-800">
-            <ShieldBan size={28} className="text-zinc-500" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+            <ShieldBan size={28} className="text-slate-400" />
           </div>
-          <p className="text-[16px] font-semibold text-zinc-300">Profile unavailable</p>
-          <p className="text-[13px] text-zinc-600 leading-relaxed">
+          <p className="text-[16px] font-semibold text-slate-600">Profile unavailable</p>
+          <p className="text-[13px] text-slate-300 leading-relaxed">
             This profile is not available to you.
           </p>
         </div>
@@ -171,18 +174,31 @@ export default async function ProfilePage({ params }: Props) {
     pronouns: profile.pronouns as string | null,
     caters_to: (profile.caters_to as string[]) ?? [],
     availability_schedule: profile.availability_schedule as Record<string, string> | null,
+    hip_size: (profile as Record<string, unknown>).hip_size as string | null,
+    bust_size: (profile as Record<string, unknown>).bust_size as string | null,
+    bra_cup_size: (profile as Record<string, unknown>).bra_cup_size as string | null,
+    contact_phone: profile.show_contact_details === false ? null : (profile as Record<string, unknown>).contact_phone as string | null,
+    website_url: profile.show_contact_details === false ? null : (profile as Record<string, unknown>).website_url as string | null,
+    social_links: profile.show_social_links === false ? {} : {
+      TikTok: (profile as Record<string, unknown>).tiktok_url as string | null,
+      Snapchat: (profile as Record<string, unknown>).snapchat_url as string | null,
+      Instagram: (profile as Record<string, unknown>).instagram_url as string | null,
+      OnlyFans: (profile as Record<string, unknown>).onlyfans_url as string | null,
+      "Twitter/X": (profile as Record<string, unknown>).twitter_url as string | null,
+      Facebook: (profile as Record<string, unknown>).facebook_url as string | null,
+    },
   };
 
   const lastSeenStr = formatLastSeen((profile as Record<string, unknown>).last_seen_at as string | null ?? null);
 
   return (
-    <main className={cn("min-h-screen bg-zinc-950", !isOwnProfile && profile.is_provider ? "pb-44" : "pb-24")}>
+    <main className={cn("min-h-screen bg-[#fafbfc]", !isOwnProfile && profile.is_provider ? "pb-44" : "pb-24")}>
       {/* ── Sticky header ── */}
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/5 bg-zinc-950/70 px-4 py-3 backdrop-blur-xl backdrop-saturate-150">
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-gray-200 bg-white/90 px-4 py-3 backdrop-blur-xl backdrop-saturate-150">
         <BackButton />
-        <span className="text-sm font-semibold text-white">{profile.username}</span>
+        <span className="text-sm font-semibold text-slate-800">{profile.username}</span>
         {isVerified && (
-          <CheckCircle size={13} className="fill-amber-400/20 text-amber-400" />
+          <CheckCircle size={13} className="fill-pink-100 text-pink-500" />
         )}
         <div className="ml-auto">
           <EditProfileLink profileId={profile.id as string} />
@@ -195,8 +211,8 @@ export default async function ProfilePage({ params }: Props) {
       {/* ── Profile info ── */}
       <div className="relative z-10 -mt-20 px-4 pb-0">
         {/* Avatar */}
-        <div className="inline-block rounded-full bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 p-[3px] shadow-[0_0_20px_rgba(251,191,36,0.2)]">
-          <div className="rounded-full bg-zinc-950 p-[2px]">
+        <div className="inline-block rounded-full bg-gradient-to-tr from-pink-400 via-sky-300 to-violet-400 p-[3px] shadow-[0_0_20px_rgba(244,114,182,0.2)]">
+          <div className="rounded-full bg-white p-[2px]">
             {profile.avatar_url ? (
               <div className="relative h-24 w-24 overflow-hidden rounded-full">
                 <Image
@@ -209,7 +225,7 @@ export default async function ProfilePage({ params }: Props) {
                 />
               </div>
             ) : (
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-zinc-800 text-2xl font-bold text-zinc-300">
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gray-100 text-2xl font-bold text-slate-600">
                 {(profile.username as string)[0].toUpperCase()}
               </div>
             )}
@@ -218,9 +234,9 @@ export default async function ProfilePage({ params }: Props) {
 
         {/* Name + verified + available */}
         <div className="mt-3 flex items-center gap-2">
-          <h1 className="text-xl font-bold text-white">{profile.username as string}</h1>
+          <h1 className="text-xl font-bold text-slate-800">{profile.username as string}</h1>
           {isVerified && (
-            <CheckCircle size={16} className="flex-shrink-0 fill-amber-400/20 text-amber-400" />
+            <CheckCircle size={16} className="flex-shrink-0 fill-pink-100 text-pink-500" />
           )}
           {available && (
             <span className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5">
@@ -232,13 +248,13 @@ export default async function ProfilePage({ params }: Props) {
 
         {/* Tagline */}
         {profile.tagline && (
-          <p className="mt-1 text-[13px] italic text-zinc-400">
+          <p className="mt-1 text-[13px] italic text-slate-500">
             {profile.tagline as string}
           </p>
         )}
 
         {/* City + age + Last Seen */}
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-zinc-500">
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-slate-400">
           {(profile.city || profile.age) && (
             <div className="flex items-center gap-1">
               {profile.city && <MapPin size={12} className="flex-shrink-0" />}
@@ -260,6 +276,7 @@ export default async function ProfilePage({ params }: Props) {
               </span>
             </div>
           )}
+          <ActivityIndicator lastSeenAt={(profile as Record<string, unknown>).last_seen_at as string | null} availableUntil={profile.available_until as string | null} />
         </div>
 
         {/* Completed bookings */}
@@ -273,7 +290,7 @@ export default async function ProfilePage({ params }: Props) {
 
         {/* Short bio */}
         {profile.bio && !profile.bio_long && (
-          <p className="mt-2 text-[13px] leading-relaxed text-zinc-400">
+          <p className="mt-2 text-[13px] leading-relaxed text-slate-500">
             {profile.bio as string}
           </p>
         )}
@@ -281,13 +298,13 @@ export default async function ProfilePage({ params }: Props) {
         {/* Stats */}
         <div className="mt-4 flex items-center gap-6">
           <StatItem value={formatCount(posts.length)} label={t("pub_posts")} />
-          <div className="h-8 w-px bg-white/5" />
+          <div className="h-8 w-px bg-gray-200" />
           <StatItem value={formatCount(followersCount)} label={t("pub_followers")} />
-          <div className="h-8 w-px bg-white/5" />
+          <div className="h-8 w-px bg-gray-200" />
           <StatItem value={formatCount(followingCount)} label={t("profile_following")} />
           {listings.length > 0 && (
             <>
-              <div className="h-8 w-px bg-white/5" />
+              <div className="h-8 w-px bg-gray-200" />
               <StatItem value={formatCount(listings.length)} label={t("pub_listings")} />
             </>
           )}
@@ -379,8 +396,8 @@ export default async function ProfilePage({ params }: Props) {
 function StatItem({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-col items-center">
-      <span className="text-[15px] font-bold text-white">{value}</span>
-      <span className="mt-0.5 text-[11px] text-zinc-500">{label}</span>
+      <span className="text-[15px] font-bold text-slate-800">{value}</span>
+      <span className="mt-0.5 text-[11px] text-slate-400">{label}</span>
     </div>
   );
 }

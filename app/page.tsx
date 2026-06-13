@@ -1,15 +1,9 @@
 import { redirect } from "next/navigation";
-import { USE_SOCIAL_FEED } from "@/lib/features";
 import { ClassicHome } from "@/components/classic/ClassicHome";
-import { SocialHome } from "@/components/social/SocialHome";
 import { ProviderDashboard } from "@/components/provider/ProviderDashboard";
 import { createServerClient } from "@/lib/supabase/server";
 
-type Props = {
-  searchParams: Promise<{ tab?: string }>;
-};
-
-export default async function Page({ searchParams }: Props) {
+export default async function Page() {
   const supabase = createServerClient();
 
   if (supabase) {
@@ -34,9 +28,5 @@ export default async function Page({ searchParams }: Props) {
     }
   }
 
-  return USE_SOCIAL_FEED ? (
-    <SocialHome searchParams={searchParams} />
-  ) : (
-    <ClassicHome />
-  );
+  return <ClassicHome />;
 }

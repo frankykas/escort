@@ -28,18 +28,18 @@ export function ProfileCategoryStrip({ serviceCategories }: Props) {
   const { t } = useTranslation();
 
   return (
-    <section className="border-t border-white/5 bg-zinc-950 py-4">
+    <section className="border-t border-gray-200 bg-[#fafbfc] py-4">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pb-3">
         <div className="flex items-center gap-2">
-          <Grid3X3 size={13} className="text-amber-400" />
-          <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
+          <Grid3X3 size={13} className="text-pink-500" />
+          <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
             {t("cat_browse")}
           </span>
         </div>
         <Link
           href="/categories"
-          className="flex items-center gap-0.5 text-[11px] font-medium text-amber-400 transition-colors hover:text-amber-300"
+          className="flex items-center gap-0.5 text-[11px] font-medium text-pink-500 transition-colors hover:text-pink-400"
         >
           {t("cat_view_all")}
           <ChevronRight size={12} />
@@ -57,8 +57,8 @@ export function ProfileCategoryStrip({ serviceCategories }: Props) {
               className={cn(
                 "flex flex-shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold transition-all active:scale-[0.96]",
                 isMatched
-                  ? "border-amber-400/25 bg-amber-400/10 text-amber-400"
-                  : "border-white/8 bg-zinc-900/80 text-zinc-400 hover:border-white/15 hover:text-zinc-200"
+                  ? "border-pink-300 bg-pink-50 text-pink-500"
+                  : "border-gray-200 bg-white text-slate-500 hover:border-gray-300 hover:text-slate-700"
               )}
             >
               <span className="text-[13px]">{cat.emoji}</span>

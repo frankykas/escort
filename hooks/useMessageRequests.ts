@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { apiFetch } from "@/lib/api-fetch";
 
 type MessageRequest = {
   id: string;
@@ -10,8 +11,8 @@ type MessageRequest = {
   status: "pending" | "accepted" | "rejected";
   channel_id: string | null;
   created_at: string;
-  sender?: { username: string; avatar_url: string | null; verification_status: string };
-  recipient?: { username: string; avatar_url: string | null; verification_status: string };
+  sender?: { username: string; avatar_url: string | null; verification_status: string; is_provider: boolean };
+  recipient?: { username: string; avatar_url: string | null; verification_status: string; is_provider: boolean };
 };
 
 type RequestStatus = {
@@ -22,14 +23,14 @@ type RequestStatus = {
 /**
  * Fetch and manage message requests for a user.
  */
-export function useMessageRequests(userId: string | null, view: "pending" | "sent" | "all" = "pending") {
+export function useMessageRequests(userId: string | null, view: "pending" | "sent" | "all" | "all_pending" = "pending") {
   const [requests, setRequests] = useState<MessageRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
-    const res = await fetch(`/api/chat/requests?userId=${userId}&view=${view}`);
+    const res = await apiFetch(`/api/chat/requests?view=${view}`);
     if (res.ok) {
       const data = await res.json();
       setRequests(data.requests ?? []);
@@ -44,10 +45,10 @@ export function useMessageRequests(userId: string | null, view: "pending" | "sen
   const accept = async (requestId: string): Promise<{ ok: boolean; error?: string }> => {
     if (!userId) return { ok: false, error: "Not logged in" };
     try {
-      const res = await fetch("/api/chat/requests", {
+      const res = await apiFetch("/api/chat/requests", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId, action: "accept", userId }),
+        body: JSON.stringify({ requestId, action: "accept" }),
       });
       if (res.ok) {
         setRequests((prev) => prev.filter((r) => r.id !== requestId));
@@ -65,10 +66,10 @@ export function useMessageRequests(userId: string | null, view: "pending" | "sen
 
   const reject = async (requestId: string) => {
     if (!userId) return;
-    const res = await fetch("/api/chat/requests", {
+    const res = await apiFetch("/api/chat/requests", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requestId, action: "reject", userId }),
+      body: JSON.stringify({ requestId, action: "reject" }),
     });
     if (res.ok) {
       setRequests((prev) => prev.filter((r) => r.id !== requestId));
@@ -89,7 +90,7 @@ export function useRequestStatus(userId: string | null, recipientId: string) {
   const refresh = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
-    const res = await fetch(`/api/chat/requests?userId=${userId}&recipientId=${recipientId}`);
+    const res = await apiFetch(`/api/chat/requests?recipientId=${recipientId}`);
     if (res.ok) {
       setStatus(await res.json());
     }

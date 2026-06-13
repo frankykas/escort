@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/api-auth";
 
 // POST — Block a user
 export async function POST(req: NextRequest) {
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const blockerId = auth.user.id;
+
   const supabase = createServerClient();
   if (!supabase) return NextResponse.json({ error: "Database unavailable" }, { status: 503 });
 
-  const { blockerId, blockedId } = await req.json();
-  if (!blockerId || !blockedId) {
-    return NextResponse.json({ error: "blockerId and blockedId required" }, { status: 400 });
+  const { blockedId } = await req.json();
+  if (!blockedId) {
+    return NextResponse.json({ error: "blockedId required" }, { status: 400 });
   }
 
   const { error } = await supabase
@@ -33,12 +38,16 @@ export async function POST(req: NextRequest) {
 
 // DELETE — Unblock a user
 export async function DELETE(req: NextRequest) {
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const blockerId = auth.user.id;
+
   const supabase = createServerClient();
   if (!supabase) return NextResponse.json({ error: "Database unavailable" }, { status: 503 });
 
-  const { blockerId, blockedId } = await req.json();
-  if (!blockerId || !blockedId) {
-    return NextResponse.json({ error: "blockerId and blockedId required" }, { status: 400 });
+  const { blockedId } = await req.json();
+  if (!blockedId) {
+    return NextResponse.json({ error: "blockedId required" }, { status: 400 });
   }
 
   await supabase
@@ -50,8 +59,12 @@ export async function DELETE(req: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-// GET — Check if a user is blocked
+// GET — Check if a user is blocked.
+// Caller must be one of the two parties (verified via session).
 export async function GET(req: NextRequest) {
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+
   const supabase = createServerClient();
   if (!supabase) return NextResponse.json({ error: "Database unavailable" }, { status: 503 });
 
@@ -60,6 +73,11 @@ export async function GET(req: NextRequest) {
 
   if (!blockerId || !blockedId) {
     return NextResponse.json({ error: "blockerId and blockedId required" }, { status: 400 });
+  }
+
+  // Only allow checking blocks involving yourself
+  if (auth.user.id !== blockerId && auth.user.id !== blockedId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { data } = await supabase

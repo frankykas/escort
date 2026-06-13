@@ -29,7 +29,7 @@ export function NavAuth() {
   }, [user]);
 
   // Render nothing during the initial session check to avoid flash
-  if (loading) return <div className="h-6 w-16 animate-pulse rounded-full bg-zinc-800" />;
+  if (loading) return <div className="h-6 w-16 animate-pulse rounded-full bg-gray-100" />;
 
   if (user) {
     return (
@@ -37,14 +37,14 @@ export function NavAuth() {
         {username && (
           <Link
             href={`/u/${username}`}
-            className="text-xs text-zinc-400 transition-colors hover:text-zinc-100"
+            className="text-xs text-slate-500 transition-colors hover:text-slate-700"
           >
             @{username}
           </Link>
         )}
         <button
           onClick={() => supabase.auth.signOut()}
-          className="text-xs text-zinc-600 transition-colors hover:text-zinc-300"
+          className="text-xs text-slate-300 transition-colors hover:text-slate-600"
         >
           {t("sign_out")}
         </button>
@@ -56,13 +56,13 @@ export function NavAuth() {
     <>
       <Link
         href="/auth/signup"
-        className="text-xs text-zinc-400 transition-colors hover:text-zinc-100"
+        className="text-xs text-slate-500 transition-colors hover:text-slate-700"
       >
         {t("sign_up")}
       </Link>
       <button
         onClick={() => setIsModalOpen(true)}
-        className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-zinc-400 transition-colors hover:border-white/20 hover:text-zinc-100"
+        className="rounded-full border border-gray-200 px-3 py-1.5 text-xs text-slate-500 transition-colors hover:border-gray-300 hover:text-slate-700"
       >
         {t("sign_in")}
       </button>

@@ -40,23 +40,23 @@ export function PostActions({ postId, initialIsLiked, initialCount, userId }: Pr
               size={28}
               className={cn(
                 "transition-colors",
-                isLiked ? "fill-red-500 text-red-500" : "text-zinc-100"
+                isLiked ? "fill-red-500 text-red-500" : "text-slate-700"
               )}
             />
           </motion.button>
-          <button aria-label="Comment" className="text-zinc-100 hover:text-zinc-400 transition-colors">
+          <button aria-label="Comment" className="text-slate-700 hover:text-slate-400 transition-colors">
             <MessageCircle size={28} />
           </button>
-          <button aria-label="Share" className="text-zinc-100 hover:text-zinc-400 transition-colors">
+          <button aria-label="Share" className="text-slate-700 hover:text-slate-400 transition-colors">
             <Send size={26} />
           </button>
         </div>
-        <button aria-label="Save" className="text-zinc-100 hover:text-zinc-400 transition-colors">
+        <button aria-label="Save" className="text-slate-700 hover:text-slate-400 transition-colors">
           <Bookmark size={26} />
         </button>
       </div>
 
-      <p className="mt-2 text-[13px] font-semibold text-white">
+      <p className="mt-2 text-[13px] font-semibold text-slate-800">
         {formatCount(likesCount)} likes
       </p>
     </div>

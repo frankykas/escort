@@ -18,7 +18,7 @@ export function LocaleSwitcher() {
   return (
     <button
       onClick={() => setLocale(other)}
-      className="fixed bottom-[72px] right-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-zinc-900/90 text-[12px] font-bold text-zinc-300 shadow-xl backdrop-blur-md transition hover:border-amber-400/40 hover:text-amber-400"
+      className="fixed bottom-[72px] right-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-[12px] font-bold text-slate-500 shadow-lg backdrop-blur-md transition hover:border-pink-300 hover:text-pink-500"
       aria-label={`Switch to ${other.toUpperCase()}`}
       title={`Switch to ${other.toUpperCase()}`}
     >

@@ -33,46 +33,46 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-950 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#fafbfc] px-4">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="w-full max-w-sm"
       >
-        <p className="mb-8 text-center text-2xl font-bold tracking-tight text-amber-400">
+        <p className="mb-8 text-center text-2xl font-bold tracking-tight bg-gradient-to-r from-pink-400 to-sky-400 bg-clip-text text-transparent">
           Cleopatra
         </p>
 
         {state === "sent" ? (
-          <div className="rounded-2xl border border-white/10 bg-zinc-900/80 p-8 text-center backdrop-blur-xl">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-400/10">
-              <CheckCircle size={24} className="text-amber-400" />
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-pink-50">
+              <CheckCircle size={24} className="text-pink-400" />
             </div>
-            <h2 className="text-base font-semibold text-zinc-100">Check your email</h2>
-            <p className="mt-2 text-sm text-zinc-400">
+            <h2 className="text-base font-semibold text-slate-800">Check your email</h2>
+            <p className="mt-2 text-sm text-slate-500">
               If an account exists for{" "}
-              <span className="text-zinc-200">{email}</span>, you&apos;ll receive a
+              <span className="text-slate-700">{email}</span>, you&apos;ll receive a
               password reset link shortly.
             </p>
             <Link
               href="/auth/signin"
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[rgb(246,51,154)] py-3 text-sm font-semibold text-white transition hover:brightness-105"
             >
               <ArrowLeft size={14} />
               Back to Sign In
             </Link>
           </div>
         ) : (
-          <div className="rounded-2xl border border-white/10 bg-zinc-900/80 p-8 backdrop-blur-xl">
-            <h1 className="mb-1 text-base font-semibold text-zinc-100">Reset your password</h1>
-            <p className="mb-6 text-xs text-zinc-500">
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+            <h1 className="mb-1 text-base font-semibold text-slate-800">Reset your password</h1>
+            <p className="mb-6 text-xs text-slate-400">
               Enter your email and we&apos;ll send you a link to reset your password.
             </p>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <div className="rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3">
-                <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+                <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-slate-400">
                   Email
                 </label>
                 <input
@@ -82,16 +82,16 @@ export default function ResetPasswordPage() {
                   required
                   autoComplete="email"
                   placeholder="you@example.com"
-                  className="w-full bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-600"
+                  className="w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-300"
                 />
               </div>
 
-              {error && <p className="text-xs text-red-400">{error}</p>}
+              {error && <p className="text-xs text-red-500">{error}</p>}
 
               <button
                 type="submit"
                 disabled={state === "loading"}
-                className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-[rgb(246,51,154)] py-3 text-sm font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {state === "loading" ? (
                   <>
@@ -104,11 +104,11 @@ export default function ResetPasswordPage() {
               </button>
             </form>
 
-            <p className="mt-5 text-center text-xs text-zinc-600">
+            <p className="mt-5 text-center text-xs text-slate-400">
               Remember your password?{" "}
               <Link
                 href="/auth/signin"
-                className="text-zinc-400 transition-colors hover:text-zinc-200"
+                className="text-pink-500 transition-colors hover:text-pink-600"
               >
                 Sign in
               </Link>

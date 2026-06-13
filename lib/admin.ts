@@ -1,4 +1,29 @@
 import { createServerClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+// ---------------------------------------------------------------------------
+// Audit log helper
+// ---------------------------------------------------------------------------
+// Wraps the admin_actions insert so failures are LOUD instead of silent.
+// We don't propagate the error (losing the audit log shouldn't undo the
+// admin action) but we make sure it shows up in server logs.
+async function logAdminAction(
+  supabase: SupabaseClient,
+  row: {
+    admin_id: string;
+    action_type: string;
+    target_id?: string | null;
+    details?: Record<string, unknown> | null;
+  }
+): Promise<void> {
+  const { error } = await supabase.from("admin_actions").insert(row);
+  if (error) {
+    console.error(
+      "[admin] FAILED to write admin_actions row — action proceeded WITHOUT audit trail",
+      { row, error: error.message }
+    );
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Admin auth
@@ -57,8 +82,7 @@ export async function suspendPosting(
     return { success: false, error: profileError.message };
   }
 
-  // Log admin action
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: "suspend_posting",
     target_id: providerId,
@@ -92,7 +116,7 @@ export async function unsuspendPosting(
     return { success: false, error: profileError.message };
   }
 
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: "unsuspend_posting",
     target_id: providerId,
@@ -130,7 +154,7 @@ export async function grantCredits(
     return { success: false, error: error.message };
   }
 
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: "grant_credits",
     target_id: providerId,
@@ -161,7 +185,7 @@ export async function hidePost(
     return { success: false, error: error.message };
   }
 
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: "delete_post",
     target_id: postId,
@@ -206,7 +230,7 @@ export async function createPackage(
     return { success: false, error: error.message };
   }
 
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: "create_package",
     target_id: data.id,
@@ -236,7 +260,7 @@ export async function deactivatePackage(
     return { success: false, error: error.message };
   }
 
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: "deactivate_package",
     target_id: packageId,
@@ -269,7 +293,7 @@ export async function updatePlatformSetting(
     return { success: false, error: error.message };
   }
 
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: "update_setting",
     details: { key, value },
@@ -320,7 +344,7 @@ export async function approveVerification(
 
   if (error) return { success: false, error: error.message };
 
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: "approve_verification",
     target_id: userId,
@@ -352,7 +376,7 @@ export async function rejectVerification(
 
   if (error) return { success: false, error: error.message };
 
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: "reject_verification",
     target_id: userId,
@@ -388,6 +412,165 @@ export async function getPendingVerifications(limit = 20): Promise<PendingVerifi
     .limit(limit);
 
   return (data ?? []) as PendingVerification[];
+}
+
+// ---------------------------------------------------------------------------
+// Explicit content moderation queue
+// ---------------------------------------------------------------------------
+
+export type PendingExplicitContent = {
+  id: string;            // content_compliance id
+  post_id: string;
+  creator_id: string;
+  creator_username: string | null;
+  consent_attested: boolean;
+  performer_count: number;
+  has_consent_doc: boolean;
+  caption: string | null;
+  media_path: string | null;
+  created_at: string;
+};
+
+export async function getPendingExplicitContent(limit = 30): Promise<PendingExplicitContent[]> {
+  const supabase = createServerClient();
+  if (!supabase) return [];
+
+  const { data } = await supabase
+    .from("content_compliance")
+    .select(`
+      id, post_id, creator_id, consent_attested, performer_ids, consent_doc_path, created_at,
+      creator:creator_id (username),
+      post:post_id (caption, media_path)
+    `)
+    .eq("review_status", "pending")
+    .order("created_at", { ascending: true })
+    .limit(limit);
+
+  return (data ?? []).map((r) => {
+    const creator = r.creator as unknown as { username: string } | null;
+    const post = r.post as unknown as { caption: string | null; media_path: string | null } | null;
+    const performerIds = (r.performer_ids as string[] | null) ?? [];
+    return {
+      id: r.id,
+      post_id: r.post_id,
+      creator_id: r.creator_id,
+      creator_username: creator?.username ?? null,
+      consent_attested: r.consent_attested,
+      performer_count: performerIds.length,
+      has_consent_doc: !!r.consent_doc_path,
+      caption: post?.caption ?? null,
+      media_path: post?.media_path ?? null,
+      created_at: r.created_at,
+    };
+  }) as PendingExplicitContent[];
+}
+
+/**
+ * Approves or rejects an explicit post. Approval makes it eligible for the feed;
+ * rejection keeps it hidden. Updates both the compliance record and the post's
+ * moderation_status in step.
+ */
+export async function reviewExplicitContent(
+  adminId: string,
+  postId: string,
+  decision: "approved" | "rejected"
+): Promise<AdminActionResult> {
+  const supabase = createServerClient();
+  if (!supabase) return { success: false, error: "Database unavailable" };
+
+  const now = new Date().toISOString();
+
+  const { error: compErr } = await supabase
+    .from("content_compliance")
+    .update({ review_status: decision, reviewed_by: adminId, reviewed_at: now })
+    .eq("post_id", postId);
+
+  if (compErr) return { success: false, error: compErr.message };
+
+  const { error: postErr } = await supabase
+    .from("status_updates")
+    .update({ moderation_status: decision })
+    .eq("id", postId);
+
+  if (postErr) return { success: false, error: postErr.message };
+
+  await logAdminAction(supabase, {
+    admin_id: adminId,
+    action_type: `explicit_${decision}`,
+    target_id: postId,
+  });
+
+  return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// Platform bundles (all-access packages)
+// ---------------------------------------------------------------------------
+
+export type Bundle = {
+  id: string;
+  name: string;
+  description: string | null;
+  monthly_price: number;
+  is_active: boolean;
+  created_at: string;
+};
+
+export async function getBundles(): Promise<Bundle[]> {
+  const supabase = createServerClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("bundles")
+    .select("id, name, description, monthly_price, is_active, created_at")
+    .order("created_at", { ascending: false });
+  return (data ?? []) as Bundle[];
+}
+
+export async function createBundle(
+  adminId: string,
+  params: { name: string; description?: string; monthlyPriceCents: number }
+): Promise<AdminActionResult> {
+  const supabase = createServerClient();
+  if (!supabase) return { success: false, error: "Database unavailable" };
+
+  const { data, error } = await supabase
+    .from("bundles")
+    .insert({
+      name: params.name.trim(),
+      description: params.description?.trim() || null,
+      monthly_price: Math.max(0, Math.round(params.monthlyPriceCents)),
+    })
+    .select("id")
+    .single();
+
+  if (error) return { success: false, error: error.message };
+
+  await logAdminAction(supabase, {
+    admin_id: adminId,
+    action_type: "create_bundle",
+    target_id: data.id,
+    details: { name: params.name, monthlyPriceCents: params.monthlyPriceCents },
+  });
+  return { success: true };
+}
+
+export async function setBundleActive(
+  adminId: string,
+  bundleId: string,
+  isActive: boolean
+): Promise<AdminActionResult> {
+  const supabase = createServerClient();
+  if (!supabase) return { success: false, error: "Database unavailable" };
+
+  const { error } = await supabase.from("bundles").update({ is_active: isActive }).eq("id", bundleId);
+  if (error) return { success: false, error: error.message };
+
+  await logAdminAction(supabase, {
+    admin_id: adminId,
+    action_type: isActive ? "activate_bundle" : "deactivate_bundle",
+    target_id: bundleId,
+  });
+  return { success: true };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -554,7 +737,7 @@ export async function resolveReport(
 
   if (error) return { success: false, error: error.message };
 
-  await supabase.from("admin_actions").insert({
+  await logAdminAction(supabase, {
     admin_id: adminId,
     action_type: `report_${resolution}`,
     target_id: reportId,

@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+# local automation/debug output
+/.tmp/
+
 # next.js
 /.next/
 /out/
@@ -42,3 +45,17 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# capacitor / android build artifacts
+/android/.gradle/
+/android/build/
+/android/app/build/
+/android/local.properties
+/android/.idea/
+/android/captures/
+/android/app/release/
+/android/app/debug/
+*.apk
+*.aab
+
+.vercel

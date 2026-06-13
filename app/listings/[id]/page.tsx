@@ -10,6 +10,7 @@ import { BackButton } from "@/components/ui/BackButton";
 import { ReportButton } from "@/components/ui/ReportButton";
 import { EnquireBar } from "../EnquireBar";
 import { ListingActions } from "./ListingActions";
+import { ImageCarousel } from "./ImageCarousel";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -113,7 +114,7 @@ export default async function ListingPage({
   const listing = raw as unknown as Listing;
   const provider = listing.provider;
 
-  const [otherRes, postsRes] = await Promise.all([
+  const [otherRes, postsRes, imagesRes] = await Promise.all([
     supabase
       .from("listings")
       .select("id, title, rate, duration_minutes, service_type")
@@ -129,12 +130,24 @@ export default async function ListingPage({
       .not("media_url", "is", null)
       .order("created_at", { ascending: false })
       .limit(1),
+    supabase
+      .from("listing_images")
+      .select("url, sort_order")
+      .eq("listing_id", id)
+      .order("sort_order"),
   ]);
 
   const otherListings = (otherRes.data ?? []) as OtherListing[];
+  const listingImages = (imagesRes.data ?? []).map((img: { url: string }) => img.url);
   const heroImage = listing.cover_url
     ?? (postsRes.data?.[0] as { media_url: string } | undefined)?.media_url
     ?? null;
+  // Build the full image list: listing images first, then fallback to hero/avatar
+  const allImages = listingImages.length > 0
+    ? listingImages
+    : heroImage
+    ? [heroImage]
+    : [];
   const isVerified = provider.verification_status === "verified";
   const hasLogistics =
     listing.advance_notice_hours ||
@@ -143,17 +156,19 @@ export default async function ListingPage({
     listing.cancellation_policy;
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-40">
+    <div className="min-h-screen bg-[#fafbfc] pb-40">
 
       {/* ── Hero ── */}
-      <div className="relative w-full" style={{ minHeight: "52vw", maxHeight: "520px", height: "65vw" }}>
-        {heroImage ? (
-          <Image src={heroImage} alt={listing.title} fill className="object-cover brightness-[0.45]" sizes="100vw" priority />
+      <div className="relative w-full">
+        {allImages.length > 0 ? (
+          <ImageCarousel images={allImages} title={listing.title} />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-900/40 via-zinc-900 to-zinc-950" />
+          <div className="relative w-full" style={{ minHeight: "52vw", maxHeight: "520px", height: "65vw" }}>
+            <div className="absolute inset-0 bg-gradient-to-br from-pink-200/40 via-gray-50 to-white" />
+          </div>
         )}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/70 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-[#fafbfc] via-[#fafbfc]/80 to-transparent" />
 
         {/* Top bar — back + save + share */}
         <div className="absolute left-4 right-4 top-12 flex items-center justify-between">
@@ -164,7 +179,7 @@ export default async function ListingPage({
         {/* Service type badge */}
         {listing.service_type && (
           <div className="absolute left-1/2 top-14 -translate-x-1/2">
-            <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest text-amber-400 backdrop-blur-md">
+            <span className="rounded-full border border-pink-400/30 bg-pink-50 px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest text-pink-500 backdrop-blur-md">
               {listing.service_type}
             </span>
           </div>
@@ -172,15 +187,15 @@ export default async function ListingPage({
 
         {/* Title + rate */}
         <div className="absolute inset-x-0 bottom-8 px-5">
-          <h1 className="mb-2 text-[24px] font-bold leading-tight tracking-tight text-white">
+          <h1 className="mb-2 text-[24px] font-bold leading-tight tracking-tight text-slate-800">
             {listing.title}
           </h1>
           <div className="flex items-center gap-3">
-            <span className="text-[28px] font-bold leading-none text-amber-400">
+            <span className="text-[28px] font-bold leading-none text-pink-500">
               {formatRate(listing.rate)}
             </span>
             {listing.duration_minutes && (
-              <span className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[12px] font-medium text-zinc-300 backdrop-blur-md">
+              <span className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white/80 px-3 py-1.5 text-[12px] font-medium text-slate-600 backdrop-blur-md">
                 <Clock size={11} />
                 {formatDuration(listing.duration_minutes)}
               </span>
@@ -193,17 +208,17 @@ export default async function ListingPage({
       <div className="relative z-10 -mt-2 mx-4">
         <Link
           href={`/u/${provider.username}`}
-          className="flex items-center gap-3.5 rounded-2xl border border-white/5 bg-zinc-900/90 px-4 py-3.5 shadow-xl backdrop-blur-xl transition-all hover:border-white/10 active:scale-[0.99]"
+          className="flex items-center gap-3.5 rounded-2xl border border-gray-200 bg-white px-4 py-3.5 shadow-xl backdrop-blur-xl transition-all hover:border-gray-300 active:scale-[0.99]"
         >
           <div className="relative flex-shrink-0">
-            <div className="rounded-full p-[2px] bg-gradient-to-tr from-amber-500 to-yellow-300">
-              <div className="rounded-full p-[1.5px] bg-zinc-900">
+            <div className="rounded-full p-[2px] bg-gradient-to-tr from-pink-400 via-sky-300 to-violet-400">
+              <div className="rounded-full p-[1.5px] bg-white">
                 {provider.avatar_url ? (
                   <div className="relative h-11 w-11 overflow-hidden rounded-full">
                     <Image src={provider.avatar_url} alt={provider.username} fill className="object-cover" sizes="44px" />
                   </div>
                 ) : (
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-zinc-800 text-base font-bold text-zinc-300">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-base font-bold text-slate-600">
                     {provider.username[0].toUpperCase()}
                   </div>
                 )}
@@ -212,10 +227,10 @@ export default async function ListingPage({
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="text-[14px] font-semibold text-white truncate">{provider.username}</span>
-              {isVerified && <CheckCircle size={12} className="flex-shrink-0 fill-amber-400/20 text-amber-400" />}
+              <span className="text-[14px] font-semibold text-slate-800 truncate">{provider.username}</span>
+              {isVerified && <CheckCircle size={12} className="flex-shrink-0 fill-pink-100 text-pink-500" />}
             </div>
-            <div className="mt-0.5 flex items-center gap-3 text-[11px] text-zinc-500">
+            <div className="mt-0.5 flex items-center gap-3 text-[11px] text-slate-400">
               {provider.city && (
                 <span className="flex items-center gap-0.5"><MapPin size={9} />{provider.city}</span>
               )}
@@ -223,7 +238,7 @@ export default async function ListingPage({
               <span className="flex items-center gap-0.5"><Users size={9} />{provider.followers_count.toLocaleString()}</span>
             </div>
           </div>
-          <div className="flex items-center gap-1 text-[11px] font-medium text-zinc-500">
+          <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400">
             View profile <ChevronLeft size={12} className="rotate-180" />
           </div>
         </Link>
@@ -235,17 +250,17 @@ export default async function ListingPage({
         {/* Call type + service tags */}
         <div className="flex flex-wrap gap-2">
           {provider.incall && (
-            <span className="flex items-center gap-1.5 rounded-full border border-white/5 bg-zinc-900 px-3.5 py-1.5 text-[12px] font-medium text-zinc-300">
+            <span className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-[12px] font-medium text-slate-600">
               <Phone size={11} className="text-emerald-400" /> In-call
             </span>
           )}
           {provider.outcall && (
-            <span className="flex items-center gap-1.5 rounded-full border border-white/5 bg-zinc-900 px-3.5 py-1.5 text-[12px] font-medium text-zinc-300">
+            <span className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-[12px] font-medium text-slate-600">
               <MapPin size={11} className="text-sky-400" /> Out-call
             </span>
           )}
           {listing.service_type && (
-            <span className="flex items-center gap-1.5 rounded-full border border-amber-400/20 bg-amber-400/5 px-3.5 py-1.5 text-[12px] font-medium text-amber-400">
+            <span className="flex items-center gap-1.5 rounded-full border border-pink-200 bg-pink-50 px-3.5 py-1.5 text-[12px] font-medium text-pink-500">
               <Star size={10} /> {listing.service_type}
             </span>
           )}
@@ -253,23 +268,23 @@ export default async function ListingPage({
 
         {/* Description */}
         {listing.description && (
-          <div className="rounded-2xl border border-white/5 bg-zinc-900/70 px-4 py-4">
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-zinc-500">About this service</p>
-            <p className="text-[14px] leading-relaxed text-zinc-300">{listing.description}</p>
+          <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-slate-400">About this service</p>
+            <p className="text-[14px] leading-relaxed text-slate-600">{listing.description}</p>
           </div>
         )}
 
         {/* What's included */}
         {listing.perks?.length > 0 && (
-          <div className="rounded-2xl border border-white/5 bg-zinc-900/70 px-4 py-4">
-            <p className="mb-3.5 text-[11px] font-semibold uppercase tracking-widest text-zinc-500">What's included</p>
+          <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4">
+            <p className="mb-3.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">What's included</p>
             <ul className="space-y-2.5">
               {listing.perks.map((perk, i) => (
                 <li key={i} className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-amber-400/15">
-                    <Check size={10} className="text-amber-400" strokeWidth={3} />
+                  <span className="mt-0.5 flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-pink-50">
+                    <Check size={10} className="text-pink-500" strokeWidth={3} />
                   </span>
-                  <span className="text-[13px] leading-snug text-zinc-300">{perk}</span>
+                  <span className="text-[13px] leading-snug text-slate-600">{perk}</span>
                 </li>
               ))}
             </ul>
@@ -278,19 +293,19 @@ export default async function ListingPage({
 
         {/* Booking logistics */}
         {hasLogistics && (
-          <div className="rounded-2xl border border-white/5 bg-zinc-900/70 px-4 py-4">
-            <p className="mb-3.5 text-[11px] font-semibold uppercase tracking-widest text-zinc-500">Booking details</p>
+          <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4">
+            <p className="mb-3.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">Booking details</p>
             <div className="space-y-3">
               {listing.advance_notice_hours && (
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-amber-400/10">
-                    <Clock size={14} className="text-amber-400" />
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-pink-50">
+                    <Clock size={14} className="text-pink-500" />
                   </div>
                   <div>
-                    <p className="text-[13px] font-medium text-zinc-200">
+                    <p className="text-[13px] font-medium text-slate-700">
                       {formatNotice(listing.advance_notice_hours)} required
                     </p>
-                    <p className="text-[11px] text-zinc-500">Please book in advance</p>
+                    <p className="text-[11px] text-slate-400">Please book in advance</p>
                   </div>
                 </div>
               )}
@@ -300,12 +315,12 @@ export default async function ListingPage({
                     <CreditCard size={14} className="text-sky-400" />
                   </div>
                   <div>
-                    <p className="text-[13px] font-medium text-zinc-200">
+                    <p className="text-[13px] font-medium text-slate-700">
                       {listing.deposit_amount
                         ? `${formatRate(listing.deposit_amount)} deposit required`
                         : "Deposit required to confirm"}
                     </p>
-                    <p className="text-[11px] text-zinc-500">Secures your booking</p>
+                    <p className="text-[11px] text-slate-400">Secures your booking</p>
                   </div>
                 </div>
               )}
@@ -315,19 +330,19 @@ export default async function ListingPage({
                     <MapPin size={14} className="text-emerald-400" />
                   </div>
                   <div>
-                    <p className="text-[13px] font-medium text-zinc-200">Out-call areas</p>
-                    <p className="text-[11px] text-zinc-400">{listing.outcall_areas.join(" · ")}</p>
+                    <p className="text-[13px] font-medium text-slate-700">Out-call areas</p>
+                    <p className="text-[11px] text-slate-500">{listing.outcall_areas.join(" · ")}</p>
                   </div>
                 </div>
               )}
               {listing.cancellation_policy && (
                 <div className="flex items-start gap-3">
-                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-zinc-700/50">
-                    <Shield size={14} className="text-zinc-400" />
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100">
+                    <Shield size={14} className="text-slate-400" />
                   </div>
                   <div>
-                    <p className="text-[13px] font-medium text-zinc-200">Cancellation policy</p>
-                    <p className="text-[11px] text-zinc-400">{listing.cancellation_policy}</p>
+                    <p className="text-[13px] font-medium text-slate-700">Cancellation policy</p>
+                    <p className="text-[11px] text-slate-500">{listing.cancellation_policy}</p>
                   </div>
                 </div>
               )}
@@ -338,7 +353,7 @@ export default async function ListingPage({
         {/* Other listings */}
         {otherListings.length > 0 && (
           <div>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
               More from @{provider.username}
             </p>
             <div className="flex gap-2.5 overflow-x-auto" style={{ scrollbarWidth: "none", paddingRight: "1rem" }}>
@@ -346,17 +361,17 @@ export default async function ListingPage({
                 <Link
                   key={ol.id}
                   href={`/listings/${ol.id}`}
-                  className="flex-shrink-0 rounded-2xl border border-white/5 bg-zinc-900/80 p-3.5 transition-all hover:border-white/10 active:scale-[0.98]"
+                  className="flex-shrink-0 rounded-2xl border border-gray-200 bg-white p-3.5 transition-all hover:border-gray-300 active:scale-[0.98]"
                   style={{ minWidth: "160px", maxWidth: "180px" }}
                 >
                   {ol.service_type && (
-                    <span className="mb-1.5 block text-[9px] font-bold uppercase tracking-widest text-amber-400/70">
+                    <span className="mb-1.5 block text-[9px] font-bold uppercase tracking-widest text-pink-400">
                       {ol.service_type}
                     </span>
                   )}
-                  <p className="text-[13px] font-semibold leading-tight text-white line-clamp-2">{ol.title}</p>
-                  <div className="mt-2 flex items-center gap-1.5 text-[11px] text-zinc-500">
-                    <span className="font-bold text-amber-400">{formatRate(ol.rate)}</span>
+                  <p className="text-[13px] font-semibold leading-tight text-slate-800 line-clamp-2">{ol.title}</p>
+                  <div className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-400">
+                    <span className="font-bold text-pink-500">{formatRate(ol.rate)}</span>
                     {ol.duration_minutes && <><span>·</span><span>{formatDuration(ol.duration_minutes)}</span></>}
                   </div>
                 </Link>
@@ -367,9 +382,9 @@ export default async function ListingPage({
         )}
 
         {/* Discreet notice */}
-        <div className="flex items-center gap-2 rounded-2xl border border-white/5 bg-zinc-900/40 px-4 py-3">
-          <AlertCircle size={13} className="flex-shrink-0 text-zinc-600" />
-          <p className="text-[11px] leading-relaxed text-zinc-600">
+        <div className="flex items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+          <AlertCircle size={13} className="flex-shrink-0 text-slate-300" />
+          <p className="text-[11px] leading-relaxed text-slate-300">
             All enquiries are handled discreetly. Your personal details are never shared without your consent.
           </p>
         </div>

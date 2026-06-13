@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createStory, getActiveStories, markStoryViewed, getStoryViewers } from "@/lib/stories";
+import { requireUser } from "@/lib/api-auth";
 
 // Create a new story
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { providerId, mediaUrl, mediaType, caption, countryCode } = body;
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const providerId = auth.user.id;
 
-  if (!providerId || !mediaUrl) {
+  const body = await req.json();
+  const { mediaUrl, mediaType, caption, countryCode } = body;
+
+  if (!mediaUrl) {
     return NextResponse.json(
-      { error: "providerId and mediaUrl are required" },
+      { error: "mediaUrl is required" },
       { status: 400 }
     );
   }
@@ -28,12 +33,18 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ storyId: result.storyId });
 }
 
-// Get active stories
+// Get active stories. viewerId is derived from the session if a Bearer token is
+// supplied so the "have I viewed this?" hint is trustworthy.
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const viewerId = searchParams.get("viewerId") ?? undefined;
   const countryCode = searchParams.get("countryCode") ?? undefined;
   const limit = Number(searchParams.get("limit") ?? 30);
+
+  let viewerId: string | undefined = undefined;
+  if (req.headers.get("authorization")) {
+    const auth = await requireUser(req);
+    if (auth.ok) viewerId = auth.user.id;
+  }
 
   const stories = await getActiveStories(viewerId, countryCode, limit);
   return NextResponse.json(stories);
@@ -41,10 +52,14 @@ export async function GET(req: NextRequest) {
 
 // Mark story as viewed / get viewers
 export async function PATCH(req: NextRequest) {
-  const body = await req.json();
-  const { action, storyId, userId } = body;
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const userId = auth.user.id;
 
-  if (action === "view" && storyId && userId) {
+  const body = await req.json();
+  const { action, storyId } = body;
+
+  if (action === "view" && storyId) {
     await markStoryViewed(storyId, userId);
     return NextResponse.json({ ok: true });
   }

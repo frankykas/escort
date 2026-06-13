@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react";
 import { Heart, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSignupPrompt } from "@/hooks/useSignupPrompt";
 
 type Props = { listingId: string; title: string };
 
 export function ListingActions({ listingId, title }: Props) {
   const [saved, setSaved] = useState(false);
   const [shareFlash, setShareFlash] = useState(false);
+  const { promptIfGuest, modal: signupModal } = useSignupPrompt();
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("saved_listings") ?? "[]") as string[];
@@ -16,6 +18,7 @@ export function ListingActions({ listingId, title }: Props) {
   }, [listingId]);
 
   function toggleSave() {
+    if (promptIfGuest("favorite")) return;
     const current = JSON.parse(localStorage.getItem("saved_listings") ?? "[]") as string[];
     const next = saved
       ? current.filter((id) => id !== listingId)
@@ -37,12 +40,13 @@ export function ListingActions({ listingId, title }: Props) {
 
   return (
     <div className="flex items-center gap-2">
+      {signupModal}
       <button
         onClick={handleShare}
         className="flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition hover:bg-black/70"
         aria-label="Share"
       >
-        <Share2 size={16} className={cn(shareFlash && "text-amber-400")} />
+        <Share2 size={16} className={cn(shareFlash && "text-pink-400")} />
       </button>
       <button
         onClick={toggleSave}

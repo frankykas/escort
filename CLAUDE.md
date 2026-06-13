@@ -48,6 +48,8 @@ All feature flags live in `lib/features.ts` and are driven by `NEXT_PUBLIC_` env
 | `USE_GEO_FEED` | `NEXT_PUBLIC_USE_GEO_FEED` | `false` | Enables radius-based proximity filtering on explore page |
 | `USE_POST_COOLDOWN` | `NEXT_PUBLIC_USE_POST_COOLDOWN` | `false` | Enforces minimum time gap between feed posts (default 6h) |
 | `USE_BOOKINGS` | `NEXT_PUBLIC_USE_BOOKINGS` | `false` | Shows booking/enquiry system (EnquireBar, booking pages, booking notifications). Disabled by default — platform is a classifieds marketplace, not a booking intermediary |
+| `USE_CREATOR_CONTENT` | `NEXT_PUBLIC_USE_CREATOR_CONTENT` | `false` | Enables the premium creator-content layer (paywalled/PPV posts, paid DMs, tips, creator payouts). Gated media is served via signed URLs from the private `premium-content` bucket. Ships dark for A/B testing. See `docs/onlyfans-plan.md` |
+| `USE_LIVE_SHOWS` | `NEXT_PUBLIC_USE_LIVE_SHOWS` | `false` | Enables ticketed live shows: creators broadcast A/V over LiveKit, viewers buy a ticket (reusing the payments rail) and tip in-stream. Routes under `/live`. Depends on the creator-content layer + LiveKit env. |
 
 **Rules:**
 - Add new flags to `lib/features.ts` — never read `process.env` directly in components

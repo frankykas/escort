@@ -13,7 +13,9 @@ import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { useProfile } from "@/contexts/ProfileContext";
 import { supabase } from "@/lib/supabase/client";
-import { compressImage } from "@/lib/image";
+import { uploadAvatar } from "@/lib/upload-avatar";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { TranslationKey } from "@/lib/i18n/en";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -25,6 +27,38 @@ const LANGUAGES        = ["English", "French", "Spanish", "Portuguese", "Italian
 const GENDER_OPTIONS   = ["Woman", "Man", "Trans Woman", "Trans Man", "Non-binary", "Other"];
 const PRONOUN_OPTIONS  = ["She/Her", "He/Him", "They/Them"];
 const CATERS_TO_OPTIONS = ["Men", "Women", "Couples", "Non-binary", "Everyone"];
+
+// Map English option values → translation keys (values stored as English in DB)
+const OPTION_LABEL_KEYS: Record<string, TranslationKey> = {
+  // Build
+  "Slim": "opt_build_slim", "Petite": "opt_build_petite", "Athletic": "opt_build_athletic",
+  "Average": "opt_build_average", "Curvy": "opt_build_curvy", "Plus-size": "opt_build_plus_size",
+  // Hair
+  "Blonde": "opt_hair_blonde", "Brunette": "opt_hair_brunette", "Black": "opt_hair_black",
+  "Red": "opt_hair_red", "Auburn": "opt_hair_auburn", "Silver": "opt_hair_silver",
+  // Eye
+  "Brown": "opt_eye_brown", "Blue": "opt_eye_blue", "Green": "opt_eye_green",
+  "Hazel": "opt_eye_hazel", "Grey": "opt_eye_grey", "Amber": "opt_eye_amber",
+  // Other (shared by hair + eye + gender)
+  "Other": "opt_eye_other",
+  // Services
+  "Companionship": "opt_service_companionship", "Dinner Date": "opt_service_dinner_date",
+  "Travel": "opt_service_travel", "GFE": "opt_service_gfe", "Massage": "opt_service_massage",
+  "Domination": "opt_service_domination",
+  // Languages
+  "English": "opt_lang_english", "French": "opt_lang_french", "Spanish": "opt_lang_spanish",
+  "Portuguese": "opt_lang_portuguese", "Italian": "opt_lang_italian", "Russian": "opt_lang_russian",
+  "Arabic": "opt_lang_arabic", "Mandarin": "opt_lang_mandarin", "Japanese": "opt_lang_japanese",
+  "German": "opt_lang_german", "Hindi": "opt_lang_hindi", "Korean": "opt_lang_korean",
+  // Gender
+  "Woman": "opt_gender_woman", "Man": "opt_gender_man", "Trans Woman": "opt_gender_trans_woman",
+  "Trans Man": "opt_gender_trans_man",
+  // Pronouns
+  "She/Her": "opt_pronouns_she_her", "He/Him": "opt_pronouns_he_him", "They/Them": "opt_pronouns_they_them",
+  // Caters to (Couples is shared with Services — service mapping wins above; we use a separate key here)
+  "Men": "opt_caters_men", "Women": "opt_caters_women", "Couples": "opt_caters_couples",
+  "Non-binary": "opt_caters_non_binary", "Everyone": "opt_caters_everyone",
+};
 const DAYS_OF_WEEK     = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
 const COUNTRY_OPTIONS  = [
   { code: "CA", name: "Canada" },
@@ -64,6 +98,18 @@ type ProfileForm = {
   contact_whatsapp: string;
   contact_telegram: string;
   contact_phone: string;
+  website_url: string;
+  tiktok_url: string;
+  snapchat_url: string;
+  instagram_url: string;
+  onlyfans_url: string;
+  twitter_url: string;
+  facebook_url: string;
+  show_contact_details: boolean;
+  show_social_links: boolean;
+  hip_size: string;
+  bust_size: string;
+  bra_cup_size: string;
   gender: string;
   pronouns: string;
   caters_to: string[];
@@ -76,13 +122,28 @@ const EMPTY_FORM: ProfileForm = {
   city: "", country_code: "CA", is_provider: false, incall: true,
   outcall: true, hourly_rate: "", service_categories: [], avatar_url: null,
   contact_whatsapp: "", contact_telegram: "", contact_phone: "",
+  website_url: "", tiktok_url: "", snapchat_url: "", instagram_url: "",
+  onlyfans_url: "", twitter_url: "", facebook_url: "",
+  show_contact_details: true, show_social_links: true,
+  hip_size: "", bust_size: "", bra_cup_size: "",
   gender: "", pronouns: "", caters_to: [], availability_schedule: {},
 };
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
+const DAY_KEYS: Record<string, TranslationKey> = {
+  monday: "day_monday",
+  tuesday: "day_tuesday",
+  wednesday: "day_wednesday",
+  thursday: "day_thursday",
+  friday: "day_friday",
+  saturday: "day_saturday",
+  sunday: "day_sunday",
+};
+
 export default function EditProfilePage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, loading: sessionLoading } = useSession();
   const { refetch } = useProfile();
   const [form, setForm]         = useState<ProfileForm>(EMPTY_FORM);
@@ -105,7 +166,7 @@ export default function EditProfilePage() {
 
     supabase
       .from("profiles")
-      .select("username, bio, bio_long, tagline, age, nationality, languages, height_cm, build, hair_color, eye_color, city, country_code, is_provider, incall, outcall, hourly_rate, service_categories, avatar_url, contact_whatsapp, contact_telegram, contact_phone, gender, pronouns, caters_to, availability_schedule")
+      .select("username, bio, bio_long, tagline, age, nationality, languages, height_cm, build, hair_color, eye_color, city, country_code, is_provider, incall, outcall, hourly_rate, service_categories, avatar_url, contact_whatsapp, contact_telegram, contact_phone, website_url, tiktok_url, snapchat_url, instagram_url, onlyfans_url, twitter_url, facebook_url, show_contact_details, show_social_links, hip_size, bust_size, bra_cup_size, gender, pronouns, caters_to, availability_schedule")
       .eq("id", user.id)
       .single()
       .then(({ data }) => {
@@ -133,6 +194,18 @@ export default function EditProfilePage() {
             contact_whatsapp:   data.contact_whatsapp ?? "",
             contact_telegram:   data.contact_telegram ?? "",
             contact_phone:      data.contact_phone ?? "",
+            website_url:        data.website_url ?? "",
+            tiktok_url:         data.tiktok_url ?? "",
+            snapchat_url:       data.snapchat_url ?? "",
+            instagram_url:      data.instagram_url ?? "",
+            onlyfans_url:       data.onlyfans_url ?? "",
+            twitter_url:        data.twitter_url ?? "",
+            facebook_url:       data.facebook_url ?? "",
+            show_contact_details: data.show_contact_details ?? true,
+            show_social_links:  data.show_social_links ?? true,
+            hip_size:           data.hip_size ?? "",
+            bust_size:          data.bust_size ?? "",
+            bra_cup_size:       data.bra_cup_size ?? "",
             gender:             data.gender ?? "",
             pronouns:           data.pronouns ?? "",
             caters_to:          data.caters_to ?? [],
@@ -166,25 +239,22 @@ export default function EditProfilePage() {
     const objectUrl = URL.createObjectURL(file);
     setAvatarPreview(objectUrl);
 
-    // Avatars are smaller — 800px is plenty
-    const compressed = await compressImage(file, { maxDimension: 800, quality: 0.85 });
-    const ext  = compressed.name.split(".").pop() ?? "jpg";
-    const path = `${user.id}/avatar.${ext}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("avatars")
-      .upload(path, compressed, { upsert: true, contentType: compressed.type });
-
-    if (uploadError) {
-      showToast("error", "Photo upload failed. Try again.");
+    try {
+      const result = await uploadAvatar(user.id, file);
+      if (!result.ok) {
+        console.error("[profile/edit] avatar upload failed:", result.error);
+        showToast("error", t("pe_err_photo"));
+        setAvatarPreview(null);
+      } else {
+        patch("avatar_url", result.publicUrl);
+      }
+    } catch (err) {
+      console.error("[profile/edit] avatar upload threw:", err);
+      showToast("error", t("pe_err_photo"));
       setAvatarPreview(null);
+    } finally {
       setUploading(false);
-      return;
     }
-
-    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
-    patch("avatar_url", publicUrl);
-    setUploading(false);
   }
 
   async function handleSave() {
@@ -193,12 +263,12 @@ export default function EditProfilePage() {
     // Validate age and height ranges
     const parsedAge = form.age ? parseInt(form.age, 10) : null;
     if (parsedAge !== null && (parsedAge < 18 || parsedAge > 99)) {
-      showToast("error", "Age must be between 18 and 99.");
+      showToast("error", t("pe_err_age"));
       return;
     }
     const parsedHeight = form.height_cm ? parseInt(form.height_cm, 10) : null;
     if (parsedHeight !== null && (parsedHeight < 140 || parsedHeight > 220)) {
-      showToast("error", "Height must be between 140 and 220 cm.");
+      showToast("error", t("pe_err_height"));
       return;
     }
 
@@ -225,6 +295,18 @@ export default function EditProfilePage() {
       contact_whatsapp:   form.contact_whatsapp.trim() || null,
       contact_telegram:   form.contact_telegram.trim() || null,
       contact_phone:      form.contact_phone.trim() || null,
+      website_url:        form.website_url.trim() || null,
+      tiktok_url:         form.tiktok_url.trim() || null,
+      snapchat_url:       form.snapchat_url.trim() || null,
+      instagram_url:      form.instagram_url.trim() || null,
+      onlyfans_url:       form.onlyfans_url.trim() || null,
+      twitter_url:        form.twitter_url.trim() || null,
+      facebook_url:       form.facebook_url.trim() || null,
+      show_contact_details: form.show_contact_details,
+      show_social_links:  form.show_social_links,
+      hip_size:           form.hip_size.trim() || null,
+      bust_size:          form.bust_size.trim() || null,
+      bra_cup_size:       form.bra_cup_size.trim() || null,
       gender:             form.gender || null,
       pronouns:           form.pronouns || null,
       caters_to:          form.caters_to,
@@ -238,10 +320,10 @@ export default function EditProfilePage() {
 
     setSaving(false);
     if (error) {
-      showToast("error", error.message.includes("profiles_username_key") ? "That username is taken." : error.message);
+      showToast("error", error.message.includes("profiles_username_key") ? t("pe_err_username_taken") : error.message);
     } else {
       refetch();
-      showToast("success", "Profile saved!");
+      showToast("success", t("pe_saved"));
       setTimeout(() => router.push(`/profile`), 1200);
     }
   }
@@ -250,15 +332,25 @@ export default function EditProfilePage() {
 
   const avatarSrc = avatarPreview ?? form.avatar_url;
 
+  // Per-context label maps (some keys like "Other"/"Couples"/"Non-binary" appear in multiple groups)
+  const buildLabels    = Object.fromEntries(BUILD_OPTIONS.map((o) => [o, t(OPTION_LABEL_KEYS[o])]));
+  const hairLabels     = { ...Object.fromEntries(HAIR_OPTIONS.map((o) => [o, t(OPTION_LABEL_KEYS[o])])), Other: t("opt_hair_other") };
+  const eyeLabels      = { ...Object.fromEntries(EYE_OPTIONS.map((o) => [o, t(OPTION_LABEL_KEYS[o])])), Other: t("opt_eye_other") };
+  const serviceLabels  = Object.fromEntries(SERVICE_CATS.map((o) => [o, t(OPTION_LABEL_KEYS[o])]));
+  const langLabels     = Object.fromEntries(LANGUAGES.map((o) => [o, t(OPTION_LABEL_KEYS[o])]));
+  const genderLabels   = { ...Object.fromEntries(GENDER_OPTIONS.map((o) => [o, t(OPTION_LABEL_KEYS[o])])), Other: t("opt_gender_other"), "Non-binary": t("opt_gender_non_binary") };
+  const pronounLabels  = Object.fromEntries(PRONOUN_OPTIONS.map((o) => [o, t(OPTION_LABEL_KEYS[o])]));
+  const catersLabels   = Object.fromEntries(CATERS_TO_OPTIONS.map((o) => [o, t(OPTION_LABEL_KEYS[o])]));
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-950 to-black pb-10">
+    <div className="min-h-screen bg-[#fafbfc] pb-10">
 
       {/* Toast */}
       {toast && (
         <div className={cn(
           "fixed left-1/2 top-4 z-50 -translate-x-1/2 rounded-full px-5 py-2.5 text-[13px] font-semibold shadow-xl transition-all",
           toast.type === "success"
-            ? "bg-emerald-400 text-zinc-950"
+            ? "bg-emerald-400 text-white"
             : "bg-red-500 text-white"
         )}>
           {toast.msg}
@@ -266,21 +358,21 @@ export default function EditProfilePage() {
       )}
 
       {/* Header */}
-      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-white/5 bg-zinc-950/80 px-4 py-3 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-gray-200 bg-white/90 px-4 py-3 backdrop-blur-xl">
         <button
           onClick={() => router.back()}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-800 hover:text-white"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-gray-100 hover:text-slate-700"
         >
           <ArrowLeft size={18} />
         </button>
-        <span className="text-[15px] font-semibold text-white">Edit Profile</span>
+        <span className="text-[15px] font-semibold text-slate-800">{t("pe_title")}</span>
         <button
           onClick={handleSave}
           disabled={saving || uploading}
-          className="flex h-8 items-center gap-1.5 rounded-full bg-amber-400 px-4 text-[13px] font-bold text-zinc-950 shadow-[0_0_15px_rgba(251,191,36,0.3)] transition-all hover:bg-amber-300 disabled:opacity-50"
+          className="flex h-8 items-center gap-1.5 rounded-full bg-pink-400 px-4 text-[13px] font-bold text-white shadow-[0_0_15px_rgba(244,114,182,0.3)] transition-all hover:bg-pink-300 disabled:opacity-50"
         >
           {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} strokeWidth={3} />}
-          Save
+          {t("pe_save")}
         </button>
       </header>
 
@@ -291,83 +383,83 @@ export default function EditProfilePage() {
           disabled={uploading}
           className="group relative"
         >
-          <div className="rounded-full p-[3px] bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 shadow-[0_0_24px_rgba(251,191,36,0.2)]">
-            <div className="rounded-full p-[2px] bg-zinc-950">
+          <div className="rounded-full p-[3px] bg-gradient-to-tr from-pink-400 via-sky-300 to-violet-400 shadow-[0_0_24px_rgba(244,114,182,0.2)]">
+            <div className="rounded-full p-[2px] bg-white">
               {avatarSrc ? (
                 <div className="relative h-24 w-24 overflow-hidden rounded-full">
                   <Image src={avatarSrc} alt="Avatar" fill className="object-cover" sizes="96px" />
                 </div>
               ) : (
-                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-zinc-800 text-3xl font-bold text-zinc-500">
+                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-pink-50 text-3xl font-bold text-pink-300">
                   {(form.username[0] ?? "?").toUpperCase()}
                 </div>
               )}
             </div>
           </div>
           <div className={cn(
-            "absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full bg-amber-400 text-zinc-950 shadow-md transition-transform group-hover:scale-110",
+            "absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full bg-pink-400 text-white shadow-md transition-transform group-hover:scale-110",
             uploading && "animate-pulse"
           )}>
             {uploading ? <Loader2 size={13} className="animate-spin" /> : <Camera size={13} />}
           </div>
         </button>
-        <p className="mt-3 text-[12px] text-zinc-500">Tap to change photo</p>
+        <p className="mt-3 text-[12px] text-slate-400">{t("pe_tap_photo")}</p>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
       </div>
 
       <div className="space-y-6 px-4">
 
         {/* ── Basic info ── */}
-        <Section icon={User} title="Basic info">
-          <Field label="Username">
+        <Section icon={User} title={t("pe_sec_basic")}>
+          <Field label={t("pe_username")}>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 text-[14px]">@</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[14px]">@</span>
               <input
                 type="text"
                 value={form.username}
                 onChange={(e) => patch("username", e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                 maxLength={30}
-                placeholder="yourname"
+                placeholder={t("pe_username_ph")}
                 className={cn(inputCls, "pl-8")}
               />
             </div>
-            <Hint>3–30 characters. Letters, numbers and underscores only.</Hint>
+            <Hint>{t("pe_username_hint")}</Hint>
           </Field>
 
-          <Field label="Tagline">
+          <Field label={t("pe_tagline")}>
             <input
               type="text"
               value={form.tagline}
               onChange={(e) => patch("tagline", e.target.value)}
               maxLength={80}
-              placeholder="Your catchy headline…"
+              placeholder={t("pe_tagline_ph")}
               className={inputCls}
             />
             <div className="flex justify-between">
-              <Hint>A short headline shown on your profile card.</Hint>
+              <Hint>{t("pe_tagline_hint")}</Hint>
               <Counter val={form.tagline.length} max={80} />
             </div>
           </Field>
 
-          <Field label="Short bio">
+          <Field label={t("pe_short_bio")}>
             <textarea
               value={form.bio}
               onChange={(e) => patch("bio", e.target.value)}
               maxLength={140}
               rows={2}
-              placeholder="One line about you…"
+              placeholder={t("pe_short_bio_ph")}
               className={cn(inputCls, "resize-none")}
             />
             <div className="flex justify-end"><Counter val={form.bio.length} max={140} /></div>
           </Field>
 
-          <Field label="About me">
+          <Field label={t("pe_about_me")}>
             <textarea
               value={form.bio_long}
               onChange={(e) => patch("bio_long", e.target.value)}
               maxLength={600}
               rows={4}
-              placeholder="Tell visitors more about yourself, your personality, and what to expect…"
+              placeholder={t("pe_about_me_ph")}
               className={cn(inputCls, "resize-none")}
             />
             <div className="flex justify-end"><Counter val={form.bio_long.length} max={600} /></div>
@@ -375,9 +467,9 @@ export default function EditProfilePage() {
         </Section>
 
         {/* ── Personal ── */}
-        <Section icon={Globe} title="Personal details">
+        <Section icon={Globe} title={t("pe_sec_personal")}>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Age">
+            <Field label={t("pe_age")}>
               <input
                 type="number" inputMode="numeric"
                 value={form.age} onChange={(e) => patch("age", e.target.value)}
@@ -385,28 +477,29 @@ export default function EditProfilePage() {
                 className={inputCls}
               />
             </Field>
-            <Field label="Nationality">
+            <Field label={t("pe_nationality")}>
               <input
                 type="text"
                 value={form.nationality} onChange={(e) => patch("nationality", e.target.value)}
-                maxLength={40} placeholder="e.g. Canadian"
+                maxLength={40} placeholder={t("pe_nationality_ph")}
                 className={inputCls}
               />
             </Field>
           </div>
 
-          <Field label="Languages spoken">
+          <Field label={t("pe_languages")}>
             <ChipGroup
               options={LANGUAGES}
               selected={form.languages}
               onToggle={(v) => toggleArray("languages", v)}
+              labelMap={langLabels}
             />
           </Field>
         </Section>
 
         {/* ── Physical ── */}
-        <Section icon={Ruler} title="Physical appearance">
-          <Field label="Height (cm)">
+        <Section icon={Ruler} title={t("pe_sec_physical")}>
+          <Field label={t("pe_height")}>
             <input
               type="number" inputMode="numeric"
               value={form.height_cm} onChange={(e) => patch("height_cm", e.target.value)}
@@ -418,30 +511,63 @@ export default function EditProfilePage() {
             )}
           </Field>
 
-          <Field label="Build">
-            <ChipGroup options={BUILD_OPTIONS} selected={form.build ? [form.build] : []} onToggle={(v) => patch("build", form.build === v ? "" : v)} single />
+          <Field label={t("pe_build")}>
+            <ChipGroup options={BUILD_OPTIONS} selected={form.build ? [form.build] : []} onToggle={(v) => patch("build", form.build === v ? "" : v)} single labelMap={buildLabels} />
           </Field>
 
-          <Field label="Hair colour">
-            <ChipGroup options={HAIR_OPTIONS} selected={form.hair_color ? [form.hair_color] : []} onToggle={(v) => patch("hair_color", form.hair_color === v ? "" : v)} single />
+          <Field label={t("pe_hair")}>
+            <ChipGroup options={HAIR_OPTIONS} selected={form.hair_color ? [form.hair_color] : []} onToggle={(v) => patch("hair_color", form.hair_color === v ? "" : v)} single labelMap={hairLabels} />
           </Field>
 
-          <Field label="Eye colour">
-            <ChipGroup options={EYE_OPTIONS} selected={form.eye_color ? [form.eye_color] : []} onToggle={(v) => patch("eye_color", form.eye_color === v ? "" : v)} single />
+          <Field label={t("pe_eye")}>
+            <ChipGroup options={EYE_OPTIONS} selected={form.eye_color ? [form.eye_color] : []} onToggle={(v) => patch("eye_color", form.eye_color === v ? "" : v)} single labelMap={eyeLabels} />
           </Field>
+
+          <div className="grid grid-cols-3 gap-2">
+            <Field label="Bust">
+              <input
+                type="text"
+                value={form.bust_size}
+                onChange={(e) => patch("bust_size", e.target.value)}
+                maxLength={20}
+                placeholder="34"
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Cup">
+              <input
+                type="text"
+                value={form.bra_cup_size}
+                onChange={(e) => patch("bra_cup_size", e.target.value)}
+                maxLength={20}
+                placeholder="C"
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Hips">
+              <input
+                type="text"
+                value={form.hip_size}
+                onChange={(e) => patch("hip_size", e.target.value)}
+                maxLength={20}
+                placeholder="38"
+                className={inputCls}
+              />
+            </Field>
+          </div>
         </Section>
 
         {/* ── Location ── */}
-        <Section icon={MapPin} title="Location">
-          <Field label="City">
+        <Section icon={MapPin} title={t("pe_sec_location")}>
+          <Field label={t("pe_city")}>
             <input
               type="text"
               value={form.city} onChange={(e) => patch("city", e.target.value)}
-              maxLength={60} placeholder="e.g. Toronto"
+              maxLength={60} placeholder={t("pe_city_ph")}
               className={inputCls}
             />
           </Field>
-          <Field label="Country">
+          <Field label={t("pe_country")}>
             <div className="relative">
               <select
                 value={form.country_code}
@@ -452,49 +578,52 @@ export default function EditProfilePage() {
                   <option key={c.code} value={c.code}>{c.name}</option>
                 ))}
               </select>
-              <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+              <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
             </div>
           </Field>
         </Section>
 
         {/* ── Identity & preferences (providers) ── */}
-        <Section icon={Heart} title="Identity & preferences">
+        <Section icon={Heart} title={t("pe_sec_identity")}>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Gender">
+            <Field label={t("pe_gender")}>
               <ChipGroup
                 options={GENDER_OPTIONS}
                 selected={form.gender ? [form.gender] : []}
                 onToggle={(v) => patch("gender", form.gender === v ? "" : v)}
                 single
+                labelMap={genderLabels}
               />
             </Field>
-            <Field label="Pronouns">
+            <Field label={t("pe_pronouns")}>
               <ChipGroup
                 options={PRONOUN_OPTIONS}
                 selected={form.pronouns ? [form.pronouns] : []}
                 onToggle={(v) => patch("pronouns", form.pronouns === v ? "" : v)}
                 single
+                labelMap={pronounLabels}
               />
             </Field>
           </div>
 
-          <Field label="Caters to">
+          <Field label={t("pe_caters_to")}>
             <ChipGroup
               options={CATERS_TO_OPTIONS}
               selected={form.caters_to}
               onToggle={(v) => toggleArray("caters_to", v)}
+              labelMap={catersLabels}
             />
-            <Hint>Select the client types you see.</Hint>
+            <Hint>{t("pe_caters_hint")}</Hint>
           </Field>
         </Section>
 
         {/* ── Weekly availability ── */}
-        <Section icon={Calendar} title="Weekly availability">
-          <Hint>Set your typical hours for each day. Leave blank for days you&apos;re unavailable.</Hint>
+        <Section icon={Calendar} title={t("pe_sec_availability")}>
+          <Hint>{t("pe_avail_hint")}</Hint>
           <div className="mt-2 space-y-2">
             {DAYS_OF_WEEK.map((day) => (
               <div key={day} className="flex items-center gap-3">
-                <span className="w-16 text-[12px] font-medium capitalize text-zinc-400">{day}</span>
+                <span className="w-16 text-[12px] font-medium text-slate-400">{t(DAY_KEYS[day])}</span>
                 <input
                   type="text"
                   value={form.availability_schedule[day] ?? ""}
@@ -504,22 +633,22 @@ export default function EditProfilePage() {
                       availability_schedule: { ...f.availability_schedule, [day]: e.target.value },
                     }))
                   }
-                  placeholder="e.g. 10am – 8pm"
+                  placeholder={t("pe_avail_ph")}
                   maxLength={30}
                   className={cn(inputCls, "flex-1 py-2.5 text-[13px]")}
                 />
               </div>
             ))}
           </div>
-          <Hint>Examples: &quot;All day&quot;, &quot;10am – 8pm&quot;, &quot;Evenings only&quot;, or leave blank</Hint>
+          <Hint>{t("pe_avail_examples")}</Hint>
         </Section>
 
         {/* ── Provider settings ── */}
-        <Section icon={Sparkles} title="Services & rates">
-          <div className="flex items-center justify-between rounded-2xl border border-white/5 bg-zinc-900/60 px-4 py-4">
+        <Section icon={Sparkles} title={t("pe_sec_services")}>
+          <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4">
             <div>
-              <p className="text-[14px] font-semibold text-white">I offer services</p>
-              <p className="text-[12px] text-zinc-500">Show listings, rates and appear in Explore</p>
+              <p className="text-[14px] font-semibold text-slate-800">{t("pe_offers_services")}</p>
+              <p className="text-[12px] text-slate-400">{t("pe_offers_desc")}</p>
             </div>
             <Toggle checked={form.is_provider} onChange={(v) => patch("is_provider", v)} />
           </div>
@@ -528,26 +657,26 @@ export default function EditProfilePage() {
             <div className="space-y-4 pt-1">
               {/* Incall / Outcall */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center justify-between rounded-xl border border-white/5 bg-zinc-900/60 px-3 py-3.5">
+                <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3 py-3.5">
                   <div>
-                    <p className="text-[13px] font-medium text-white">In-call</p>
-                    <p className="text-[10px] text-zinc-500">At my location</p>
+                    <p className="text-[13px] font-medium text-slate-800">{t("pe_incall")}</p>
+                    <p className="text-[10px] text-slate-400">{t("pe_incall_desc")}</p>
                   </div>
                   <Toggle checked={form.incall} onChange={(v) => patch("incall", v)} />
                 </div>
-                <div className="flex items-center justify-between rounded-xl border border-white/5 bg-zinc-900/60 px-3 py-3.5">
+                <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3 py-3.5">
                   <div>
-                    <p className="text-[13px] font-medium text-white">Out-call</p>
-                    <p className="text-[10px] text-zinc-500">At your location</p>
+                    <p className="text-[13px] font-medium text-slate-800">{t("pe_outcall")}</p>
+                    <p className="text-[10px] text-slate-400">{t("pe_outcall_desc")}</p>
                   </div>
                   <Toggle checked={form.outcall} onChange={(v) => patch("outcall", v)} />
                 </div>
               </div>
 
               {/* Hourly rate */}
-              <Field label="Hourly rate">
+              <Field label={t("pe_hourly_rate")}>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-zinc-400">CA$</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-slate-400">CA$</span>
                   <input
                     type="number" inputMode="numeric"
                     value={form.hourly_rate} onChange={(e) => patch("hourly_rate", e.target.value)}
@@ -555,21 +684,22 @@ export default function EditProfilePage() {
                     className={cn(inputCls, "pl-12")}
                   />
                 </div>
-                <Hint>Displayed on your Explore card and profile. Stored in CA$.</Hint>
+                <Hint>{t("pe_hourly_hint")}</Hint>
               </Field>
 
               {/* Service categories */}
-              <Field label="Service categories">
+              <Field label={t("pe_service_cats")}>
                 <ChipGroup
                   options={SERVICE_CATS}
                   selected={form.service_categories}
                   onToggle={(v) => toggleArray("service_categories", v)}
+                  labelMap={serviceLabels}
                 />
-                <Hint>These appear as filters in Explore.</Hint>
+                <Hint>{t("pe_service_cats_hint")}</Hint>
               </Field>
 
               {/* Contact methods */}
-              <Field label="WhatsApp number">
+              <Field label={t("pe_whatsapp")}>
                 <input
                   type="tel" inputMode="tel"
                   value={form.contact_whatsapp}
@@ -578,22 +708,22 @@ export default function EditProfilePage() {
                   maxLength={20}
                   className={inputCls}
                 />
-                <Hint>Full number with country code. Shown as a contact option on your profile.</Hint>
+                <Hint>{t("pe_whatsapp_hint")}</Hint>
               </Field>
 
-              <Field label="Telegram handle">
+              <Field label={t("pe_telegram")}>
                 <input
                   type="text"
                   value={form.contact_telegram}
                   onChange={(e) => patch("contact_telegram", e.target.value)}
-                  placeholder="@yourtelegram"
+                  placeholder={t("pe_telegram_ph")}
                   maxLength={40}
                   className={inputCls}
                 />
-                <Hint>Your Telegram username. Clients can message you directly.</Hint>
+                <Hint>{t("pe_telegram_hint")}</Hint>
               </Field>
 
-              <Field label="Phone number">
+              <Field label={t("pe_phone")}>
                 <input
                   type="tel" inputMode="tel"
                   value={form.contact_phone}
@@ -602,24 +732,73 @@ export default function EditProfilePage() {
                   maxLength={20}
                   className={inputCls}
                 />
-                <Hint>Optional. Shown as a call button on your profile. Only add if you want clients to call you.</Hint>
+                <Hint>{t("pe_phone_hint")}</Hint>
               </Field>
+
+              <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3 py-3.5">
+                <div>
+                  <p className="text-[13px] font-medium text-slate-800">Show contact details</p>
+                  <p className="text-[10px] text-slate-400">Controls phone and website visibility on your public profile.</p>
+                </div>
+                <Toggle checked={form.show_contact_details} onChange={(v) => patch("show_contact_details", v)} />
+              </div>
+
+              <Field label="Website">
+                <input
+                  type="url"
+                  value={form.website_url}
+                  onChange={(e) => patch("website_url", e.target.value)}
+                  placeholder="https://example.com"
+                  maxLength={120}
+                  className={inputCls}
+                />
+              </Field>
+
+              <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3 py-3.5">
+                <div>
+                  <p className="text-[13px] font-medium text-slate-800">Show social links</p>
+                  <p className="text-[10px] text-slate-400">Keep all social handles optional and easy to hide.</p>
+                </div>
+                <Toggle checked={form.show_social_links} onChange={(v) => patch("show_social_links", v)} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {([
+                  ["instagram_url", "Instagram"],
+                  ["tiktok_url", "TikTok"],
+                  ["snapchat_url", "Snapchat"],
+                  ["onlyfans_url", "OnlyFans"],
+                  ["twitter_url", "Twitter/X"],
+                  ["facebook_url", "Facebook"],
+                ] as const).map(([key, label]) => (
+                  <Field key={key} label={label}>
+                    <input
+                      type="text"
+                      value={form[key]}
+                      onChange={(e) => patch(key, e.target.value)}
+                      placeholder="@handle or URL"
+                      maxLength={120}
+                      className={inputCls}
+                    />
+                  </Field>
+                ))}
+              </div>
             </div>
           )}
         </Section>
 
         {/* ── Verification nudge ── */}
-        <div className="flex items-center gap-3 rounded-2xl border border-amber-400/10 bg-amber-400/5 px-4 py-4">
-          <Shield size={18} className="flex-shrink-0 text-amber-400" />
+        <div className="flex items-center gap-3 rounded-2xl border border-pink-200 bg-pink-50 px-4 py-4">
+          <Shield size={18} className="flex-shrink-0 text-pink-500" />
           <div className="flex-1">
-            <p className="text-[13px] font-semibold text-white">Get verified</p>
-            <p className="text-[11px] text-zinc-500">A gold checkmark builds trust and boosts your visibility.</p>
+            <p className="text-[13px] font-semibold text-slate-800">{t("pe_get_verified")}</p>
+            <p className="text-[11px] text-slate-400">{t("pe_get_verified_desc")}</p>
           </div>
           <button
             onClick={() => router.push("/profile/verify")}
-            className="rounded-full border border-amber-400/30 px-3 py-1.5 text-[11px] font-semibold text-amber-400 hover:bg-amber-400/10"
+            className="rounded-full border border-pink-300 px-3 py-1.5 text-[11px] font-semibold text-pink-500 hover:bg-pink-100"
           >
-            Apply
+            {t("pe_apply")}
           </button>
         </div>
 
@@ -627,10 +806,10 @@ export default function EditProfilePage() {
         <button
           onClick={handleSave}
           disabled={saving || uploading}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-4 text-[15px] font-bold text-zinc-950 shadow-[0_0_25px_rgba(251,191,36,0.25)] transition-all hover:bg-amber-300 active:scale-[0.99] disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-pink-400 py-4 text-[15px] font-bold text-white shadow-[0_0_25px_rgba(244,114,182,0.25)] transition-all hover:bg-pink-300 active:scale-[0.99] disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} strokeWidth={3} />}
-          {saving ? "Saving…" : "Save profile"}
+          {saving ? t("pe_saving") : t("pe_save_profile")}
         </button>
 
       </div>
@@ -646,10 +825,10 @@ function Section({
   return (
     <div>
       <div className="mb-3 flex items-center gap-2">
-        <Icon size={13} className="text-amber-400" />
-        <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">{title}</span>
+        <Icon size={13} className="text-pink-400" />
+        <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{title}</span>
       </div>
-      <div className="space-y-3 rounded-2xl border border-white/5 bg-zinc-900/50 px-4 py-4">
+      <div className="space-y-3 rounded-2xl border border-gray-200 bg-white px-4 py-4">
         {children}
       </div>
     </div>
@@ -659,27 +838,28 @@ function Section({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-[12px] font-medium text-zinc-400">{label}</label>
+      <label className="block text-[12px] font-medium text-slate-400">{label}</label>
       {children}
     </div>
   );
 }
 
 function Hint({ children }: { children: React.ReactNode }) {
-  return <p className="text-[10px] text-zinc-600">{children}</p>;
+  return <p className="text-[10px] text-slate-300">{children}</p>;
 }
 
 function Counter({ val, max }: { val: number; max: number }) {
-  return <span className="text-[10px] text-zinc-600">{val}/{max}</span>;
+  return <span className="text-[10px] text-slate-300">{val}/{max}</span>;
 }
 
 function ChipGroup({
-  options, selected, onToggle, single = false,
+  options, selected, onToggle, labelMap,
 }: {
   options: string[];
   selected: string[];
   onToggle: (v: string) => void;
   single?: boolean;
+  labelMap?: Record<string, string>;
 }) {
   return (
     <div className="flex flex-wrap gap-2">
@@ -692,11 +872,11 @@ function ChipGroup({
             className={cn(
               "rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-all",
               active
-                ? "border-amber-400/50 bg-amber-400/10 text-amber-400"
-                : "border-white/8 bg-zinc-900 text-zinc-400 hover:border-white/15 hover:text-zinc-200"
+                ? "border-pink-300 bg-pink-50 text-pink-500"
+                : "border-gray-200 bg-gray-50 text-slate-400 hover:border-gray-300 hover:text-slate-600"
             )}
           >
-            {opt}
+            {labelMap?.[opt] ?? opt}
           </button>
         );
       })}
@@ -710,7 +890,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
       onClick={() => onChange(!checked)}
       className={cn(
         "relative h-6 w-11 flex-shrink-0 rounded-full transition-colors duration-200",
-        checked ? "bg-amber-400" : "bg-zinc-700"
+        checked ? "bg-pink-400" : "bg-gray-300"
       )}
     >
       <span className={cn(
@@ -729,18 +909,18 @@ function cmToFtIn(cm: number): string {
 }
 
 const inputCls =
-  "w-full rounded-xl border border-white/8 bg-zinc-900 px-4 py-3 text-[14px] text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-amber-400/40 focus:ring-1 focus:ring-amber-400/20";
+  "w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-[14px] text-slate-800 placeholder-slate-300 outline-none transition focus:border-pink-300 focus:ring-1 focus:ring-pink-200";
 
 function Skeleton() {
   return (
-    <div className="min-h-screen animate-pulse bg-zinc-950">
-      <div className="h-[53px] border-b border-zinc-900" />
+    <div className="min-h-screen animate-pulse bg-[#fafbfc]">
+      <div className="h-[53px] border-b border-gray-200" />
       <div className="flex flex-col items-center pt-8 pb-6 gap-3">
-        <div className="h-24 w-24 rounded-full bg-zinc-800" />
-        <div className="h-3 w-28 rounded-full bg-zinc-800" />
+        <div className="h-24 w-24 rounded-full bg-gray-100" />
+        <div className="h-3 w-28 rounded-full bg-gray-100" />
       </div>
       <div className="space-y-4 px-4">
-        {[1,2,3,4].map((i) => <div key={i} className="h-32 rounded-2xl bg-zinc-900" />)}
+        {[1,2,3,4].map((i) => <div key={i} className="h-32 rounded-2xl bg-gray-50" />)}
       </div>
     </div>
   );

@@ -43,31 +43,31 @@ export function TrustSignals({ isVerified, memberSince, lastSeenAt }: TrustProps
       icon: Shield,
       label: isVerified ? "ID Verified" : "Not yet verified",
       sublabel: isVerified ? "Identity confirmed" : "Verification pending",
-      color: isVerified ? "text-amber-400" : "text-zinc-500",
-      bgColor: isVerified ? "bg-amber-400/10 border-amber-400/20" : "bg-zinc-800/60 border-zinc-700/50",
+      color: isVerified ? "text-pink-500" : "text-slate-400",
+      bgColor: isVerified ? "bg-pink-50 border-pink-200" : "bg-gray-50 border-gray-200",
     },
     {
       icon: Clock,
       label: formatMemberSince(memberSince),
       sublabel: "Member since",
-      color: "text-zinc-300",
-      bgColor: "bg-zinc-800/60 border-zinc-700/50",
+      color: "text-slate-600",
+      bgColor: "bg-gray-50 border-gray-200",
     },
     {
       icon: Eye,
       label: lastActive,
       sublabel: isOnline ? "Currently active" : "Last seen",
-      color: isOnline ? "text-emerald-400" : "text-zinc-300",
-      bgColor: isOnline ? "bg-emerald-400/10 border-emerald-400/20" : "bg-zinc-800/60 border-zinc-700/50",
+      color: isOnline ? "text-emerald-400" : "text-slate-600",
+      bgColor: isOnline ? "bg-emerald-400/10 border-emerald-400/20" : "bg-gray-50 border-gray-200",
     },
   ];
 
   return (
     <div className="mx-4 mt-6">
-      <div className="rounded-2xl border border-white/5 bg-zinc-900/40 p-4">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4">
         <div className="mb-3 flex items-center gap-2">
-          <Shield size={12} className="text-amber-400" />
-          <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
+          <Shield size={12} className="text-pink-500" />
+          <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
             Trust & Safety
           </span>
         </div>
@@ -87,7 +87,7 @@ export function TrustSignals({ isVerified, memberSince, lastSeenAt }: TrustProps
               <span className={cn("text-[11px] font-semibold leading-tight", s.color)}>
                 {s.label}
               </span>
-              <span className="text-[9px] text-zinc-500">{s.sublabel}</span>
+              <span className="text-[9px] text-slate-400">{s.sublabel}</span>
             </motion.div>
           ))}
         </div>
@@ -125,9 +125,9 @@ export function SocialProofStrip({
 
   return (
     <div className="mx-4 mt-4">
-      <div className="flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-zinc-900/30 px-4 py-2.5">
-        <MessageCircle size={11} className="flex-shrink-0 text-zinc-500" />
-        <p className="text-[11px] text-zinc-500">
+      <div className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5">
+        <MessageCircle size={11} className="flex-shrink-0 text-slate-400" />
+        <p className="text-[11px] text-slate-400">
           {items.join("  ·  ")}
         </p>
       </div>
@@ -163,28 +163,28 @@ export function AvailabilitySpotlight({ schedule, availableUntil }: Availability
         "flex items-center gap-3 rounded-xl border px-4 py-3",
         isAvailableNow
           ? "border-emerald-500/20 bg-emerald-500/5"
-          : "border-white/5 bg-zinc-900/40"
+          : "border-gray-200 bg-white"
       )}>
         <div className={cn(
           "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full",
           isAvailableNow
             ? "bg-emerald-400/15"
-            : "bg-zinc-800"
+            : "bg-gray-100"
         )}>
-          <CalendarDays size={16} className={isAvailableNow ? "text-emerald-400" : "text-zinc-400"} />
+          <CalendarDays size={16} className={isAvailableNow ? "text-emerald-400" : "text-slate-500"} />
         </div>
         <div className="flex-1 min-w-0">
           <p className={cn(
             "text-[13px] font-semibold",
-            isAvailableNow ? "text-emerald-400" : "text-white"
+            isAvailableNow ? "text-emerald-400" : "text-slate-800"
           )}>
             {isAvailableNow ? "Available now" : `Today: ${todayHours}`}
           </p>
           {isAvailableNow && todayHours && (
-            <p className="text-[11px] text-zinc-500">Today&apos;s hours: {todayHours}</p>
+            <p className="text-[11px] text-slate-400">Today&apos;s hours: {todayHours}</p>
           )}
           {!isAvailableNow && (
-            <p className="text-[11px] text-zinc-500 capitalize">{today}&apos;s schedule</p>
+            <p className="text-[11px] text-slate-400 capitalize">{today}&apos;s schedule</p>
           )}
         </div>
       </div>
@@ -220,7 +220,7 @@ export function ShareStrip({ username }: ShareProps) {
     <div className="mx-4 mt-4 mb-2">
       <button
         onClick={handleShare}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/5 bg-zinc-900/30 px-4 py-3 text-[12px] font-medium text-zinc-500 transition-all hover:border-white/10 hover:text-zinc-300 active:scale-[0.99]"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-[12px] font-medium text-slate-400 transition-all hover:border-gray-300 hover:text-slate-600 active:scale-[0.99]"
       >
         {copied ? (
           <>

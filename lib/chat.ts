@@ -13,8 +13,8 @@ export type MessageRequest = {
   channel_id: string | null;
   created_at: string;
   updated_at: string;
-  sender?: { username: string; avatar_url: string | null; verification_status: string };
-  recipient?: { username: string; avatar_url: string | null; verification_status: string };
+  sender?: { username: string; avatar_url: string | null; verification_status: string; is_provider: boolean };
+  recipient?: { username: string; avatar_url: string | null; verification_status: string; is_provider: boolean };
 };
 
 type ActionResult = { success: boolean; error?: string; data?: Record<string, unknown> };
@@ -109,7 +109,7 @@ export async function createMessageRequest(
 
 export async function getMessageRequests(
   userId: string,
-  view: "pending" | "sent" | "all" = "pending"
+  view: "pending" | "sent" | "all" | "all_pending" = "pending"
 ): Promise<MessageRequest[]> {
   const supabase = createServerClient();
   if (!supabase) return [];
@@ -119,8 +119,8 @@ export async function getMessageRequests(
     .select(`
       id, sender_id, recipient_id, intro_message, status,
       channel_id, created_at, updated_at,
-      sender:sender_id (username, avatar_url, verification_status),
-      recipient:recipient_id (username, avatar_url, verification_status)
+      sender:sender_id (username, avatar_url, verification_status, is_provider),
+      recipient:recipient_id (username, avatar_url, verification_status, is_provider)
     `)
     .order("created_at", { ascending: false });
 
@@ -128,6 +128,10 @@ export async function getMessageRequests(
     query = query.eq("recipient_id", userId).eq("status", "pending");
   } else if (view === "sent") {
     query = query.eq("sender_id", userId).eq("status", "pending");
+  } else if (view === "all_pending") {
+    query = query
+      .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
+      .eq("status", "pending");
   } else {
     query = query.or(`sender_id.eq.${userId},recipient_id.eq.${userId}`);
   }

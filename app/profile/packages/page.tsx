@@ -8,7 +8,9 @@ import {
   Clock, Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-fetch";
 import { useSession } from "@/hooks/useSession";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -45,8 +47,10 @@ function pricePerPost(cents: number, credits: number): string {
   return `CA$${(cents / credits / 100).toFixed(2)}`;
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-CA", {
+function formatDate(iso: string, locale: string): string {
+  // Map our 2-letter locale to a BCP-47 tag for Intl.
+  const tag = locale === "fr" ? "fr-CA" : "en-CA";
+  return new Date(iso).toLocaleDateString(tag, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -76,6 +80,7 @@ function PackagesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, checked } = useSession();
+  const { t, locale } = useTranslation();
 
   const [packages, setPackages] = useState<PostingPackage[]>([]);
   const [balance, setBalance] = useState<number>(0);
@@ -88,7 +93,7 @@ function PackagesPageContent() {
 
   useEffect(() => {
     if (!user) return;
-    fetch(`/api/packages?providerId=${user.id}`)
+    apiFetch(`/api/packages?includeOwn=1`)
       .then((r) => r.json())
       .then((data) => {
         setPackages(data.packages ?? []);
@@ -101,7 +106,7 @@ function PackagesPageContent() {
   // Refresh after successful purchase
   useEffect(() => {
     if (isSuccess && user) {
-      fetch(`/api/packages?providerId=${user.id}`)
+      apiFetch(`/api/packages?includeOwn=1`)
         .then((r) => r.json())
         .then((data) => {
           setBalance(data.balance ?? 0);
@@ -119,10 +124,10 @@ function PackagesPageContent() {
     if (!user || buying) return;
     setBuying(packageId);
 
-    const res = await fetch("/api/packages/checkout", {
+    const res = await apiFetch("/api/packages/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ packageId, providerId: user.id }),
+      body: JSON.stringify({ packageId }),
     });
 
     const data = await res.json();
@@ -131,23 +136,23 @@ function PackagesPageContent() {
     if (data.url) {
       window.location.href = data.url;
     } else {
-      alert(data.error ?? "Failed to start checkout. Please try again.");
+      alert(data.error ?? t("pkg_checkout_failed"));
     }
   }
 
   const bestValueId = findBestValue(packages);
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-20">
+    <div className="min-h-screen bg-[#fafbfc] pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/5 bg-zinc-950/90 px-4 py-3 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-xl">
         <button
           onClick={() => router.back()}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-gray-100 hover:text-slate-700"
         >
           <ChevronLeft size={20} />
         </button>
-        <span className="text-[15px] font-semibold text-white">Post Credits</span>
+        <span className="text-[15px] font-semibold text-slate-800">{t("pkg_header")}</span>
       </header>
 
       <div className="mx-auto max-w-lg space-y-6 px-4 pt-5">
@@ -162,7 +167,7 @@ function PackagesPageContent() {
             >
               <CheckCircle size={18} className="text-emerald-400" />
               <p className="text-[13px] text-emerald-300">
-                Payment successful! Your credits have been added.
+                {t("pkg_payment_success")}
               </p>
             </motion.div>
           )}
@@ -171,52 +176,52 @@ function PackagesPageContent() {
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="flex items-center gap-3 rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3"
+              className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3"
             >
-              <p className="text-[13px] text-zinc-400">
-                Checkout was cancelled. No charge was made.
+              <p className="text-[13px] text-slate-500">
+                {t("pkg_payment_cancelled")}
               </p>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Credit balance card */}
-        <div className="rounded-2xl border border-amber-400/20 bg-gradient-to-br from-amber-400/5 to-amber-400/0 p-5">
+        <div className="rounded-2xl border border-pink-200 bg-gradient-to-br from-pink-50 to-transparent p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-400/15">
-              <Coins size={22} className="text-amber-400" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-pink-50">
+              <Coins size={22} className="text-pink-500" />
             </div>
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500">
-                Your balance
+              <p className="text-[11px] font-medium uppercase tracking-widest text-slate-400">
+                {t("credits_your_balance")}
               </p>
-              <p className="text-[28px] font-bold leading-none text-white">
+              <p className="text-[28px] font-bold leading-none text-slate-800">
                 {loading ? "—" : balance}
-                <span className="ml-1.5 text-[14px] font-medium text-zinc-500">
-                  credit{balance !== 1 ? "s" : ""}
+                <span className="ml-1.5 text-[14px] font-medium text-slate-400">
+                  {balance !== 1 ? t("credits_credits") : t("credits_credit")}
                 </span>
               </p>
             </div>
           </div>
-          <p className="mt-3 text-[12px] leading-relaxed text-zinc-500">
-            Each feed post costs 1 credit. Stories are always free.
+          <p className="mt-3 text-[12px] leading-relaxed text-slate-400">
+            {t("credits_feed_cost_note")}
           </p>
         </div>
 
         {/* Package cards */}
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 size={24} className="animate-spin text-zinc-500" />
+            <Loader2 size={24} className="animate-spin text-slate-400" />
           </div>
         ) : packages.length === 0 ? (
-          <div className="rounded-2xl border border-white/5 bg-zinc-900 px-4 py-10 text-center">
-            <Package size={28} className="mx-auto mb-3 text-zinc-700" />
-            <p className="text-[14px] text-zinc-400">No packages available right now</p>
+          <div className="rounded-2xl border border-gray-200 bg-white px-4 py-10 text-center">
+            <Package size={28} className="mx-auto mb-3 text-slate-300" />
+            <p className="text-[14px] text-slate-500">{t("pkg_no_packages")}</p>
           </div>
         ) : (
           <div className="space-y-3">
-            <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-600">
-              Choose a package
+            <p className="text-[11px] font-medium uppercase tracking-widest text-slate-300">
+              {t("pkg_choose_header")}
             </p>
             {packages.map((pkg) => {
               const isBest = pkg.id === bestValueId;
@@ -230,46 +235,46 @@ function PackagesPageContent() {
                   className={cn(
                     "relative overflow-hidden rounded-2xl border p-4 transition-all",
                     isBest
-                      ? "border-amber-400/30 bg-amber-400/5"
-                      : "border-white/5 bg-zinc-900"
+                      ? "border-pink-300 bg-pink-50"
+                      : "border-gray-200 bg-white"
                   )}
                 >
                   {/* Best value badge */}
                   {isBest && (
-                    <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-0.5">
-                      <Sparkles size={10} className="text-zinc-950" />
-                      <span className="text-[10px] font-bold text-zinc-950">BEST VALUE</span>
+                    <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-pink-400 px-2.5 py-0.5">
+                      <Sparkles size={10} className="text-white" />
+                      <span className="text-[10px] font-bold text-white">{t("pkg_best_value")}</span>
                     </div>
                   )}
 
                   <div className="flex items-start gap-4">
                     <div className={cn(
                       "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl",
-                      isBest ? "bg-amber-400/15 text-amber-400" : "bg-zinc-800 text-zinc-400"
+                      isBest ? "bg-pink-100 text-pink-500" : "bg-gray-100 text-slate-500"
                     )}>
                       <Zap size={20} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[15px] font-semibold text-white">{pkg.name}</p>
+                      <p className="text-[15px] font-semibold text-slate-800">{pkg.name}</p>
                       <div className="mt-1 flex items-baseline gap-2">
-                        <span className="text-[20px] font-bold text-amber-400">
+                        <span className="text-[20px] font-bold text-pink-500">
                           {formatPrice(pkg.price)}
                         </span>
-                        <span className="text-[12px] text-zinc-500">
-                          {pkg.post_credits} credits
+                        <span className="text-[12px] text-slate-400">
+                          {pkg.post_credits} {t("credits_credits")}
                         </span>
                       </div>
-                      <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[11px] text-zinc-500">
-                        <span>{pricePerPost(pkg.price, pkg.post_credits)}/post</span>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
+                        <span>{pricePerPost(pkg.price, pkg.post_credits)}{t("pkg_per_post")}</span>
                         {pkg.validity_days && (
                           <span className="flex items-center gap-1">
                             <Clock size={10} />
-                            Valid {pkg.validity_days} days
+                            {t("pkg_valid_days").replace("{n}", String(pkg.validity_days))}
                           </span>
                         )}
                       </div>
                       {pkg.description && (
-                        <p className="mt-2 text-[12px] text-zinc-500">{pkg.description}</p>
+                        <p className="mt-2 text-[12px] text-slate-400">{pkg.description}</p>
                       )}
                     </div>
                   </div>
@@ -280,15 +285,15 @@ function PackagesPageContent() {
                     className={cn(
                       "mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-[13px] font-semibold transition-all",
                       isBest
-                        ? "bg-amber-400 text-zinc-950 hover:bg-amber-300 active:scale-[0.98]"
-                        : "bg-zinc-800 text-white hover:bg-zinc-700 active:scale-[0.98]",
+                        ? "bg-pink-400 text-white hover:bg-pink-300 active:scale-[0.98]"
+                        : "bg-gray-100 text-slate-800 hover:bg-gray-200 active:scale-[0.98]",
                       buying && "opacity-50 cursor-not-allowed"
                     )}
                   >
                     {isBuying ? (
-                      <><Loader2 size={14} className="animate-spin" /> Processing…</>
+                      <><Loader2 size={14} className="animate-spin" /> {t("pkg_processing")}</>
                     ) : (
-                      `Buy ${pkg.post_credits} Credits`
+                      t("pkg_buy_n_credits").replace("{n}", String(pkg.post_credits))
                     )}
                   </button>
                 </motion.div>
@@ -300,31 +305,31 @@ function PackagesPageContent() {
         {/* Purchase history */}
         {history.length > 0 && (
           <div>
-            <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-zinc-600">
-              Purchase history
+            <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-slate-300">
+              {t("credits_history")}
             </p>
             <div className="space-y-2">
               {history.map((h) => (
                 <div
                   key={h.id}
-                  className="flex items-center justify-between rounded-xl border border-white/5 bg-zinc-900 px-4 py-3"
+                  className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3"
                 >
                   <div>
-                    <p className="text-[13px] font-medium text-zinc-300">
-                      {h.credits_purchased} credits purchased
+                    <p className="text-[13px] font-medium text-slate-600">
+                      {t("pkg_purchased_row").replace("{n}", String(h.credits_purchased))}
                     </p>
-                    <p className="text-[11px] text-zinc-600">{formatDate(h.purchased_at)}</p>
+                    <p className="text-[11px] text-slate-300">{formatDate(h.purchased_at, locale)}</p>
                   </div>
                   <div className="text-right">
                     <p className={cn(
                       "text-[13px] font-semibold",
-                      h.credits_remaining > 0 ? "text-emerald-400" : "text-zinc-500"
+                      h.credits_remaining > 0 ? "text-emerald-400" : "text-slate-400"
                     )}>
-                      {h.credits_remaining} left
+                      {t("pkg_left").replace("{n}", String(h.credits_remaining))}
                     </p>
                     {h.expires_at && (
-                      <p className="text-[10px] text-zinc-600">
-                        Expires {formatDate(h.expires_at)}
+                      <p className="text-[10px] text-slate-300">
+                        {t("pkg_expires_date").replace("{date}", formatDate(h.expires_at, locale))}
                       </p>
                     )}
                   </div>
@@ -341,8 +346,8 @@ function PackagesPageContent() {
 export default function PackagesPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <Loader2 size={24} className="animate-spin text-zinc-500" />
+      <div className="min-h-screen bg-[#fafbfc] flex items-center justify-center">
+        <Loader2 size={24} className="animate-spin text-slate-400" />
       </div>
     }>
       <PackagesPageContent />

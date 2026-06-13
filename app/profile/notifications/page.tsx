@@ -33,7 +33,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
       onClick={() => onChange(!checked)}
       className={cn(
         "relative h-6 w-11 rounded-full transition-colors",
-        checked ? "bg-amber-400" : "bg-zinc-700"
+        checked ? "bg-[rgb(246,51,154)]" : "bg-gray-200"
       )}
     >
       <div className={cn(
@@ -50,7 +50,7 @@ function Row({
   description,
   checked,
   onChange,
-  iconColor = "text-zinc-400",
+  iconColor = "text-slate-500",
   disabled = false,
 }: {
   icon: React.ElementType;
@@ -63,12 +63,12 @@ function Row({
 }) {
   return (
     <div className={cn("flex items-center gap-4 px-4 py-4", disabled && "opacity-40")}>
-      <div className={cn("flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-zinc-800", iconColor)}>
+      <div className={cn("flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100", iconColor)}>
         <Icon size={18} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[14px] font-medium text-white">{title}</p>
-        <p className="text-[12px] text-zinc-500 leading-snug mt-0.5">{description}</p>
+        <p className="text-[14px] font-medium text-slate-800">{title}</p>
+        <p className="text-[12px] text-slate-500 leading-snug mt-0.5">{description}</p>
       </div>
       <Toggle checked={checked} onChange={disabled ? () => {} : onChange} />
     </div>
@@ -121,32 +121,32 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-20">
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/5 bg-zinc-950/90 px-4 py-3 backdrop-blur-xl">
+    <div className="min-h-screen bg-[#fafbfc] pb-20">
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-gray-200 bg-[#fafbfc]/90 px-4 py-3 backdrop-blur-xl">
         <button
           onClick={() => router.back()}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-gray-100 hover:text-slate-800"
         >
           <ChevronLeft size={20} />
         </button>
-        <span className="text-[15px] font-semibold text-white">Notifications</span>
+        <span className="text-[15px] font-semibold text-slate-800">Notifications</span>
       </header>
 
       {!loaded ? (
         <div className="flex items-center justify-center pt-24">
-          <Loader2 size={24} className="animate-spin text-zinc-600" />
+          <Loader2 size={24} className="animate-spin text-slate-400" />
         </div>
       ) : (
         <div className="mx-auto max-w-lg space-y-2 pt-4 px-4">
           {/* Email notifications */}
-          <p className="px-1 pb-1 text-[11px] font-medium uppercase tracking-widest text-zinc-600">Email</p>
-          <div className="overflow-hidden rounded-2xl bg-zinc-900 border border-white/5 divide-y divide-white/5">
+          <p className="px-1 pb-1 text-[11px] font-medium uppercase tracking-widest text-slate-400">Email</p>
+          <div className="overflow-hidden rounded-2xl bg-white border border-gray-200 divide-y divide-gray-200">
             <Row
               icon={MessageCircle}
               title="New message"
               description="When someone sends you a direct message"
               checked={prefs.email_new_message}
-              iconColor="text-emerald-400"
+              iconColor="text-emerald-500"
               onChange={(v) => updatePref("email_new_message", v)}
             />
             <Row
@@ -154,7 +154,7 @@ export default function NotificationsPage() {
               title="New enquiry"
               description="When a visitor submits an enquiry on your listing"
               checked={prefs.email_new_enquiry}
-              iconColor="text-sky-400"
+              iconColor="text-sky-500"
               onChange={(v) => updatePref("email_new_enquiry", v)}
             />
             <Row
@@ -162,7 +162,7 @@ export default function NotificationsPage() {
               title="New subscriber"
               description="When someone subscribes to your profile"
               checked={prefs.email_new_subscriber}
-              iconColor="text-amber-400"
+              iconColor="text-pink-500"
               onChange={(v) => updatePref("email_new_subscriber", v)}
             />
             <Row
@@ -170,23 +170,23 @@ export default function NotificationsPage() {
               title="New follower"
               description="When someone starts following you"
               checked={prefs.email_new_follower}
-              iconColor="text-violet-400"
+              iconColor="text-violet-500"
               onChange={(v) => updatePref("email_new_follower", v)}
             />
           </div>
 
           {/* Likes row — always on, no toggle */}
-          <p className="px-1 pb-1 pt-4 text-[11px] font-medium uppercase tracking-widest text-zinc-600">Always on</p>
-          <div className="overflow-hidden rounded-2xl bg-zinc-900 border border-white/5">
-            <div className="flex items-center gap-4 px-4 py-4 opacity-50">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-zinc-800 text-rose-400">
+          <p className="px-1 pb-1 pt-4 text-[11px] font-medium uppercase tracking-widest text-slate-400">Always on</p>
+          <div className="overflow-hidden rounded-2xl bg-white border border-gray-200">
+            <div className="flex items-center gap-4 px-4 py-4 opacity-60">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100 text-rose-500">
                 <Heart size={18} />
               </div>
               <div className="flex-1">
-                <p className="text-[14px] font-medium text-white">Security alerts</p>
-                <p className="text-[12px] text-zinc-500">Sign-in from a new device, password changes</p>
+                <p className="text-[14px] font-medium text-slate-800">Security alerts</p>
+                <p className="text-[12px] text-slate-500">Sign-in from a new device, password changes</p>
               </div>
-              <span className="text-[12px] text-zinc-500">Always on</span>
+              <span className="text-[12px] text-slate-500">Always on</span>
             </div>
           </div>
         </div>

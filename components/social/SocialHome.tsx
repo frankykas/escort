@@ -13,6 +13,8 @@ export type FeedPostData = {
   provider_username: string;
   provider_avatar: string | null;
   provider_verified: string;
+  provider_city?: string | null;
+  provider_last_seen_at?: string | null;
   caption: string | null;
   media_url: string | null;
   media_type: string;
@@ -23,6 +25,10 @@ export type FeedPostData = {
   views_count: number;
   created_at: string;
   expires_at: string | null;
+  is_premium?: boolean;
+  unlock_price?: number | null;
+  content_rating?: string;
+  media_path?: string | null;
   latest_comments: {
     id: string;
     user_id: string;
@@ -46,12 +52,12 @@ export async function SocialHome({ searchParams }: Props) {
   if (!supabase) {
     return (
       <main className="flex flex-1 items-center justify-center px-4">
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 text-center max-w-sm">
-          <p className="text-sm font-medium text-zinc-300">Supabase not configured</p>
-          <p className="mt-2 text-xs text-zinc-500">
-            Add <code className="text-amber-400">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
-            <code className="text-amber-400">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to{" "}
-            <code className="text-zinc-400">.env.local</code>
+        <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center max-w-sm">
+          <p className="text-sm font-medium text-slate-600">Supabase not configured</p>
+          <p className="mt-2 text-xs text-slate-400">
+            Add <code className="text-pink-500">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
+            <code className="text-pink-500">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to{" "}
+            <code className="text-slate-500">.env.local</code>
           </p>
         </div>
       </main>
@@ -59,16 +65,16 @@ export async function SocialHome({ searchParams }: Props) {
   }
 
   return (
-    <main className="flex flex-col flex-1 bg-zinc-950">
+    <main className="flex flex-col flex-1 bg-[#fafbfc]">
       {/* Nav */}
-      <header className="sticky top-0 z-20 border-b border-white/5 bg-zinc-950/70 px-4 py-4 backdrop-blur-xl backdrop-saturate-150">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/70 px-4 py-4 backdrop-blur-xl backdrop-saturate-150">
         <div className="flex items-center justify-center">
-          <span className="text-2xl font-bold tracking-tight text-amber-400">Cleopatra</span>
+          <span className="text-2xl font-bold tracking-tight bg-gradient-to-r from-pink-400 to-sky-400 bg-clip-text text-transparent">Cleopatra</span>
         </div>
       </header>
 
       {/* Tab switcher — wrapped in Suspense because FeedTabs uses useSearchParams */}
-      <Suspense fallback={<div className="h-[45px] border-b border-zinc-800 bg-black" />}>
+      <Suspense fallback={<div className="h-[45px] border-b border-gray-200 bg-white" />}>
         <FeedTabs />
       </Suspense>
 
@@ -93,6 +99,6 @@ async function ForYouFeed({
   supabase: NonNullable<ReturnType<typeof createServerClient>>;
 }) {
   const posts = await getFeedPosts();
-  
+
   return <FeedList posts={posts} />;
 }

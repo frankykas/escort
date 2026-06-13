@@ -1,0 +1,12 @@
+.git
+.vercel
+.env*
+.next
+.tmp
+.claude
+android
+node_modules
+supabase/.branches
+supabase/.temp
+tsconfig.tsbuildinfo
+*.pem

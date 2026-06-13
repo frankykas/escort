@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/api-auth";
 
 export async function POST(req: NextRequest) {
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const providerId = auth.user.id;
+
   const supabase = createServerClient();
   if (!supabase) {
     return NextResponse.json({ error: "Database unavailable" }, { status: 503 });
@@ -9,13 +14,13 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const {
-    providerId, title, description, durationMinutes,
+    title, description, durationMinutes,
     rate, serviceType, perks, durationHours,
   } = body;
 
-  if (!providerId || !title) {
+  if (!title) {
     return NextResponse.json(
-      { error: "providerId and title are required" },
+      { error: "title is required" },
       { status: 400 }
     );
   }

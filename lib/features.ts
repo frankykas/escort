@@ -23,3 +23,15 @@ export const USE_POST_COOLDOWN =
 // Disabled by default — the platform is a classifieds marketplace, not a booking intermediary.
 export const USE_BOOKINGS =
   process.env.NEXT_PUBLIC_USE_BOOKINGS === "true";
+
+// Creator content: when enabled, surfaces the premium creator-content layer
+// (paywalled posts, PPV, paid DMs, tips, creator payouts). Gated content is
+// served via signed URLs from the private premium-content bucket. Disabled by
+// default — ships dark so it can be A/B tested before launch.
+export const USE_CREATOR_CONTENT =
+  process.env.NEXT_PUBLIC_USE_CREATOR_CONTENT === "true";
+
+// Live shows: ticketed LiveKit A/V broadcasts by creators, with in-stream tips.
+// Depends on the creator-content layer; ships dark by default.
+export const USE_LIVE_SHOWS =
+  process.env.NEXT_PUBLIC_USE_LIVE_SHOWS === "true";

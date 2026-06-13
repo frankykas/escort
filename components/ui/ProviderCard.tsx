@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MapPin, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ActivityIndicator } from "./ActivityIndicator";
 
 export type ProviderCardData = {
   id: string;
@@ -15,6 +16,7 @@ export type ProviderCardData = {
   tagline: string | null;
   hourly_rate: number | null;
   available_until: string | null;
+  last_seen_at?: string | null;
 };
 
 type Props = {
@@ -32,7 +34,7 @@ export function ProviderCard({ provider }: Props) {
 
   return (
     <Link href={`/u/${provider.username}`} className="group block">
-      <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-zinc-800">
+      <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-gray-100 border border-gray-200 shadow-sm">
         {/* Photo */}
         {provider.avatar_url ? (
           <Image
@@ -43,7 +45,7 @@ export function ProviderCard({ provider }: Props) {
             sizes="(max-width: 640px) 50vw, 33vw"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900 text-4xl font-bold text-zinc-600">
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-4xl font-bold text-slate-300">
             {provider.username[0].toUpperCase()}
           </div>
         )}
@@ -54,8 +56,8 @@ export function ProviderCard({ provider }: Props) {
         {/* Top badges */}
         <div className="absolute left-2 right-2 top-2 flex items-center justify-between">
           {isVerified && (
-            <span className="flex items-center gap-1 rounded-full bg-black/40 px-2 py-0.5 text-[9px] font-semibold text-amber-400 backdrop-blur-md border border-amber-400/20">
-              <CheckCircle size={9} className="fill-amber-400/20" />
+            <span className="flex items-center gap-1 rounded-full bg-white/80 px-2 py-0.5 text-[9px] font-semibold text-pink-500 backdrop-blur-md border border-pink-200">
+              <CheckCircle size={9} className="fill-pink-100" />
               Verified
             </span>
           )}
@@ -64,6 +66,13 @@ export function ProviderCard({ provider }: Props) {
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
               <span className="text-[9px] font-semibold text-emerald-400">Available</span>
             </span>
+          )}
+          {!isAvailable && (
+            <ActivityIndicator
+              lastSeenAt={provider.last_seen_at}
+              compact
+              className="ml-auto border-white/10 bg-black/35 text-white/70 backdrop-blur-md"
+            />
           )}
         </div>
 

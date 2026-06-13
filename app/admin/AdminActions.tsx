@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, X, Loader2 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
+import { apiFetch } from "@/lib/api-fetch";
 
 export function AdminActions({
   reportId,
@@ -18,10 +19,10 @@ export function AdminActions({
     if (!user) return;
     setLoading(resolution === "actioned" ? "action" : "dismiss");
 
-    const res = await fetch("/api/admin/reports", {
+    const res = await apiFetch("/api/admin/reports", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reportId, resolution, userId: user.id }),
+      body: JSON.stringify({ reportId, resolution }),
     });
 
     setLoading(null);
@@ -41,7 +42,7 @@ export function AdminActions({
       <button
         onClick={() => handle("dismissed")}
         disabled={loading !== null}
-        className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-[11px] font-semibold text-zinc-400 transition hover:bg-zinc-800 disabled:opacity-40"
+        className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-[11px] font-semibold text-slate-500 transition hover:bg-gray-100 disabled:opacity-40"
       >
         {loading === "dismiss" ? <Loader2 size={12} className="animate-spin" /> : <X size={12} />}
         Dismiss

@@ -8,8 +8,11 @@ import {
   CheckCircle, Loader2, ExternalLink, Phone, Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-fetch";
 import { useSession } from "@/hooks/useSession";
 import { useRequestStatus } from "@/hooks/useMessageRequests";
+import { useSignupPrompt } from "@/hooks/useSignupPrompt";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 // ─── WhatsApp / Telegram brand icons (inline SVG) ──────────────────────────
 
@@ -46,7 +49,9 @@ type Step = "options" | "compose" | "sending" | "sent" | "pending";
 
 export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp, contactTelegram, contactPhone }: Props) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user } = useSession();
+  const { promptIfGuest, modal: signupModal } = useSignupPrompt();
   const { status: requestStatus, loading: statusLoading, refresh: refreshStatus } = useRequestStatus(user?.id ?? null, providerId);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [step, setStep] = useState<Step>("options");
@@ -67,7 +72,7 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
   }
 
   function handleMainCta() {
-    if (!user) { router.push("/auth/signin"); return; }
+    if (promptIfGuest("message")) return;
 
     // If already accepted, go straight to chat
     if (requestStatus === "accepted") {
@@ -93,17 +98,16 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
   }
 
   async function handleSend() {
-    if (!user) { router.push("/auth/signin"); return; }
+    if (promptIfGuest("message")) return;
     if (!message.trim()) return;
 
     setStep("sending");
     setSubmitError(null);
 
-    const res = await fetch("/api/chat/requests", {
+    const res = await apiFetch("/api/chat/requests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        senderId: user.id,
         recipientId: providerId,
         introMessage: message.trim(),
       }),
@@ -146,18 +150,18 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
 
   // Button label based on request status
   const ctaLabel = statusLoading
-    ? "Send Message Request"
+    ? t("eb_send_message_request")
     : requestStatus === "accepted"
-      ? "Open Chat"
+      ? t("eb_open_chat")
       : requestStatus === "pending"
-        ? "Request Pending"
-        : "Send Message Request";
+        ? t("eb_request_pending")
+        : t("eb_send_message_request");
 
   const contactOptions = [
     ...(hasWhatsapp ? [{
       icon: WhatsAppIcon,
       label: "WhatsApp",
-      sub: "Chat on WhatsApp",
+      sub: t("eb_chat_whatsapp"),
       color: "text-emerald-400",
       iconBg: "bg-emerald-500/15",
       border: "border-emerald-500/15",
@@ -167,7 +171,7 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
     ...(hasTelegram ? [{
       icon: TelegramIcon,
       label: "Telegram",
-      sub: "Message on Telegram",
+      sub: t("eb_msg_telegram"),
       color: "text-sky-400",
       iconBg: "bg-sky-500/15",
       border: "border-sky-500/15",
@@ -176,7 +180,7 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
     }] : []),
     ...(hasPhone ? [{
       icon: Phone,
-      label: "Call",
+      label: t("eb_call"),
       sub: contactPhone!,
       color: "text-violet-400",
       iconBg: "bg-violet-500/15",
@@ -186,17 +190,17 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
     }] : []),
     {
       icon: MessageCircle,
-      label: requestStatus === "accepted" ? "Open Chat" : "Send a Message Request",
+      label: requestStatus === "accepted" ? t("eb_open_chat") : t("eb_send_a_request"),
       sub: requestStatus === "accepted"
-        ? `Continue your conversation with @${username}`
+        ? t("eb_continue_conversation").replace("{username}", username)
         : requestStatus === "pending"
-          ? "Request pending — waiting for approval"
-          : `Request to chat privately with @${username}`,
-      color: "text-amber-400",
-      iconBg: "bg-amber-400/15",
-      border: "border-amber-400/20",
+          ? t("eb_request_pending_approval")
+          : t("eb_request_to_chat").replace("{username}", username),
+      color: "text-pink-500",
+      iconBg: "bg-pink-50",
+      border: "border-pink-200",
       action: () => {
-        if (!user) { router.push("/auth/signin"); return; }
+        if (promptIfGuest("message")) return;
         if (requestStatus === "accepted") {
           router.push(`/messages/${username}`);
         } else if (requestStatus === "pending") {
@@ -211,8 +215,9 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
 
   return (
     <>
+      {signupModal}
       {/* ── Sticky bar ── */}
-      <div className="fixed inset-x-0 bottom-[57px] z-30 border-t border-white/5 bg-zinc-950/95 px-4 py-3 backdrop-blur-xl">
+      <div className="fixed inset-x-0 bottom-[57px] z-30 border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-xl">
         <div className="mx-auto flex max-w-lg items-center gap-3">
 
           {hasWhatsapp && (
@@ -231,8 +236,8 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
             className={cn(
               "flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 text-[14px] font-bold transition-all active:scale-[0.98]",
               requestStatus === "pending"
-                ? "border border-zinc-700 bg-zinc-900 text-zinc-400"
-                : "bg-amber-400 text-zinc-950 shadow-[0_0_28px_rgba(251,191,36,0.4)] hover:bg-amber-300"
+                ? "border border-gray-200 bg-gray-50 text-slate-400"
+                : "bg-pink-400 text-white shadow-[0_0_28px_rgba(244,114,182,0.3)] hover:bg-pink-300"
             )}
           >
             {requestStatus === "pending" ? (
@@ -269,26 +274,26 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm"
+              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
               onClick={closeSheet}
             />
             <motion.div
               initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-white/10 bg-zinc-950 px-5"
+              className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-gray-200 bg-white px-5"
               style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" }}
             >
               {/* Handle */}
               <div className="flex justify-center pt-3 pb-1">
-                <div className="h-1 w-10 rounded-full bg-zinc-700" />
+                <div className="h-1 w-10 rounded-full bg-gray-300" />
               </div>
 
               {/* Header */}
-              <div className="flex items-center gap-3 py-4 border-b border-white/5">
+              <div className="flex items-center gap-3 py-4 border-b border-gray-200">
                 {step === "compose" && hasExternalContact && (
                   <button
                     onClick={() => setStep("options")}
-                    className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                    className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 text-slate-500 hover:text-slate-700"
                   >
                     <ChevronRight size={14} className="rotate-180" />
                   </button>
@@ -296,29 +301,29 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
                 <div className="flex-1">
                   {step === "options" && (
                     <>
-                      <p className="text-[16px] font-semibold text-white">Contact</p>
-                      <p className="mt-0.5 text-[12px] text-zinc-500">Reach out to @{username}</p>
+                      <p className="text-[16px] font-semibold text-slate-800">{t("eb_contact")}</p>
+                      <p className="mt-0.5 text-[12px] text-slate-400">{t("eb_reach_out").replace("{username}", username)}</p>
                     </>
                   )}
                   {step === "compose" && (
                     <>
-                      <p className="text-[16px] font-semibold text-white">Message Request</p>
-                      <p className="mt-0.5 text-[12px] text-zinc-500">Introduce yourself to @{username}</p>
+                      <p className="text-[16px] font-semibold text-slate-800">{t("eb_message_request")}</p>
+                      <p className="mt-0.5 text-[12px] text-slate-400">{t("eb_introduce_yourself").replace("{username}", username)}</p>
                     </>
                   )}
                   {step === "sending" && (
-                    <p className="text-[16px] font-semibold text-white">Sending request...</p>
+                    <p className="text-[16px] font-semibold text-slate-800">{t("eb_sending_request")}</p>
                   )}
                   {step === "sent" && (
-                    <p className="text-[16px] font-semibold text-white">Request sent!</p>
+                    <p className="text-[16px] font-semibold text-slate-800">{t("eb_request_sent")}</p>
                   )}
                   {step === "pending" && (
-                    <p className="text-[16px] font-semibold text-white">Request pending</p>
+                    <p className="text-[16px] font-semibold text-slate-800">{t("eb_request_pending_title")}</p>
                   )}
                 </div>
                 <button
                   onClick={closeSheet}
-                  className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                  className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 text-slate-500 hover:text-slate-700"
                 >
                   <X size={14} />
                 </button>
@@ -338,18 +343,18 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
                       <button
                         key={label}
                         onClick={action}
-                        className={`flex w-full items-center gap-4 rounded-2xl border ${border} bg-zinc-900/60 px-4 py-4 text-left transition-all active:scale-[0.99] hover:opacity-90`}
+                        className={`flex w-full items-center gap-4 rounded-2xl border ${border} bg-gray-50 px-4 py-4 text-left transition-all active:scale-[0.99] hover:opacity-90`}
                       >
                         <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${iconBg} ${color}`}>
                           <Icon size={19} />
                         </div>
                         <div className="flex-1">
                           <p className={`text-[14px] font-semibold ${color}`}>{label}</p>
-                          <p className="text-[12px] text-zinc-500">{sub}</p>
+                          <p className="text-[12px] text-slate-400">{sub}</p>
                         </div>
                         {external
-                          ? <ExternalLink size={14} className="flex-shrink-0 text-zinc-600" />
-                          : <ChevronRight size={15} className="flex-shrink-0 text-zinc-600" />
+                          ? <ExternalLink size={14} className="flex-shrink-0 text-slate-300" />
+                          : <ChevronRight size={15} className="flex-shrink-0 text-slate-300" />
                         }
                       </button>
                     ))}
@@ -364,19 +369,19 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
                     exit={{ opacity: 0, x: 16 }} transition={{ duration: 0.16 }}
                     className="py-4"
                   >
-                    <div className="rounded-2xl border border-white/5 bg-zinc-900/50 p-1">
+                    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-1">
                       <textarea
                         autoFocus
-                        placeholder={`Hi ${username}, I'd love to connect...`}
+                        placeholder={t("eb_compose_placeholder").replace("{username}", username)}
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         maxLength={500}
                         rows={4}
-                        className="w-full resize-none rounded-xl bg-transparent px-3 py-3 text-[14px] text-zinc-100 placeholder-zinc-600 outline-none"
+                        className="w-full resize-none rounded-xl bg-transparent px-3 py-3 text-[14px] text-slate-700 placeholder-slate-300 outline-none"
                       />
                       <div className="flex items-center justify-between px-3 pb-2">
-                        <p className="text-[10px] text-zinc-600">{message.length}/500</p>
-                        <p className="text-[10px] text-zinc-600">Private &amp; secure</p>
+                        <p className="text-[10px] text-slate-300">{message.length}/500</p>
+                        <p className="text-[10px] text-slate-300">{t("eb_private_secure")}</p>
                       </div>
                     </div>
 
@@ -387,9 +392,9 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
                     <button
                       onClick={handleSend}
                       disabled={!message.trim()}
-                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-3.5 text-[14px] font-bold text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:bg-amber-300 active:scale-[0.99] disabled:opacity-40"
+                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-pink-400 py-3.5 text-[14px] font-bold text-white shadow-[0_0_20px_rgba(244,114,182,0.2)] transition-all hover:bg-pink-300 active:scale-[0.99] disabled:opacity-40"
                     >
-                      <Send size={15} strokeWidth={2.5} /> Send Request
+                      <Send size={15} strokeWidth={2.5} /> {t("eb_send_request")}
                     </button>
                   </motion.div>
                 )}
@@ -401,8 +406,8 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                     className="flex flex-col items-center gap-4 py-10 text-center"
                   >
-                    <Loader2 size={32} className="animate-spin text-amber-400" />
-                    <p className="text-[14px] text-zinc-400">Sending your request...</p>
+                    <Loader2 size={32} className="animate-spin text-pink-400" />
+                    <p className="text-[14px] text-slate-500">{t("eb_sending_your_request")}</p>
                   </motion.div>
                 )}
 
@@ -414,21 +419,20 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
                     transition={{ duration: 0.2 }}
                     className="flex flex-col items-center gap-4 py-10 text-center"
                   >
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-400/10">
-                      <CheckCircle size={32} className="text-amber-400" />
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-pink-50">
+                      <CheckCircle size={32} className="text-pink-500" />
                     </div>
                     <div>
-                      <p className="text-[17px] font-semibold text-white">Request sent!</p>
-                      <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500">
-                        @{username} will review your message request.
-                        You&apos;ll be notified when they respond.
+                      <p className="text-[17px] font-semibold text-slate-800">{t("eb_request_sent")}</p>
+                      <p className="mt-1.5 text-[13px] leading-relaxed text-slate-400">
+                        {t("eb_review_message").replace("{username}", username)}
                       </p>
                     </div>
                     <button
                       onClick={closeSheet}
-                      className="rounded-full border border-white/10 px-5 py-2.5 text-[13px] font-medium text-zinc-300 transition-all hover:border-white/20 hover:text-white"
+                      className="rounded-full border border-gray-200 px-5 py-2.5 text-[13px] font-medium text-slate-600 transition-all hover:border-gray-300 hover:text-slate-800"
                     >
-                      Close
+                      {t("eb_close")}
                     </button>
                   </motion.div>
                 )}
@@ -441,21 +445,20 @@ export function EnquireBar({ username, providerId, isOwnProfile, contactWhatsapp
                     transition={{ duration: 0.2 }}
                     className="flex flex-col items-center gap-4 py-10 text-center"
                   >
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-400/10">
-                      <Clock size={32} className="text-amber-400" />
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-pink-50">
+                      <Clock size={32} className="text-pink-500" />
                     </div>
                     <div>
-                      <p className="text-[17px] font-semibold text-white">Request pending</p>
-                      <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500">
-                        Your message request to @{username} is waiting for their approval.
-                        You&apos;ll be notified when they respond.
+                      <p className="text-[17px] font-semibold text-slate-800">{t("eb_request_pending_title")}</p>
+                      <p className="mt-1.5 text-[13px] leading-relaxed text-slate-400">
+                        {t("eb_pending_message").replace("{username}", username)}
                       </p>
                     </div>
                     <button
                       onClick={closeSheet}
-                      className="rounded-full border border-white/10 px-5 py-2.5 text-[13px] font-medium text-zinc-300 transition-all hover:border-white/20 hover:text-white"
+                      className="rounded-full border border-gray-200 px-5 py-2.5 text-[13px] font-medium text-slate-600 transition-all hover:border-gray-300 hover:text-slate-800"
                     >
-                      Close
+                      {t("eb_close")}
                     </button>
                   </motion.div>
                 )}

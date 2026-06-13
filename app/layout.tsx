@@ -1,12 +1,23 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { BottomNav } from "@/components/ui/BottomNav";
 import { LocaleSwitcher } from "@/components/ui/LocaleSwitcher";
 import { ProfileProvider } from "@/contexts/ProfileContext";
-import { AmbientAura, Vignette } from "@/components/ui/AmbientEffects";
-import { OnboardingTour } from "@/components/ui/OnboardingTour";
-import { PushPermissionPrompt } from "@/components/ui/PushPermissionPrompt";
+import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
+import { ClientShell } from "@/components/ui/ClientShell";
+import { NativeShellInit } from "@/components/ui/NativeShellInit";
+
+// Pulled from NEXT_PUBLIC_SUPABASE_URL at build time so the preconnect always
+// matches the env the client is talking to.
+const SUPABASE_ORIGIN = (() => {
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    return url ? new URL(url).origin : null;
+  } catch {
+    return null;
+  }
+})();
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,9 +30,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cleopatra — Buy & Sell Locally",
+  title: "Cleopatra - Private Companion Discovery",
   description:
-    "A premium classifieds marketplace. Post ads, browse listings, and connect with buyers and sellers in your area.",
+    "Discover verified companion profiles with discreet verification, private messaging, and a privacy-first experience for adults.",
+};
+
+// `viewport-fit: cover` is what makes `env(safe-area-inset-*)` resolve to real
+// pixel values inside the Capacitor WebView. Without it the insets are 0 and
+// the bottom nav slides under the gesture bar.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#fdf2f8",
 };
 
 export default function RootLayout({
@@ -32,19 +53,31 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-50 pb-[60px]">
-        <ProfileProvider>
-          <AmbientAura />
-          <Vignette />
-          <div className="film-grain" aria-hidden="true" />
-          {children}
-          <BottomNav />
-          <OnboardingTour />
-          <PushPermissionPrompt />
-          <LocaleSwitcher />
-        </ProfileProvider>
+      <head>
+        {/* Preconnect to Supabase so the TLS handshake happens in parallel
+            with the HTML download — saves ~150-250ms on the first auth/data
+            request after navigation. */}
+        {SUPABASE_ORIGIN && (
+          <link rel="preconnect" href={SUPABASE_ORIGIN} crossOrigin="" />
+        )}
+      </head>
+      <body className="min-h-full flex flex-col bg-[#fafbfc] text-slate-800 pb-[60px]">
+        <a href="#main-content" className="skip-link">
+          Skip to content
+        </a>
+        <AccessibilityProvider>
+          <ProfileProvider>
+            <NativeShellInit />
+            <ClientShell />
+            <main id="main-content" tabIndex={-1} className="contents">
+              {children}
+            </main>
+            <BottomNav />
+            <LocaleSwitcher />
+          </ProfileProvider>
+        </AccessibilityProvider>
       </body>
     </html>
   );

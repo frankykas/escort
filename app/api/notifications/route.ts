@@ -6,16 +6,16 @@ import {
   markAllAsRead,
   deleteNotification,
 } from "@/lib/notifications";
+import { requireUser } from "@/lib/api-auth";
 
 // Get notifications or unread count
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const userId = searchParams.get("userId");
-  const view = searchParams.get("view") ?? "list"; // "list" | "count"
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const userId = auth.user.id;
 
-  if (!userId) {
-    return NextResponse.json({ error: "userId is required" }, { status: 400 });
-  }
+  const { searchParams } = new URL(req.url);
+  const view = searchParams.get("view") ?? "list"; // "list" | "count"
 
   if (view === "count") {
     const count = await getUnreadCount(userId);
@@ -32,15 +32,19 @@ export async function GET(req: NextRequest) {
 
 // Mark as read / mark all as read / delete
 export async function PATCH(req: NextRequest) {
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const userId = auth.user.id;
+
   const body = await req.json();
-  const { action, notificationId, userId } = body;
+  const { action, notificationId } = body;
 
   if (action === "read" && notificationId) {
     await markAsRead(notificationId);
     return NextResponse.json({ ok: true });
   }
 
-  if (action === "read_all" && userId) {
+  if (action === "read_all") {
     await markAllAsRead(userId);
     return NextResponse.json({ ok: true });
   }

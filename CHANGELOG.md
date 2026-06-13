@@ -4,6 +4,98 @@ A summary of everything we've built and improved, newest first.
 
 ---
 
+## 3 June 2026 — Free Subscriptions + Feed Fix
+
+### What's New
+- **Free subscriptions** — creators can now offer a **$0 subscription** (a "Free subscription" toggle on the subscription-tier screen). Fans subscribe with one tap (no payment) and the creator monetizes through pay-per-view content and tips instead — matching OnlyFans' popular free-subscription model. Paid subscriptions work exactly as before.
+
+### Bug Fixes
+- **Feed failed to load with a "could not choose the best candidate function" error** — an old version of the feed database function was still present alongside the new one, so the database couldn't decide which to call. Removed the stale version (migration 081); the feed loads normally again.
+
+---
+
+## 3 June 2026 — Creator Content Platform: All-Access Bundles + Compliance Hardening
+
+### What's New
+- **All-access bundle packages** — A single subscription that unlocks the subscribers-only content of *every* creator on the platform. Users browse and subscribe at **`/bundles`**; admins create and manage bundles at `/admin/bundles`. A bundle holder automatically sees every creator's subscriber-only posts unlocked in the feed (pay-per-view items and live-show tickets remain separate one-off purchases). Bundle revenue is pooled — fair per-creator revenue-sharing based on engagement is a planned follow-up.
+
+### Compliance hardening
+- **Region blocking for adult content** — Adult (suggestive/explicit) content can now be withheld entirely in configured countries via `ADULT_BLOCKED_COUNTRIES`, enforced in both the feed and the media endpoint based on the request's country.
+- **2257-style records on explicit posts** — When marking a post explicit, creators can now list everyone appearing (by @username) and attach a consent/release document; both are stored with the post's compliance record and surfaced to admins in the review queue (with performer count + "consent doc attached" indicators).
+- **CSAM scanning hook** — Added the server-side integration seam and an internal scan endpoint that quarantines flagged media. Detection requires wiring a licensed provider (PhotoDNA/Thorn/Hive); until then, human moderation remains the safeguard.
+
+---
+
+## 3 June 2026 — Creator Content Platform: Ticketed Live Shows (M5)
+
+### What's New
+- **Live shows** — Creators can broadcast live video to their audience. Tap **Go live** (`/live/new`), set a title and an optional **ticket price**, and start streaming from your camera. Viewers browse currently-live shows at **`/live`**, buy a ticket through the crypto checkout if the show is paid (free shows join instantly), then watch in real time and **tip during the stream**. The host sees a live viewer count and can end the show anytime. Built on LiveKit (the same realtime tech already used for chat), with tickets and tips flowing through the existing payments + earnings system. Ships behind a new `USE_LIVE_SHOWS` flag (off by default).
+
+---
+
+## 3 June 2026 — Creator Content Platform: Paid DMs + Payout Automation (M3c)
+
+### What's New
+- **Pay-per-view direct messages** — Creators can send a **locked photo** in a DM with a price: tap the lock icon next to the photo button, set a price, and send. The recipient sees a tasteful "Locked photo" bubble with an **Unlock · CA$X** button; after paying, the photo reveals (and the creator's balance is credited like any other sale). Locked media is stored privately and only ever served through a short-lived, permission-checked link — it's never broadcast over the live chat connection, so it can't leak to someone who hasn't paid. The sender always sees their own content.
+- **Automatic payout maturation** — Confirmed earnings now move from *pending* to *withdrawable* on a schedule (hourly), once the hold window passes — no manual step required (uses pg_cron).
+- **Admin Payram health check** — A new admin-only diagnostic endpoint reports whether the Payram payment gateway is configured and reachable, to confirm the integration once the server is deployed.
+
+---
+
+## 3 June 2026 — Creator Content Platform: Age Gate & Compliance (M4)
+
+### What's New
+- **Age-gating and explicit-content moderation (required before launch)** — Put the safety rails in place for tiered adult content. **Viewers** only see suggestive/explicit posts if they're age-verified AND have switched on "Show adult content" in Privacy settings (the toggle is locked until age verification is done); everyone else — and anyone logged out — sees an SFW-only feed. This is enforced in two places so it can't be bypassed: the feed query and the secure media endpoint both re-check eligibility. **Creators** can't mark a post explicit unless they're age-verified, and must tick a consent attestation (everyone appearing is 18+ and has consented). **Explicit posts are held for review** — they stay hidden from the feed until an admin approves them in a new **Explicit content review** queue in the admin dashboard, backed by a 2257-style compliance record per post. (Follow-ups before scale: performer-ID/consent-document capture, automated CSAM scanning, and region-based SFW-only enforcement.)
+
+---
+
+## 3 June 2026 — Creator Content Platform: Premium Posts in the Feed (M3b)
+
+### What's New
+- **Pay-per-view & subscriber-only posts now work in the feed** — Creators can post premium content directly from the composer: choose **Public**, **Subscribers-only**, or **Pay-per-view** (with a price), plus a content rating (SFW / Suggestive / Explicit). Premium media uploads to a **private storage bucket** and never gets a public link. In the feed, locked posts show a tasteful blurred card with an **Unlock · CA$X** button (pay-per-view) or a **Subscribe to view** link; once a viewer subscribes or unlocks, the real media loads through a secure, expiring link that's re-checked on the server every time. Viewers' own posts and already-unlocked content show normally. (Paid direct-message attachments are coming in a follow-up.)
+
+### What's New
+- **Tips, pay-per-view DMs, and creator payouts (behind the feature flag)** — Built out the ways creators earn and cash out on the premium layer. **Tips:** fans can send a one-off tip (preset or custom amount) to any creator via a polished bottom-sheet. **Paid DMs:** messages can be locked behind a price, unlocked individually by the recipient. **Payouts:** every confirmed payment now credits the creator's balance, which moves from *pending* to *available* after a hold window (a safety buffer against refunds/chargebacks); creators can then request a withdrawal. A new **Earnings dashboard** (`/profile/earnings`) shows available / pending / lifetime totals and full payout history. All amounts remain server-authoritative, and the payment-confirmation logic stays fully idempotent. Backend: new `tips` and `payouts` tables, balance maturation + payout RPCs, and paid-DM columns on messages.
+
+### Wired into the app
+- **Paid subscribe** — the Subscribe button on a creator's profile now shows the monthly price (e.g. "Subscribe · CA$20/mo") and opens a PayRam checkout; it falls back to the old free subscribe when the creator layer is off. Also fixed a latent bug where the "already subscribed?" check looked at a column that doesn't exist, so the button could wrongly show as not-subscribed.
+- **Send a tip** — a Tip button on creator profiles opens the tip sheet.
+- **Cancel subscription** — subscribers can cancel from `/profile/subscriptions`; access continues until the paid period ends rather than cutting off immediately.
+- **Earnings menu entry** — creators get an Earnings link in their profile menu.
+
+---
+
+## 3 June 2026 — Creator Content Platform: Payments (M2)
+
+### What's New
+- **Crypto payments wired up via Payram (still behind the feature flag)** — Built the first end-to-end money flow for the premium creator layer using **Payram**, a self-hosted, non-custodial crypto payment gateway (accepts USDT/USDC/BTC/ETH, 0% processing fees, no third-party KYC). A new payments engine records every transaction in a single source-of-truth `payments` table, opens a Payram checkout page, and listens for Payram's confirmation webhook to **activate subscriptions**, **record pay-per-view unlocks**, and **credit the creator's earnings balance** — all idempotently, so duplicate/retried webhooks can never double-charge or double-grant. Amounts are always calculated server-side from the database (never trusted from the browser). The processor sits behind a swappable interface, so a different gateway can be dropped in later without touching the rest of the app. Setup steps and env vars are documented in `docs/onlyfans-plan.md` and `.env.example`.
+
+---
+
+## 2 June 2026 — Creator Content Platform: Foundations (M1)
+
+### What's New
+- **Premium creator-content layer — foundations laid (behind a feature flag)** — Began building an OnlyFans-style premium content system on top of the existing feed/subscription infrastructure. This first milestone is infrastructure only, shipped dark behind the new `USE_CREATOR_CONTENT` flag (off by default), so nothing changes for users yet. It adds: a **private `premium-content` storage bucket** (paywalled media is never publicly readable), a **content rating field** (SFW / suggestive / explicit) on posts to power age-gating, a consumer **adult-content opt-in** setting, an **entitlement engine** (`lib/access.ts`) that is the single gate deciding who can view paid content, and a **secure media endpoint** (`/api/media/[postId]`) that hands out short-lived (60-second) signed links only to subscribers, buyers, or the creator. Reuses the existing subscriptions and pay-per-view (`content_unlocks`) tables rather than duplicating them. Full roadmap (Payram payments, paid DMs, tips, payouts, live shows, compliance) documented in `docs/onlyfans-plan.md`.
+
+---
+
+## 22 April 2026 — Free Listings Promo, KYC Onboarding Step, Credit Bug Fix
+
+### What's New
+- **All listings are now FREE (limited time launch promo)** — Switched from "first listing free" to "all listings free." Provider listing creation and relisting cost 0 credits across the app. Credits remain required only for premium placements (Bump and Star).
+- **KYC verification reminder during signup** — Added a new step in the provider onboarding flow, surfaced right after the listing card, that explains the gold verified badge benefits and offers a one-tap CTA to start ID verification (or skip and verify later). Card now emphasizes that the check is **free**, takes **under 2 minutes**, replaces the usual photo-with-paper verification, and includes a privacy footnote: **we do NOT keep ANY verification data**.
+
+### Improvements
+- **Credit strings fully translated to French** — The Billing & Credits page, Packages page, and Provider Dashboard credit row are now fully localized. Previously English-only labels like "X credits left", "Buy More", "Your balance", "Credits Available", "Purchase History", "Best Value", "Expired/Active", and the Stripe payment notice now render in French when the FR locale is active. Dates in the credits area also follow the user's locale.
+- **KYC / ID verification page fully translated to French** — The entire `/profile/verify` screen (header, hero title/body for all three states, "How it works" steps, benefits list, privacy note, and the "Verification usually takes under 2 minutes" badge) now renders in French when the FR locale is active. Previously every label on this page was hardcoded English regardless of locale.
+
+### Bug Fixes
+- **"Insufficient credits" error when bumping/starring with a non-zero balance** — Welcome credits and admin grants only updated the denormalized `profiles.post_credits_balance` without creating a backing row in the purchase ledger. The `deduct_post_credit` RPC now falls back to deducting from the denormalized balance when the ledger is empty, so the 100 welcome credits actually work.
+- **Avatar/profile picture upload failures** — Uploads were silently getting stuck in three ways: (1) HEIC photos from iPhones crashed the compression step with no try/catch, leaving the UI spinning forever; (2) the storage path's file extension was derived from the original filename rather than the compressed file's MIME type, producing garbage extensions like `avatar.foo` for files with no extension; (3) the `avatars` storage `UPDATE` RLS policy was missing its `WITH CHECK` clause, which caused `upsert: true` to be rejected when overwriting an existing avatar. All three are fixed: compression now gracefully falls back to the original file on decode errors, uploads now use a timestamped filename (auto cache-busting, no upsert needed), and the RLS policy is now well-formed.
+- **Persona KYC verification "Cannot access camera" error** — The site's `Permissions-Policy` header was set to `camera=()` and `microphone=()`, which disables those features in **all** frames including Persona's verification iframe. The user never even got the browser camera prompt — the request was blocked at the policy layer before reaching the OS. Switched both to `camera=*` / `microphone=*` so any frame may *request* access (the browser's user-permission prompt still gates actual access, so this doesn't weaken security).
+
+---
+
 ## 31 March 2026 — UX Improvements, Infinite Scroll, Relist System
 
 ### What's New

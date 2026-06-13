@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
 import { supabase } from "@/lib/supabase/client";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 type Purchase = {
   id: string;
@@ -21,6 +22,7 @@ type Purchase = {
 
 export default function BillingPage() {
   const router = useRouter();
+  const { t, locale } = useTranslation();
   const { user, checked } = useSession();
   const [creditBalance, setCreditBalance] = useState(0);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
@@ -57,66 +59,66 @@ export default function BillingPage() {
   const totalUsed = purchases.reduce((sum, p) => sum + (p.credits_purchased - p.credits_remaining), 0);
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-24">
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/5 bg-zinc-950/90 px-4 py-3 backdrop-blur-xl">
+    <div className="min-h-screen bg-[#fafbfc] pb-24">
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-xl">
         <button
           onClick={() => router.back()}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-gray-100 hover:text-slate-700"
         >
           <ChevronLeft size={20} />
         </button>
-        <span className="text-[15px] font-semibold text-white">Billing &amp; Credits</span>
+        <span className="text-[15px] font-semibold text-slate-800">{t("credits_header_billing")}</span>
       </header>
 
       <div className="mx-auto max-w-lg px-4 pt-6 space-y-6">
 
         {/* Credit balance hero */}
-        <div className="rounded-2xl border border-amber-400/15 bg-gradient-to-br from-amber-400/5 to-transparent p-6 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-400/10">
-            <Coins size={28} className="text-amber-400" />
+        <div className="rounded-2xl border border-pink-200 bg-gradient-to-br from-pink-50 to-transparent p-6 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-pink-50">
+            <Coins size={28} className="text-pink-500" />
           </div>
-          <p className="mt-4 text-[36px] font-bold text-white leading-none">
+          <p className="mt-4 text-[36px] font-bold text-slate-800 leading-none">
             {loading ? "—" : creditBalance}
           </p>
-          <p className="mt-1 text-[14px] text-zinc-400">Credits Available</p>
+          <p className="mt-1 text-[14px] text-slate-500">{t("credits_available")}</p>
           <Link
             href="/profile/packages"
-            className="mt-4 inline-flex items-center gap-2 rounded-full bg-amber-400 px-6 py-3 text-[14px] font-bold text-zinc-950 transition hover:bg-amber-300 active:scale-[0.98]"
+            className="mt-4 inline-flex items-center gap-2 rounded-full bg-pink-400 px-6 py-3 text-[14px] font-bold text-white transition hover:bg-pink-300 active:scale-[0.98]"
           >
             <Package size={16} />
-            Buy Credits
+            {t("credits_buy")}
           </Link>
         </div>
 
         {/* Stats */}
         {!loading && (
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-white/5 bg-zinc-900 px-4 py-4">
+            <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4">
               <CreditCard size={14} className="text-sky-400" />
-              <p className="mt-2 text-[22px] font-bold text-white">{totalSpent}</p>
-              <p className="text-[11px] text-zinc-500">Credits purchased</p>
+              <p className="mt-2 text-[22px] font-bold text-slate-800">{totalSpent}</p>
+              <p className="text-[11px] text-slate-400">{t("credits_purchased")}</p>
             </div>
-            <div className="rounded-2xl border border-white/5 bg-zinc-900 px-4 py-4">
+            <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4">
               <CheckCircle size={14} className="text-emerald-400" />
-              <p className="mt-2 text-[22px] font-bold text-white">{totalUsed}</p>
-              <p className="text-[11px] text-zinc-500">Credits used</p>
+              <p className="mt-2 text-[22px] font-bold text-slate-800">{totalUsed}</p>
+              <p className="text-[11px] text-slate-400">{t("credits_used")}</p>
             </div>
           </div>
         )}
 
         {/* What credits are used for */}
         <div>
-          <p className="mb-3 px-1 text-[11px] font-medium uppercase tracking-widest text-zinc-600">Credits are used for</p>
-          <div className="rounded-2xl border border-white/5 bg-zinc-900 divide-y divide-white/5">
+          <p className="mb-3 px-1 text-[11px] font-medium uppercase tracking-widest text-slate-300">{t("credits_used_for_header")}</p>
+          <div className="rounded-2xl border border-gray-200 bg-white divide-y divide-gray-100">
             {[
-              { text: "Your first listing is always free", highlight: true },
-              { text: "Additional service listings (1 credit, live for 24h)" },
-              { text: "Relisting expired listings (1 credit)" },
-              { text: "Creating feed posts (1 credit each)" },
+              { text: t("billing_first_free"), highlight: true },
+              { text: t("credits_use_bump") },
+              { text: t("credits_use_star") },
+              { text: t("credits_use_post") },
             ].map(({ text, highlight }) => (
               <div key={text} className="flex items-center gap-3 px-4 py-3.5">
-                <CheckCircle size={14} className={`flex-shrink-0 ${highlight ? "text-amber-400 fill-amber-400/20" : "text-emerald-400 fill-emerald-400/20"}`} />
-                <span className={`text-[13px] ${highlight ? "text-amber-400 font-medium" : "text-zinc-300"}`}>{text}</span>
+                <CheckCircle size={14} className={`flex-shrink-0 ${highlight ? "text-pink-500 fill-pink-500/20" : "text-emerald-400 fill-emerald-400/20"}`} />
+                <span className={`text-[13px] ${highlight ? "text-pink-500 font-medium" : "text-slate-600"}`}>{text}</span>
               </div>
             ))}
           </div>
@@ -124,17 +126,17 @@ export default function BillingPage() {
 
         {/* Bump tiers */}
         <div>
-          <p className="mb-3 px-1 text-[11px] font-medium uppercase tracking-widest text-zinc-600">Promote your listings</p>
-          <div className="rounded-2xl border border-white/5 bg-zinc-900 divide-y divide-white/5">
+          <p className="mb-3 px-1 text-[11px] font-medium uppercase tracking-widest text-slate-300">{t("credits_promote_header")}</p>
+          <div className="rounded-2xl border border-gray-200 bg-white divide-y divide-gray-100">
             {[
               { tier: "Tier 1", credits: "1 credit", desc: "Explore Stories (24h)", color: "text-sky-400" },
               { tier: "Tier 2", credits: "2 credits", desc: "Stories + Similar Profiles (24h)", color: "text-violet-400" },
-              { tier: "Tier 3", credits: "3 credits", desc: "Stories + Similar Profiles + Feed (24h)", color: "text-amber-400" },
+              { tier: "Tier 3", credits: "3 credits", desc: "Stories + Similar Profiles + Feed (24h)", color: "text-pink-500" },
             ].map(({ tier, credits, desc, color }) => (
               <div key={tier} className="flex items-center gap-3 px-4 py-3.5">
                 <Megaphone size={14} className={`flex-shrink-0 ${color}`} />
                 <div className="flex-1">
-                  <span className="text-[13px] text-zinc-300">{tier} — {desc}</span>
+                  <span className="text-[13px] text-slate-600">{tier} — {desc}</span>
                 </div>
                 <span className={`text-[12px] font-semibold ${color}`}>{credits}</span>
               </div>
@@ -144,60 +146,60 @@ export default function BillingPage() {
 
         {/* Purchase history */}
         <div>
-          <p className="mb-3 px-1 text-[11px] font-medium uppercase tracking-widest text-zinc-600">
-            Purchase History
+          <p className="mb-3 px-1 text-[11px] font-medium uppercase tracking-widest text-slate-300">
+            {t("credits_history")}
           </p>
           {loading ? (
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-16 animate-pulse rounded-2xl bg-zinc-900" />
+                <div key={i} className="h-16 animate-pulse rounded-2xl bg-gray-100" />
               ))}
             </div>
           ) : purchases.length === 0 ? (
-            <div className="rounded-2xl border border-white/5 bg-zinc-900/50 px-4 py-6 text-center">
-              <Package size={20} className="mx-auto mb-2 text-zinc-700" />
-              <p className="text-[13px] text-zinc-500">No purchases yet</p>
+            <div className="rounded-2xl border border-gray-200 bg-white px-4 py-6 text-center">
+              <Package size={20} className="mx-auto mb-2 text-slate-300" />
+              <p className="text-[13px] text-slate-400">{t("credits_no_purchases")}</p>
               <Link
                 href="/profile/packages"
-                className="mt-2 inline-block text-[13px] font-medium text-amber-400 hover:text-amber-300"
+                className="mt-2 inline-block text-[13px] font-medium text-pink-500 hover:text-pink-400"
               >
-                Browse packages
+                {t("credits_browse_packages")}
               </Link>
             </div>
           ) : (
             <div className="space-y-2">
               {purchases.map((p) => {
                 const isExpired = p.expires_at && new Date(p.expires_at) < new Date();
-                const packageName = (p.posting_packages as { name: string } | null)?.name ?? "Credits";
+                const packageName = (p.posting_packages as { name: string } | null)?.name ?? t("credits_fallback_name");
                 return (
                   <div
                     key={p.id}
-                    className="flex items-center gap-3 rounded-2xl border border-white/5 bg-zinc-900 px-4 py-3"
+                    className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3"
                   >
-                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-amber-400/10">
-                      <Package size={15} className="text-amber-400" />
+                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-pink-50">
+                      <Package size={15} className="text-pink-500" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-white truncate">{packageName}</p>
-                      <p className="text-[11px] text-zinc-500">
-                        {new Date(p.purchased_at).toLocaleDateString("en-CA", {
+                      <p className="text-[13px] font-semibold text-slate-800 truncate">{packageName}</p>
+                      <p className="text-[11px] text-slate-400">
+                        {new Date(p.purchased_at).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", {
                           month: "short", day: "numeric", year: "numeric",
                         })}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[13px] font-semibold text-white">
+                      <p className="text-[13px] font-semibold text-slate-800">
                         {p.credits_remaining}/{p.credits_purchased}
                       </p>
-                      <p className="text-[10px] text-zinc-500">
+                      <p className="text-[10px] text-slate-400">
                         {isExpired ? (
-                          <span className="text-red-400">Expired</span>
+                          <span className="text-red-400">{t("billing_expired")}</span>
                         ) : p.expires_at ? (
                           <span className="flex items-center gap-0.5 justify-end">
-                            <Clock size={8} /> Active
+                            <Clock size={8} /> {t("billing_active")}
                           </span>
                         ) : (
-                          "No expiry"
+                          t("billing_no_expiry")
                         )}
                       </p>
                     </div>
@@ -209,10 +211,10 @@ export default function BillingPage() {
         </div>
 
         {/* Stripe connect info */}
-        <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-zinc-900/50 px-4 py-4">
-          <ShieldCheck size={16} className="flex-shrink-0 text-zinc-500" />
-          <p className="text-[12px] text-zinc-500 leading-relaxed">
-            All payments are processed securely by Stripe. Cleopatra never stores card details.
+        <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-4">
+          <ShieldCheck size={16} className="flex-shrink-0 text-slate-400" />
+          <p className="text-[12px] text-slate-400 leading-relaxed">
+            {t("billing_stripe_notice")}
           </p>
         </div>
       </div>

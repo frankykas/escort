@@ -10,7 +10,7 @@ export function BackButton({ className }: { className?: string }) {
     <button
       onClick={() => router.back()}
       className={cn(
-        "flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white",
+        "flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-gray-100 hover:text-slate-700",
         className
       )}
       aria-label="Go back"

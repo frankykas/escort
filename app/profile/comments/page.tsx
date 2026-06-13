@@ -129,21 +129,21 @@ export default function CommentModerationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-20">
+    <div className="min-h-screen bg-[#fafbfc] pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-white/5 bg-zinc-950/90 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-[#fafbfc]/90 backdrop-blur-xl">
         <div className="flex items-center justify-between px-4 py-3 max-w-lg mx-auto">
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.back()}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-gray-100 hover:text-slate-800"
             >
               <ChevronLeft size={20} />
             </button>
             <div>
-              <h1 className="text-[15px] font-semibold text-white">Comment Moderation</h1>
+              <h1 className="text-[15px] font-semibold text-slate-800">Comment Moderation</h1>
               {!loading && comments.length > 0 && (
-                <p className="text-[11px] text-zinc-500">{comments.length} pending</p>
+                <p className="text-[11px] text-slate-500">{comments.length} pending</p>
               )}
             </div>
           </div>
@@ -151,7 +151,7 @@ export default function CommentModerationPage() {
             <button
               onClick={handleApproveAll}
               disabled={actingOn.size > 0}
-              className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 text-[11px] font-semibold text-emerald-400 transition hover:bg-emerald-500/20 disabled:opacity-40"
+              className="flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-[11px] font-semibold text-emerald-500 transition hover:bg-emerald-100 disabled:opacity-40"
             >
               <CheckCheck size={13} />
               Approve All
@@ -163,20 +163,20 @@ export default function CommentModerationPage() {
       <div className="mx-auto max-w-lg">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 size={24} className="animate-spin text-zinc-500" />
+            <Loader2 size={24} className="animate-spin text-slate-400" />
           </div>
         ) : comments.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-            <div className="w-16 h-16 rounded-full bg-zinc-900 flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mb-4">
               <ShieldCheck size={28} className="text-emerald-500" />
             </div>
-            <p className="text-[15px] font-semibold text-white">All clear!</p>
-            <p className="text-[13px] text-zinc-500 mt-1">
+            <p className="text-[15px] font-semibold text-slate-800">All clear!</p>
+            <p className="text-[13px] text-slate-500 mt-1">
               No comments waiting for approval.
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-zinc-800/50">
+          <div className="divide-y divide-gray-200">
             <AnimatePresence>
               {comments.map((c) => {
                 const acting = actingOn.has(c.comment_id);
@@ -191,7 +191,7 @@ export default function CommentModerationPage() {
                     {/* Post context */}
                     <div className="flex items-center gap-2.5 mb-3">
                       {c.post_media_url ? (
-                        <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-zinc-800">
+                        <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
                           <Image
                             src={c.post_media_url}
                             alt="Post"
@@ -201,11 +201,11 @@ export default function CommentModerationPage() {
                           />
                         </div>
                       ) : (
-                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-zinc-800">
-                          <MessageCircle size={16} className="text-zinc-500" />
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                          <MessageCircle size={16} className="text-slate-500" />
                         </div>
                       )}
-                      <p className="text-[12px] text-zinc-500 line-clamp-1 flex-1">
+                      <p className="text-[12px] text-slate-500 line-clamp-1 flex-1">
                         On: {c.post_caption ? `"${c.post_caption}"` : "your post"}
                       </p>
                     </div>
@@ -224,7 +224,7 @@ export default function CommentModerationPage() {
                             />
                           </div>
                         ) : (
-                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-sm font-bold text-zinc-400">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-sm font-bold text-slate-500">
                             {c.commenter_username[0].toUpperCase()}
                           </div>
                         )}
@@ -233,15 +233,15 @@ export default function CommentModerationPage() {
                         <div className="flex items-center gap-2">
                           <Link
                             href={`/u/${c.commenter_username}`}
-                            className="text-[13px] font-semibold text-white hover:text-zinc-300"
+                            className="text-[13px] font-semibold text-slate-800 hover:text-pink-500"
                           >
                             @{c.commenter_username}
                           </Link>
-                          <span className="text-[11px] text-zinc-600">
+                          <span className="text-[11px] text-slate-400">
                             {timeAgo(c.comment_created)}
                           </span>
                         </div>
-                        <p className="mt-0.5 text-[13px] text-zinc-300 leading-relaxed">
+                        <p className="mt-0.5 text-[13px] text-slate-600 leading-relaxed">
                           {c.comment_body}
                         </p>
                       </div>
@@ -254,8 +254,8 @@ export default function CommentModerationPage() {
                         disabled={acting}
                         className={cn(
                           "flex items-center gap-1.5 rounded-xl border px-4 py-2 text-[12px] font-semibold transition-all",
-                          "border-emerald-500/20 bg-emerald-500/10 text-emerald-400",
-                          "hover:bg-emerald-500/20 active:scale-[0.97]",
+                          "border-emerald-200 bg-emerald-50 text-emerald-500",
+                          "hover:bg-emerald-100 active:scale-[0.97]",
                           "disabled:opacity-40"
                         )}
                       >
@@ -271,8 +271,8 @@ export default function CommentModerationPage() {
                         disabled={acting}
                         className={cn(
                           "flex items-center gap-1.5 rounded-xl border px-4 py-2 text-[12px] font-semibold transition-all",
-                          "border-red-500/20 bg-red-500/5 text-red-400",
-                          "hover:bg-red-500/10 active:scale-[0.97]",
+                          "border-red-200 bg-red-50 text-red-500",
+                          "hover:bg-red-100 active:scale-[0.97]",
                           "disabled:opacity-40"
                         )}
                       >
@@ -288,7 +288,7 @@ export default function CommentModerationPage() {
               <div className="flex justify-center py-6">
                 <button
                   onClick={() => load(comments.length)}
-                  className="rounded-full border border-white/10 px-5 py-2 text-[13px] font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200"
+                  className="rounded-full border border-gray-200 px-5 py-2 text-[13px] font-medium text-slate-500 transition hover:bg-gray-100 hover:text-slate-800"
                 >
                   Load more
                 </button>

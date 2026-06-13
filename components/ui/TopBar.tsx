@@ -17,7 +17,7 @@ function TopBarInner() {
 
   return (
     <div className="fixed top-0 right-0 z-50 p-2 pointer-events-none">
-      <div className="pointer-events-auto bg-black/60 backdrop-blur-md rounded-full p-1.5 ring-1 ring-zinc-800/50">
+      <div className="pointer-events-auto bg-white/80 backdrop-blur-md rounded-full p-1.5 ring-1 ring-gray-200 shadow-sm">
         <NotificationBell />
       </div>
     </div>

@@ -18,18 +18,18 @@ export function CategoryGrid() {
   const displayCategories = expanded ? CATEGORIES : featured;
 
   return (
-    <div className="border-b border-white/5 bg-black">
+    <div className="border-b border-gray-200 bg-white">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div className="flex items-center gap-2">
-          <Grid3X3 size={13} className="text-[#FCBA03]" />
-          <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
+          <Grid3X3 size={13} className="text-pink-500" />
+          <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
             {t("cat_browse")}
           </span>
         </div>
         <Link
           href="/categories"
-          className="flex items-center gap-0.5 text-[11px] font-medium text-[#FCBA03] transition-colors hover:text-[#fdd44b]"
+          className="flex items-center gap-0.5 text-[11px] font-medium text-pink-500 transition-colors hover:text-pink-400"
         >
           {t("cat_view_all")}
           <ChevronRight size={12} />
@@ -47,7 +47,7 @@ export function CategoryGrid() {
       {!expanded && CATEGORIES.length > featured.length && (
         <button
           onClick={() => setExpanded(true)}
-          className="flex w-full items-center justify-center gap-1 pb-3 text-[11px] font-medium text-zinc-500 transition-colors hover:text-zinc-300"
+          className="flex w-full items-center justify-center gap-1 pb-3 text-[11px] font-medium text-slate-400 transition-colors hover:text-slate-600"
         >
           {t("cat_show_all")} {CATEGORIES.length} {t("cat_categories")}
           <ChevronDown size={12} />
@@ -72,7 +72,7 @@ function CategoryCard({ category, index }: { category: Category; index: number }
           className={cn(
             "relative flex h-[72px] items-end overflow-hidden rounded-xl bg-gradient-to-br p-2.5",
             category.color,
-            "transition-all duration-300 group-hover:shadow-lg group-hover:shadow-black/40 group-active:scale-[0.97]"
+            "transition-all duration-300 group-hover:shadow-lg group-hover:shadow-gray-300/40 group-active:scale-[0.97]"
           )}
         >
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
@@ -96,15 +96,15 @@ export function CategoryStrip() {
   const featured = getFeaturedCategories();
 
   return (
-    <div className="border-b border-white/5">
+    <div className="border-b border-gray-200">
       {/* Toggle header */}
       <button
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between px-4 py-3"
       >
         <div className="flex items-center gap-2">
-          <Grid3X3 size={13} className="text-[#FCBA03]" />
-          <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
+          <Grid3X3 size={13} className="text-pink-500" />
+          <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
             {t("cat_browse")}
           </span>
         </div>
@@ -112,7 +112,7 @@ export function CategoryStrip() {
           animate={{ rotate: open ? 180 : 0 }}
           transition={{ duration: 0.2 }}
         >
-          <ChevronDown size={14} className="text-zinc-600" />
+          <ChevronDown size={14} className="text-slate-300" />
         </motion.div>
       </button>
 
@@ -138,7 +138,7 @@ export function CategoryStrip() {
                     href={`/category/${cat.slug}`}
                     className="group flex items-center gap-2 rounded-lg py-2 transition-colors"
                   >
-                    <span className="text-[13px] text-zinc-500 transition-colors group-hover:text-zinc-300">
+                    <span className="text-[13px] text-slate-400 transition-colors group-hover:text-slate-600">
                       {cat.shortLabel}
                     </span>
                   </Link>
@@ -150,7 +150,7 @@ export function CategoryStrip() {
             <div className="px-5 pb-3">
               <Link
                 href="/categories"
-                className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#FCBA03] transition-colors hover:text-[#fdd44b]"
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-pink-500 transition-colors hover:text-pink-400"
               >
                 {t("cat_view_all")} {CATEGORIES.length} {t("cat_categories")}
                 <ChevronRight size={11} />
@@ -177,7 +177,7 @@ export function FullCategoryGrid() {
           transition={{ duration: 0.35, delay: i * 0.03, ease: "easeOut" }}
         >
           <Link href={`/category/${cat.slug}`} className="group block">
-            <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#141414] transition-all duration-300 group-hover:border-[#FCBA03]/20 group-hover:shadow-[0_0_24px_rgba(252,186,3,0.06)] group-active:scale-[0.98] glow-card">
+            <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all duration-300 group-hover:border-pink-300 group-hover:shadow-[0_0_24px_rgba(236,72,153,0.06)] group-active:scale-[0.98] glow-card">
               {/* Top accent line */}
               <div className={cn(
                 "h-[3px] w-full bg-gradient-to-r opacity-60 transition-opacity group-hover:opacity-100",
@@ -188,10 +188,10 @@ export function FullCategoryGrid() {
                 {/* Emoji + label row */}
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="text-[14px] font-semibold tracking-tight text-zinc-100 group-hover:text-white transition-colors">
+                    <p className="text-[14px] font-semibold tracking-tight text-slate-700 group-hover:text-slate-800 transition-colors">
                       {cat.shortLabel}
                     </p>
-                    <p className="mt-1 text-[11px] leading-relaxed text-zinc-600 line-clamp-2">
+                    <p className="mt-1 text-[11px] leading-relaxed text-slate-300 line-clamp-2">
                       {cat.description}
                     </p>
                   </div>
@@ -202,10 +202,10 @@ export function FullCategoryGrid() {
 
                 {/* Browse link */}
                 <div className="mt-3 flex items-center gap-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[#FCBA03]/70 group-hover:text-[#FCBA03] transition-colors">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-pink-400 group-hover:text-pink-500 transition-colors">
                     {t("cat_browse_cta")}
                   </span>
-                  <ChevronRight size={10} className="text-[#FCBA03]/50 group-hover:text-[#FCBA03] group-hover:translate-x-0.5 transition-all" />
+                  <ChevronRight size={10} className="text-pink-300 group-hover:text-pink-500 group-hover:translate-x-0.5 transition-all" />
                 </div>
               </div>
             </div>

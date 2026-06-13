@@ -21,7 +21,7 @@ import Link from "next/link";
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 20;
-const GOLD = "#FCBA03";
+const PINK = "#ec4899";
 
 const RADIUS_OPTIONS = [
   { label: "5 km", value: 5 },
@@ -260,12 +260,12 @@ export default function CategoryPage() {
   // ── Not found ──
   if (!category) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] pb-24">
-        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/5 bg-[#0a0a0a]/90 px-4 py-3 backdrop-blur-xl">
-          <button onClick={() => router.back()} className="text-zinc-400 hover:text-white transition">
+      <div className="min-h-screen bg-[#fafbfc] pb-24">
+        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-gray-200 bg-[#fafbfc]/90 px-4 py-3 backdrop-blur-xl">
+          <button onClick={() => router.back()} className="text-slate-500 hover:text-slate-800 transition">
             <ArrowLeft size={20} />
           </button>
-          <span className="text-[15px] font-semibold text-white">Category not found</span>
+          <span className="text-[15px] font-semibold text-slate-800">Category not found</span>
         </header>
         <EmptyState variant="no-results" />
         <BottomNav />
@@ -279,50 +279,50 @@ export default function CategoryPage() {
   const relatedCategories = CATEGORIES.filter((c) => c.slug !== slug).slice(0, 6);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pb-24">
+    <div className="min-h-screen bg-[#fafbfc] pb-24">
 
       {/* ══════════════════════════════════════════════════════════════════════
           HERO — dark, minimal, no colored gradients
           ════════════════════════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden bg-[#0e0e0e]">
+      <div className="relative overflow-hidden bg-white">
         {/* Ambient glow behind emoji */}
         <div
           className="pointer-events-none absolute -top-16 right-4 h-40 w-40 rounded-full blur-[70px] opacity-[0.07]"
-          style={{ background: GOLD }}
+          style={{ background: PINK }}
         />
 
         {/* Back button */}
         <header className="relative z-10 flex items-center gap-3 px-4 pt-4 pb-1">
           <button
             onClick={() => router.back()}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/8 bg-white/[0.03] text-zinc-400 backdrop-blur-md transition-all hover:border-white/15 hover:text-white active:scale-95"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-slate-500 backdrop-blur-md transition-all hover:border-gray-300 hover:text-slate-800 active:scale-95"
           >
             <ArrowLeft size={16} />
           </button>
 
           {/* Breadcrumb */}
-          <div className="flex items-center gap-1.5 text-[11px] text-zinc-600">
-            <Link href="/categories" className="hover:text-zinc-400 transition-colors">Categories</Link>
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+            <Link href="/categories" className="hover:text-slate-500 transition-colors">Categories</Link>
             <ChevronRight size={10} />
-            <span className="text-zinc-400">{category.shortLabel}</span>
+            <span className="text-slate-500">{category.shortLabel}</span>
           </div>
         </header>
 
         <div className="relative z-10 px-5 pb-6 pt-3">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h1 className="text-[22px] font-bold tracking-tight text-white">
+              <h1 className="text-[22px] font-bold tracking-tight text-slate-800">
                 {category.label}
               </h1>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500 max-w-[280px]">
+              <p className="mt-1.5 text-[13px] leading-relaxed text-slate-500 max-w-[280px]">
                 {category.description}
               </p>
               {!loading && (
-                <p className="mt-3 text-[12px] font-medium text-zinc-600">
-                  <span className="text-[#FCBA03]">{totalCount}</span>{" "}
+                <p className="mt-3 text-[12px] font-medium text-slate-400">
+                  <span className="text-pink-500">{totalCount}</span>{" "}
                   {totalCount === 1 ? "provider" : "providers"}
                   {cityQuery && (
-                    <span className="text-zinc-600"> near <span className="text-zinc-400">{cityQuery}</span></span>
+                    <span className="text-slate-400"> near <span className="text-slate-500">{cityQuery}</span></span>
                   )}
                 </p>
               )}
@@ -332,13 +332,13 @@ export default function CategoryPage() {
         </div>
 
         {/* Gold accent line */}
-        <div className="h-px bg-gradient-to-r from-transparent via-[#FCBA03]/25 to-transparent" />
+        <div className="h-px bg-gradient-to-r from-transparent via-pink-200 to-transparent" />
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════
           CONTROLS — sticky search, sort, radius, related
           ════════════════════════════════════════════════════════════════════ */}
-      <div className="sticky top-0 z-20 bg-[#0a0a0a]/95 backdrop-blur-xl">
+      <div className="sticky top-0 z-20 bg-[#fafbfc]/95 backdrop-blur-xl">
         {/* Search row */}
         <div className="flex items-center gap-2 px-4 py-3">
           {/* Near me */}
@@ -348,17 +348,17 @@ export default function CategoryPage() {
             className={cn(
               "flex flex-shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-[12px] font-medium transition-all disabled:opacity-40",
               isGeoActive
-                ? "border-[#FCBA03]/40 bg-[#FCBA03]/10 text-[#FCBA03]"
-                : "border-white/8 bg-[#141414] text-zinc-500 hover:border-[#FCBA03]/25 hover:text-[#FCBA03]"
+                ? "border-pink-300 bg-pink-50 text-pink-500"
+                : "border-gray-200 bg-white text-slate-500 hover:border-pink-200 hover:text-pink-500"
             )}
           >
-            {isGeoActive ? <Navigation size={12} className="fill-[#FCBA03]" /> : <MapPin size={13} />}
+            {isGeoActive ? <Navigation size={12} className="fill-pink-500" /> : <MapPin size={13} />}
             {geoLoading ? "..." : cityQuery || "Near me"}
             {isGeoActive && (
               <span
                 role="button"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); clearGeo(); }}
-                className="ml-0.5 text-[#FCBA03]/60 hover:text-[#FCBA03]"
+                className="ml-0.5 text-pink-400 hover:text-pink-500"
               >
                 <X size={11} />
               </span>
@@ -367,16 +367,16 @@ export default function CategoryPage() {
 
           {/* Search input */}
           <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-600" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
             <input
               type="text"
               placeholder="Search providers..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-full border border-white/8 bg-[#141414] py-2 pl-8 pr-7 text-[13px] text-zinc-200 placeholder-zinc-600 outline-none transition-all focus:border-[#FCBA03]/30 focus:ring-1 focus:ring-[#FCBA03]/10"
+              className="w-full rounded-full border border-gray-200 bg-white py-2 pl-8 pr-7 text-[13px] text-slate-700 placeholder-slate-400 outline-none transition-all focus:border-pink-300 focus:ring-1 focus:ring-pink-200"
             />
             {searchQuery && (
-              <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-300 transition">
+              <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition">
                 <X size={13} />
               </button>
             )}
@@ -389,7 +389,7 @@ export default function CategoryPage() {
           <div className="relative flex-shrink-0">
             <button
               onClick={() => { setSortOpen(!sortOpen); setRadiusOpen(false); }}
-              className="flex items-center gap-1.5 rounded-full border border-white/8 bg-[#141414] px-3 py-1.5 text-[11px] font-medium text-zinc-500 transition-all hover:border-white/15 hover:text-zinc-300"
+              className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-500 transition-all hover:border-gray-300 hover:text-slate-600"
             >
               <SlidersHorizontal size={11} />
               {currentSort?.label}
@@ -399,7 +399,7 @@ export default function CategoryPage() {
             {sortOpen && (
               <>
                 <div className="fixed inset-0 z-30" onClick={() => setSortOpen(false)} />
-                <div className="absolute left-0 top-full z-40 mt-1.5 w-48 overflow-hidden rounded-xl border border-white/8 bg-[#161616] shadow-2xl shadow-black/60">
+                <div className="absolute left-0 top-full z-40 mt-1.5 w-48 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl shadow-slate-200/60">
                   {SORT_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
@@ -407,8 +407,8 @@ export default function CategoryPage() {
                       className={cn(
                         "flex w-full px-4 py-2.5 text-[12px] transition-colors",
                         sortBy === opt.value
-                          ? "bg-[#FCBA03]/8 text-[#FCBA03] font-semibold"
-                          : "text-zinc-500 hover:bg-white/[0.03] hover:text-zinc-300"
+                          ? "bg-pink-50 text-pink-500 font-semibold"
+                          : "text-slate-500 hover:bg-gray-50 hover:text-slate-600"
                       )}
                     >
                       {opt.label}
@@ -424,9 +424,9 @@ export default function CategoryPage() {
             <div className="relative flex-shrink-0">
               <button
                 onClick={() => { setRadiusOpen(!radiusOpen); setSortOpen(false); }}
-                className="flex items-center gap-1.5 rounded-full border border-[#FCBA03]/25 bg-[#FCBA03]/8 px-3 py-1.5 text-[11px] font-medium text-[#FCBA03] transition-all hover:bg-[#FCBA03]/12"
+                className="flex items-center gap-1.5 rounded-full border border-pink-200 bg-pink-50 px-3 py-1.5 text-[11px] font-medium text-pink-500 transition-all hover:bg-pink-100"
               >
-                <Navigation size={10} className="fill-[#FCBA03]" />
+                <Navigation size={10} className="fill-pink-500" />
                 {currentRadius?.label}
                 <ChevronDown size={10} className={cn("transition-transform", radiusOpen && "rotate-180")} />
               </button>
@@ -434,7 +434,7 @@ export default function CategoryPage() {
               {radiusOpen && (
                 <>
                   <div className="fixed inset-0 z-30" onClick={() => setRadiusOpen(false)} />
-                  <div className="absolute left-0 top-full z-40 mt-1.5 w-40 overflow-hidden rounded-xl border border-white/8 bg-[#161616] shadow-2xl shadow-black/60">
+                  <div className="absolute left-0 top-full z-40 mt-1.5 w-40 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl shadow-slate-200/60">
                     {RADIUS_OPTIONS.map((opt) => (
                       <button
                         key={opt.value}
@@ -442,8 +442,8 @@ export default function CategoryPage() {
                         className={cn(
                           "flex w-full px-4 py-2.5 text-[12px] transition-colors",
                           radiusKm === opt.value
-                            ? "bg-[#FCBA03]/8 text-[#FCBA03] font-semibold"
-                            : "text-zinc-500 hover:bg-white/[0.03] hover:text-zinc-300"
+                            ? "bg-pink-50 text-pink-500 font-semibold"
+                            : "text-slate-500 hover:bg-gray-50 hover:text-slate-600"
                         )}
                       >
                         {opt.label}
@@ -457,7 +457,7 @@ export default function CategoryPage() {
 
           {/* Divider dot */}
           {relatedCategories.length > 0 && (
-            <div className="h-1 w-1 flex-shrink-0 rounded-full bg-zinc-800" />
+            <div className="h-1 w-1 flex-shrink-0 rounded-full bg-gray-200" />
           )}
 
           {/* Related categories */}
@@ -465,7 +465,7 @@ export default function CategoryPage() {
             <Link
               key={cat.slug}
               href={`/category/${cat.slug}`}
-              className="flex-shrink-0 rounded-full border border-white/[0.06] bg-[#141414] px-3 py-1.5 text-[11px] font-medium text-zinc-500 transition-all hover:border-white/12 hover:text-zinc-300"
+              className="flex-shrink-0 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-500 transition-all hover:border-gray-300 hover:text-slate-600"
             >
               {cat.shortLabel}
             </Link>
@@ -474,7 +474,7 @@ export default function CategoryPage() {
         </div>
 
         {/* Bottom separator */}
-        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+        <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════
@@ -483,7 +483,7 @@ export default function CategoryPage() {
       {loading ? (
         <div className="grid grid-cols-2 gap-3 px-4 pt-5">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="aspect-[3/4] rounded-2xl bg-[#161616] shimmer" />
+            <div key={i} className="aspect-[3/4] rounded-2xl bg-white shimmer" />
           ))}
         </div>
       ) : providers.length === 0 ? (
@@ -492,11 +492,11 @@ export default function CategoryPage() {
         <>
           {/* Result count */}
           <div className="px-5 pt-4 pb-1">
-            <p className="text-[11px] text-zinc-700">
+            <p className="text-[11px] text-slate-300">
               Showing{" "}
-              <span className="font-medium text-zinc-500">{providers.length}</span>
+              <span className="font-medium text-slate-500">{providers.length}</span>
               {" "}of{" "}
-              <span className="font-medium text-zinc-500">{totalCount}</span>
+              <span className="font-medium text-slate-500">{totalCount}</span>
             </p>
           </div>
 
@@ -512,8 +512,8 @@ export default function CategoryPage() {
                 {/* Distance badge */}
                 {provider.distance_km !== null && (
                   <div className="mt-1.5 flex items-center justify-center gap-1">
-                    <MapPin size={9} className="text-zinc-700" />
-                    <span className="text-[10px] font-medium text-zinc-600">
+                    <MapPin size={9} className="text-slate-300" />
+                    <span className="text-[10px] font-medium text-slate-400">
                       {provider.distance_km} km
                     </span>
                   </div>
@@ -529,8 +529,8 @@ export default function CategoryPage() {
           {loadingMore && (
             <div className="flex items-center justify-center py-8">
               <div className="flex items-center gap-2.5">
-                <Loader2 size={16} className="animate-spin text-[#FCBA03]" />
-                <span className="text-[11px] font-medium text-zinc-600">Loading more</span>
+                <Loader2 size={16} className="animate-spin text-pink-500" />
+                <span className="text-[11px] font-medium text-slate-400">Loading more</span>
               </div>
             </div>
           )}
@@ -538,8 +538,8 @@ export default function CategoryPage() {
           {/* End of results */}
           {!hasMore && providers.length > 0 && (
             <div className="py-8 text-center">
-              <div className="mx-auto mb-2 h-px w-16 bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
-              <p className="text-[11px] text-zinc-700">
+              <div className="mx-auto mb-2 h-px w-16 bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+              <p className="text-[11px] text-slate-300">
                 All {totalCount} providers in this category
               </p>
             </div>

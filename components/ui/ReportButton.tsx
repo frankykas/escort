@@ -66,7 +66,7 @@ export function ReportButton({ targetType, targetId, className }: Props) {
       <button
         onClick={() => setStep("form")}
         className={cn(
-          "flex items-center gap-1.5 text-[12px] text-zinc-600 transition hover:text-red-400",
+          "flex items-center gap-1.5 text-[12px] text-slate-400 transition hover:text-red-400",
           className
         )}
       >
@@ -80,7 +80,7 @@ export function ReportButton({ targetType, targetId, className }: Props) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center"
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 backdrop-blur-sm sm:items-center"
             onClick={close}
           >
             <motion.div
@@ -88,16 +88,16 @@ export function ReportButton({ targetType, targetId, className }: Props) {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 40, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md rounded-t-3xl bg-zinc-900 p-6 sm:rounded-3xl"
+              className="w-full max-w-md rounded-t-3xl bg-white border border-gray-200 p-6 sm:rounded-3xl"
             >
               {/* Header */}
               <div className="mb-5 flex items-center justify-between">
-                <h3 className="text-[16px] font-semibold text-white">
+                <h3 className="text-[16px] font-semibold text-slate-800">
                   {step === "done" || step === "already" ? "Report" : `Report ${targetType}`}
                 </h3>
                 <button
                   onClick={close}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 transition hover:text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-slate-400 transition hover:text-slate-700"
                 >
                   <X size={16} />
                 </button>
@@ -105,16 +105,16 @@ export function ReportButton({ targetType, targetId, className }: Props) {
 
               {step === "done" && (
                 <div className="flex flex-col items-center gap-3 py-4 text-center">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-400/10">
-                    <CheckCircle size={28} className="text-amber-400" />
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-pink-50">
+                    <CheckCircle size={28} className="text-pink-500" />
                   </div>
-                  <p className="text-[14px] font-medium text-white">Report submitted</p>
-                  <p className="text-[13px] text-zinc-500">
+                  <p className="text-[14px] font-medium text-slate-800">Report submitted</p>
+                  <p className="text-[13px] text-slate-500">
                     Our team will review this and take action if needed.
                   </p>
                   <button
                     onClick={close}
-                    className="mt-2 w-full rounded-xl bg-zinc-800 py-3 text-[14px] font-medium text-zinc-300 transition hover:bg-zinc-700"
+                    className="mt-2 w-full rounded-xl bg-gray-100 py-3 text-[14px] font-medium text-slate-700 transition hover:bg-gray-200"
                   >
                     Close
                   </button>
@@ -123,12 +123,12 @@ export function ReportButton({ targetType, targetId, className }: Props) {
 
               {step === "already" && (
                 <div className="flex flex-col items-center gap-3 py-4 text-center">
-                  <p className="text-[14px] text-zinc-400">
+                  <p className="text-[14px] text-slate-400">
                     You have already reported this {targetType}. Our team is reviewing it.
                   </p>
                   <button
                     onClick={close}
-                    className="mt-2 w-full rounded-xl bg-zinc-800 py-3 text-[14px] font-medium text-zinc-300 transition hover:bg-zinc-700"
+                    className="mt-2 w-full rounded-xl bg-gray-100 py-3 text-[14px] font-medium text-slate-700 transition hover:bg-gray-200"
                   >
                     Close
                   </button>
@@ -137,7 +137,7 @@ export function ReportButton({ targetType, targetId, className }: Props) {
 
               {(step === "form" || step === "sending") && (
                 <>
-                  <p className="mb-3 text-[13px] text-zinc-500">
+                  <p className="mb-3 text-[13px] text-slate-500">
                     Select a reason for your report:
                   </p>
 
@@ -149,8 +149,8 @@ export function ReportButton({ targetType, targetId, className }: Props) {
                         className={cn(
                           "w-full rounded-xl border px-4 py-3 text-left text-[13px] transition",
                           reason === r.value
-                            ? "border-amber-400/40 bg-amber-400/10 text-amber-400"
-                            : "border-white/5 bg-zinc-800 text-zinc-300 hover:border-white/10"
+                            ? "border-pink-300 bg-pink-50 text-pink-500"
+                            : "border-gray-200 bg-gray-50 text-slate-700 hover:border-gray-300"
                         )}
                       >
                         {r.label}
@@ -165,7 +165,7 @@ export function ReportButton({ targetType, targetId, className }: Props) {
                       placeholder="Please describe the issue..."
                       maxLength={500}
                       rows={3}
-                      className="mt-3 w-full resize-none rounded-xl border border-white/10 bg-zinc-800/50 px-4 py-3 text-[13px] text-zinc-100 placeholder-zinc-600 outline-none focus:border-amber-400/40"
+                      className="mt-3 w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-[13px] text-slate-700 placeholder-slate-400 outline-none focus:border-pink-300"
                     />
                   )}
 

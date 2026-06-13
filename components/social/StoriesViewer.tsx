@@ -65,7 +65,7 @@ export function StoriesViewer({ stories, initialIndex, onClose }: Props) {
 
   const handleNext = useCallback(() => {
     if (!currentGroup) return;
-    
+
     if (currentStoryIndex < currentGroup.stories.length - 1) {
       // Next story in same group
       setDirection(1);
@@ -210,7 +210,7 @@ export function StoriesViewer({ stories, initialIndex, onClose }: Props) {
             onClick={onClose}
             className="flex items-center gap-2.5 group"
           >
-            <div className="rounded-full p-[2px] bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 flex-shrink-0">
+            <div className="rounded-full p-[2px] bg-gradient-to-tr from-pink-400 via-sky-300 to-violet-400 flex-shrink-0">
               <div className="rounded-full p-[1.5px] bg-black/50">
                 {avatar_url ? (
                   <div className="relative h-8 w-8 overflow-hidden rounded-full">
@@ -223,7 +223,7 @@ export function StoriesViewer({ stories, initialIndex, onClose }: Props) {
                     />
                   </div>
                 ) : (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold text-white">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-white">
                     {username[0].toUpperCase()}
                   </div>
                 )}
@@ -237,7 +237,7 @@ export function StoriesViewer({ stories, initialIndex, onClose }: Props) {
                 {isVerified && (
                   <CheckCircle
                     size={11}
-                    className="text-amber-400 fill-amber-400/20 flex-shrink-0"
+                    className="text-pink-400 fill-pink-400/20 flex-shrink-0"
                   />
                 )}
               </div>
@@ -290,7 +290,7 @@ export function StoriesViewer({ stories, initialIndex, onClose }: Props) {
                 priority
               />
             ) : (
-              <div className="h-full w-full bg-gradient-to-br from-amber-900/40 via-zinc-900 to-black" />
+              <div className="h-full w-full bg-gradient-to-br from-pink-900/40 via-black to-black" />
             )}
           </motion.div>
         </AnimatePresence>

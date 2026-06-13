@@ -6,18 +6,23 @@ import {
   acceptMessageRequest,
   rejectMessageRequest,
 } from "@/lib/chat";
+import { requireUser } from "@/lib/api-auth";
 
 // ---------------------------------------------------------------------------
 // POST — Create a message request
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { senderId, recipientId, introMessage } = body;
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const senderId = auth.user.id;
 
-  if (!senderId || !recipientId) {
+  const body = await req.json();
+  const { recipientId, introMessage } = body;
+
+  if (!recipientId) {
     return NextResponse.json(
-      { error: "senderId and recipientId are required" },
+      { error: "recipientId is required" },
       { status: 400 }
     );
   }
@@ -36,14 +41,13 @@ export async function POST(req: NextRequest) {
 // ---------------------------------------------------------------------------
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = req.nextUrl;
-  const userId = searchParams.get("userId");
-  const recipientId = searchParams.get("recipientId");
-  const view = searchParams.get("view") as "pending" | "sent" | "all" | null;
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const userId = auth.user.id;
 
-  if (!userId) {
-    return NextResponse.json({ error: "userId is required" }, { status: 400 });
-  }
+  const { searchParams } = req.nextUrl;
+  const recipientId = searchParams.get("recipientId");
+  const view = searchParams.get("view") as "pending" | "sent" | "all" | "all_pending" | null;
 
   // If recipientId is provided, return status between two users
   if (recipientId) {
@@ -61,12 +65,16 @@ export async function GET(req: NextRequest) {
 // ---------------------------------------------------------------------------
 
 export async function PATCH(req: NextRequest) {
-  const body = await req.json();
-  const { requestId, action, userId } = body;
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const userId = auth.user.id;
 
-  if (!requestId || !action || !userId) {
+  const body = await req.json();
+  const { requestId, action } = body;
+
+  if (!requestId || !action) {
     return NextResponse.json(
-      { error: "requestId, action, and userId are required" },
+      { error: "requestId and action are required" },
       { status: 400 }
     );
   }

@@ -1,17 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/api-auth";
 
 export async function POST(req: NextRequest) {
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const providerId = auth.user.id;
+
   const supabase = createServerClient();
   if (!supabase) {
     return NextResponse.json({ error: "Database unavailable" }, { status: 503 });
   }
 
-  const { providerId, listingId } = await req.json();
+  const { listingId } = await req.json();
 
-  if (!providerId || !listingId) {
+  if (!listingId) {
     return NextResponse.json(
-      { error: "providerId and listingId are required" },
+      { error: "listingId is required" },
       { status: 400 },
     );
   }

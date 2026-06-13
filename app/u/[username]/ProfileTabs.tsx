@@ -16,8 +16,10 @@ import {
   ChevronRight,
   Calendar,
   Users,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import { PostModal } from "@/components/social/PostModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CATEGORIES } from "@/lib/categories";
@@ -70,6 +72,12 @@ export type ProfileAttributes = {
   pronouns: string | null;
   caters_to: string[];
   availability_schedule: AvailabilitySchedule | null;
+  hip_size?: string | null;
+  bust_size?: string | null;
+  bra_cup_size?: string | null;
+  contact_phone?: string | null;
+  website_url?: string | null;
+  social_links?: Record<string, string | null>;
 };
 
 type Tab = "posts" | "listings" | "about";
@@ -114,20 +122,21 @@ function heightDisplay(cm: number | null): string {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function ProfileTabs({ posts, listings, attributes, isOwnProfile, isProvider = true }: Props) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>("posts");
 
   const tabs: { id: Tab; label: string; icon: React.ElementType; count?: number }[] = [
-    { id: "posts", label: "Posts", icon: Grid3X3, count: posts.length },
+    { id: "posts", label: t("tab_posts"), icon: Grid3X3, count: posts.length },
     ...(isProvider ? [
-      { id: "listings" as Tab, label: "Listings", icon: ListOrdered, count: listings.length },
+      { id: "listings" as Tab, label: t("tab_listings"), icon: ListOrdered, count: listings.length },
     ] : []),
-    { id: "about", label: "About", icon: User },
+    { id: "about", label: t("tab_about"), icon: User },
   ];
 
   return (
     <div>
       {/* Tab bar */}
-      <div className="flex border-b border-white/5 bg-zinc-950">
+      <div className="flex border-b border-gray-200 bg-white">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const active = activeTab === tab.id;
@@ -138,8 +147,8 @@ export function ProfileTabs({ posts, listings, attributes, isOwnProfile, isProvi
               className={cn(
                 "flex flex-1 items-center justify-center gap-1.5 py-3 text-[12px] font-semibold uppercase tracking-wider transition-colors",
                 active
-                  ? "border-b-2 border-amber-400 text-white"
-                  : "text-zinc-600 hover:text-zinc-400"
+                  ? "border-b-2 border-pink-400 text-slate-800"
+                  : "text-slate-400 hover:text-slate-500"
               )}
             >
               <Icon size={14} strokeWidth={active ? 2.5 : 1.8} />
@@ -148,7 +157,7 @@ export function ProfileTabs({ posts, listings, attributes, isOwnProfile, isProvi
                 <span
                   className={cn(
                     "rounded-full px-1.5 py-px text-[9px] font-bold",
-                    active ? "bg-amber-400/20 text-amber-400" : "bg-zinc-800 text-zinc-500"
+                    active ? "bg-pink-50 text-pink-500" : "bg-gray-100 text-slate-400"
                   )}
                 >
                   {tab.count}
@@ -180,12 +189,12 @@ function PostsGrid({ posts, isOwnProfile }: { posts: PostItem[]; isOwnProfile: b
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-[1px] bg-zinc-800/50">
+      <div className="grid grid-cols-3 gap-[1px] bg-gray-100">
         {posts.map((post) => (
           <button
             key={post.id}
             onClick={() => setSelectedPostId(post.id)}
-            className="group relative aspect-square overflow-hidden bg-zinc-900"
+            className="group relative aspect-square overflow-hidden bg-gray-50"
           >
             {post.media_url ? (
               <Image
@@ -196,8 +205,8 @@ function PostsGrid({ posts, isOwnProfile }: { posts: PostItem[]; isOwnProfile: b
                 sizes="(max-width: 768px) 33vw, 200px"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-zinc-900">
-                <span className="text-[10px] text-zinc-700">No image</span>
+              <div className="flex h-full w-full items-center justify-center bg-gray-50">
+                <span className="text-[10px] text-slate-300">No image</span>
               </div>
             )}
             <div className="absolute inset-0 flex items-center justify-center gap-4 bg-black/50 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
@@ -261,27 +270,27 @@ function ListingsTab({
 function ListingCard({ listing, categories }: { listing: ListingItem; categories: import("@/lib/categories").Category[] }) {
   return (
     <Link href={`/listings/${listing.id}`} className="group block">
-      <div className="overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 shadow-md transition-all group-hover:border-white/10 group-hover:shadow-lg">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md transition-all group-hover:border-gray-300 group-hover:shadow-lg">
         <div className="px-4 pt-4 pb-3">
           {/* Title + rate */}
           <div className="flex items-start justify-between gap-3">
-            <h3 className="text-[15px] font-semibold text-white leading-tight flex-1">
+            <h3 className="text-[15px] font-semibold text-slate-800 leading-tight flex-1">
               {listing.title}
             </h3>
-            <span className="text-[17px] font-bold text-amber-400 flex-shrink-0">
+            <span className="text-[17px] font-bold text-pink-500 flex-shrink-0">
               {formatRate(listing.rate)}
             </span>
           </div>
 
           {/* Duration */}
-          <div className="mt-1.5 flex items-center gap-1 text-zinc-500">
+          <div className="mt-1.5 flex items-center gap-1 text-slate-400">
             <Clock size={11} className="flex-shrink-0" />
             <span className="text-[12px]">{formatDuration(listing.duration_minutes)}</span>
           </div>
 
           {/* Description */}
           {listing.description && (
-            <p className="mt-2 text-[13px] leading-relaxed text-zinc-400 line-clamp-2">
+            <p className="mt-2 text-[13px] leading-relaxed text-slate-500 line-clamp-2">
               {listing.description}
             </p>
           )}
@@ -297,7 +306,7 @@ function ListingCard({ listing, categories }: { listing: ListingItem; categories
                 >
                   <Link
                     href={`/category/${cat.slug}`}
-                    className="flex items-center gap-1 rounded-full border border-white/8 bg-zinc-800/60 px-2.5 py-0.5 text-[10px] font-medium text-zinc-400 transition-colors hover:border-amber-400/20 hover:text-amber-400"
+                    className="flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-[10px] font-medium text-slate-500 transition-colors hover:border-pink-300 hover:text-pink-500"
                   >
                     <span className="text-[11px]">{cat.emoji}</span>
                     {cat.shortLabel}
@@ -309,7 +318,7 @@ function ListingCard({ listing, categories }: { listing: ListingItem; categories
         </div>
 
         {/* CTA */}
-        <div className="flex w-full items-center justify-center gap-1.5 border-t border-white/5 py-3 text-[13px] font-semibold text-amber-400 transition-all group-hover:bg-amber-400/5">
+        <div className="flex w-full items-center justify-center gap-1.5 border-t border-gray-200 py-3 text-[13px] font-semibold text-pink-500 transition-all group-hover:bg-pink-50">
           View details
           <ChevronRight size={14} />
         </div>
@@ -326,6 +335,9 @@ function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
     attributes.age ? { label: "Age", value: `${attributes.age}` } : null,
     attributes.height_cm ? { label: "Height", value: heightDisplay(attributes.height_cm) } : null,
     attributes.build ? { label: "Build", value: capitalize(attributes.build) } : null,
+    attributes.bust_size ? { label: "Bust", value: attributes.bust_size } : null,
+    attributes.hip_size ? { label: "Hips", value: attributes.hip_size } : null,
+    attributes.bra_cup_size ? { label: "Cup", value: attributes.bra_cup_size } : null,
     attributes.hair_color ? { label: "Hair", value: capitalize(attributes.hair_color) } : null,
     attributes.eye_color ? { label: "Eyes", value: capitalize(attributes.eye_color) } : null,
     attributes.nationality ? { label: "Nationality", value: attributes.nationality } : null,
@@ -340,13 +352,15 @@ function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
   const hasServices = attributes.service_categories.length > 0 || attributes.hourly_rate !== null;
   const hasCatersTo = attributes.caters_to.length > 0;
   const hasSchedule = attributes.availability_schedule && Object.values(attributes.availability_schedule).some(Boolean);
-  const isEmpty = !hasAttrs && !hasBio && !hasLocation && !hasServices && !hasCatersTo && !hasSchedule;
+  const socialLinks = Object.entries(attributes.social_links ?? {}).filter(([, value]) => !!value) as [string, string][];
+  const hasContact = !!(attributes.contact_phone || attributes.website_url || socialLinks.length > 0);
+  const isEmpty = !hasAttrs && !hasBio && !hasLocation && !hasServices && !hasCatersTo && !hasSchedule && !hasContact;
 
   if (isEmpty) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-16 px-4 text-center">
-        <User size={28} className="text-zinc-700" />
-        <p className="text-sm text-zinc-600">No profile information yet.</p>
+        <User size={28} className="text-slate-300" />
+        <p className="text-sm text-slate-400">No profile information yet.</p>
       </div>
     );
   }
@@ -367,11 +381,11 @@ function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
       {hasAttrs && (
         <section>
           <SectionLabel>Attributes</SectionLabel>
-          <div className="mt-2 overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 divide-y divide-white/5 shadow-md">
+          <div className="mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white divide-y divide-gray-100 shadow-md">
             {attrs.map(({ label, value }) => (
               <div key={label} className="flex items-center justify-between px-4 py-3">
-                <span className="text-[13px] text-zinc-500">{label}</span>
-                <span className="text-[13px] font-medium text-zinc-100">{value}</span>
+                <span className="text-[13px] text-slate-400">{label}</span>
+                <span className="text-[13px] font-medium text-slate-700">{value}</span>
               </div>
             ))}
           </div>
@@ -382,10 +396,10 @@ function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
       {hasCatersTo && (
         <section>
           <SectionLabel>Caters to</SectionLabel>
-          <div className="mt-2 rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 px-4 py-4 shadow-md">
+          <div className="mt-2 rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-md">
             <div className="flex items-center gap-2.5">
-              <Users size={15} className="flex-shrink-0 text-zinc-500" />
-              <span className="text-[13px] text-zinc-100">
+              <Users size={15} className="flex-shrink-0 text-slate-400" />
+              <span className="text-[13px] text-slate-700">
                 {attributes.caters_to.join(", ")}
               </span>
             </div>
@@ -397,8 +411,8 @@ function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
       {hasBio && (
         <section>
           <SectionLabel>About me</SectionLabel>
-          <div className="mt-2 rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 px-4 py-4 shadow-md">
-            <p className="text-[14px] leading-relaxed text-zinc-300">
+          <div className="mt-2 rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-md">
+            <p className="text-[14px] leading-relaxed text-slate-600">
               {attributes.bio_long || attributes.bio}
             </p>
           </div>
@@ -409,11 +423,11 @@ function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
       {hasServices && (
         <section>
           <SectionLabel>Services</SectionLabel>
-          <div className="mt-2 rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 px-4 py-4 shadow-md space-y-3">
+          <div className="mt-2 rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-md space-y-3">
             {attributes.hourly_rate !== null && (
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-zinc-500">Starting rate</span>
-                <span className="text-[15px] font-semibold text-amber-400">{formatRate(attributes.hourly_rate)}/hr</span>
+                <span className="text-[13px] text-slate-400">Starting rate</span>
+                <span className="text-[15px] font-semibold text-pink-500">{formatRate(attributes.hourly_rate)}/hr</span>
               </div>
             )}
             {attributes.service_categories.length > 0 && (
@@ -421,7 +435,7 @@ function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
                 {attributes.service_categories.map((cat) => (
                   <span
                     key={cat}
-                    className="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-[12px] font-medium text-amber-400"
+                    className="rounded-full border border-pink-300 bg-pink-50 px-3 py-1 text-[12px] font-medium text-pink-500"
                   >
                     {cat}
                   </span>
@@ -432,11 +446,40 @@ function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
         </section>
       )}
 
+      {/* Contact and socials */}
+      {hasContact && (
+        <section>
+          <SectionLabel>Contact</SectionLabel>
+          <div className="mt-2 rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-md">
+            <div className="grid gap-2 sm:grid-cols-2">
+              {attributes.contact_phone && (
+                <a href={`tel:${attributes.contact_phone}`} className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-[13px] font-medium text-slate-700">
+                  <Phone size={14} className="text-slate-400" />
+                  Phone
+                </a>
+              )}
+              {attributes.website_url && (
+                <a href={normalizeUrl(attributes.website_url)} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-[13px] font-medium text-slate-700">
+                  <ExternalLink size={14} className="text-slate-400" />
+                  Website
+                </a>
+              )}
+              {socialLinks.map(([label, url]) => (
+                <a key={label} href={normalizeUrl(url)} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-[13px] font-medium text-slate-700">
+                  <ExternalLink size={14} className="text-pink-400" />
+                  {label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Weekly availability schedule */}
       {hasSchedule && attributes.availability_schedule && (
         <section>
           <SectionLabel>Availability</SectionLabel>
-          <div className="mt-2 overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 divide-y divide-white/5 shadow-md">
+          <div className="mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white divide-y divide-gray-100 shadow-md">
             {DAYS.map(({ key, label }) => {
               const val = attributes.availability_schedule![key];
               if (!val) return null;
@@ -444,12 +487,12 @@ function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
               return (
                 <div key={key} className="flex items-center justify-between px-4 py-3">
                   <div className="flex items-center gap-2.5">
-                    <Calendar size={13} className="flex-shrink-0 text-zinc-600" />
-                    <span className="text-[13px] font-medium text-zinc-300">{label}</span>
+                    <Calendar size={13} className="flex-shrink-0 text-slate-300" />
+                    <span className="text-[13px] font-medium text-slate-600">{label}</span>
                   </div>
                   <span className={cn(
                     "text-[13px]",
-                    isUnavailable ? "text-zinc-600" : "text-zinc-100 font-medium"
+                    isUnavailable ? "text-slate-300" : "text-slate-700 font-medium"
                   )}>
                     {val}
                   </span>
@@ -464,11 +507,11 @@ function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
       {hasLocation && (
         <section>
           <SectionLabel>Location & availability</SectionLabel>
-          <div className="mt-2 overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 divide-y divide-white/5 shadow-md">
+          <div className="mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white divide-y divide-gray-100 shadow-md">
             {attributes.city && (
               <div className="flex items-center gap-3 px-4 py-3">
-                <MapPin size={15} className="flex-shrink-0 text-zinc-500" />
-                <span className="text-[13px] text-zinc-100">
+                <MapPin size={15} className="flex-shrink-0 text-slate-400" />
+                <span className="text-[13px] text-slate-700">
                   {attributes.city}
                   {attributes.country_code ? `, ${attributes.country_code.toUpperCase()}` : ""}
                 </span>
@@ -476,8 +519,8 @@ function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
             )}
             {(attributes.incall || attributes.outcall) && (
               <div className="flex items-center gap-3 px-4 py-3">
-                <Phone size={15} className="flex-shrink-0 text-zinc-500" />
-                <span className="text-[13px] text-zinc-100">
+                <Phone size={15} className="flex-shrink-0 text-slate-400" />
+                <span className="text-[13px] text-slate-700">
                   {[attributes.incall && "In-call", attributes.outcall && "Out-call"]
                     .filter(Boolean)
                     .join(" · ")}
@@ -493,7 +536,7 @@ function AboutTab({ attributes }: { attributes: ProfileAttributes }) {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="px-1 text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
+    <p className="px-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
       {children}
     </p>
   );
@@ -501,4 +544,8 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function normalizeUrl(url: string): string {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
 }
