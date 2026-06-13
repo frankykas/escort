@@ -4,6 +4,19 @@ A summary of everything we've built and improved, newest first.
 
 ---
 
+## 13 June 2026 — Creator / Escort Split
+
+### What's New
+- **Two provider types** — The app is now divided into **Section OF (Content Creators)** and **Section Escortes**. Creators sell content only (subscriptions, PPV, paid DMs, tips, live shows). Escorts get everything creators have *plus* listings, bookings, and availability.
+- **Three-path onboarding** — New users choose between Client, Content Creator, or Escort during sign-up. Each path shows only the relevant setup steps (creators skip rate/listing, escorts get the full flow).
+- **CreatorDashboard** — Creators land on a focused home screen with earnings, subscriber stats, quick actions (upload, go live, subscription settings), and no escort-specific clutter.
+- **Feature gating** — Listings, bookings, and availability are escort-only. Content features (posts, subscriptions, earnings, live shows) are available to both creators and escorts. Route guards redirect creators away from escort-only pages.
+- **Database migration** — New `provider_type` column (`'creator' | 'escort' | null`) with a sync trigger that keeps the legacy `is_provider` boolean accurate for backward compatibility.
+- **Updated navigation** — Create menu shows Story + Post for creators; Story + Post + Listing for escorts.
+- **i18n** — All new UI strings translated to French.
+
+---
+
 ## 3 June 2026 — Free Subscriptions + Feed Fix
 
 ### What's New
