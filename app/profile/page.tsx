@@ -55,6 +55,7 @@ type ProfileData = {
   avatar_url: string | null;
   bio: string | null;
   is_provider: boolean;
+  provider_type: "creator" | "escort" | null;
   verification_status: "none" | "pending" | "verified";
   is_private: boolean;
   followers_count: number;
@@ -277,7 +278,7 @@ export default function ProfilePage() {
       const [profileResult, followersResult, likedResult, subscriptionsResult] = await Promise.all([
         supabase
           .from("profiles")
-          .select("id, username, avatar_url, bio, is_provider, verification_status, is_private, followers_count, following_count, created_at")
+          .select("id, username, avatar_url, bio, is_provider, provider_type, verification_status, is_private, followers_count, following_count, created_at")
           .eq("id", user!.id)
           .single(),
         supabase
@@ -383,11 +384,12 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {profile.is_provider && (
+      {profile.provider_type != null && (
         <ProviderPerformanceStrip userId={profile.id} />
       )}
 
-      {profile.is_provider && (
+      {/* ── Escort section: listings + content + availability ── */}
+      {profile.provider_type === "escort" && (
         <ScrollReveal>
           <SectionLabel>{t("profile_section_provider")}</SectionLabel>
           <ListCard>
@@ -406,6 +408,25 @@ export default function ProfilePage() {
             )}
             <Row icon={MessageCircle} label={t("profile_comment_mod")}       href="/profile/comments"        iconClassName="text-emerald-400" />
             <Row icon={ImagePlus}     label={t("profile_upload_post")}      href="/profile/upload"          iconClassName="text-sky-400" />
+          </ListCard>
+        </ScrollReveal>
+      )}
+
+      {/* ── Creator section: content only, no listings/availability ── */}
+      {profile.provider_type === "creator" && (
+        <ScrollReveal>
+          <SectionLabel>{t("profile_section_creator")}</SectionLabel>
+          <ListCard>
+            <Row icon={ImagePlus}     label={t("profile_upload_post")}      href="/profile/upload"          iconClassName="text-sky-400" />
+            <Row icon={User}          label={t("profile_my_page")}          href={`/u/${profile.username}`} iconClassName="text-violet-400" />
+            <Row icon={Crown}         label={t("profile_subscription_tier")}href="/profile/subscription"    iconClassName="text-pink-500" />
+            {USE_CREATOR_CONTENT && (
+              <Row icon={Wallet}      label={t("profile_earnings")}         href="/profile/earnings"        iconClassName="text-emerald-500" />
+            )}
+            {USE_LIVE_SHOWS && (
+              <Row icon={Radio}       label={t("profile_live_shows")}       href="/live"                    iconClassName="text-red-500" />
+            )}
+            <Row icon={MessageCircle} label={t("profile_comment_mod")}       href="/profile/comments"        iconClassName="text-emerald-400" />
           </ListCard>
         </ScrollReveal>
       )}
@@ -430,14 +451,14 @@ export default function ProfilePage() {
         <ListCard>
         <Row icon={Pencil}     label={t("profile_edit")}             href="/profile/edit"          iconClassName="text-pink-500" />
         <Row icon={Eye}        label={t("profile_privacy")}          href="/profile/privacy"       value={profile.is_private ? t("profile_private") : t("profile_public")} />
-        {profile.is_provider && (
+        {profile.provider_type != null && (
           <Row icon={Shield}   label={t("profile_id_verification")}  href="/profile/verify"        value={isVerified ? t("profile_verified") : t("profile_not_verified")} iconClassName={isVerified ? "text-pink-500" : "text-slate-400"} />
         )}
         <Row icon={Bell}       label={t("profile_notifications")}    href="/profile/notifications" />
-        {profile.is_provider && (
+        {profile.provider_type != null && (
           <Row icon={CreditCard} label={t("profile_billing")}        href="/profile/billing" />
         )}
-        {profile.is_provider && (
+        {profile.provider_type != null && (
           <Row icon={ShieldBan}  label={t("profile_blocked")}         href="/profile/blocked" />
         )}
         <Row icon={Settings}   label={t("profile_account_settings")} href="/profile/settings" />

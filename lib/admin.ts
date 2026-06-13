@@ -617,7 +617,7 @@ export async function getDashboardStats(): Promise<DashboardStats | null> {
     signupsTodayRes, signupsWeekRes,
   ] = await Promise.all([
     supabase.from("profiles").select("id", { count: "exact", head: true }),
-    supabase.from("profiles").select("id", { count: "exact", head: true }).eq("is_provider", true),
+    supabase.from("profiles").select("id", { count: "exact", head: true }).not("provider_type", "is", null),
     supabase.from("profiles").select("id", { count: "exact", head: true }).eq("verification_status", "verified"),
     supabase.from("status_updates").select("id", { count: "exact", head: true }).eq("post_type", "post"),
     supabase.from("status_updates").select("id", { count: "exact", head: true }).eq("post_type", "story"),
@@ -662,6 +662,7 @@ export type RecentUser = {
   username: string;
   avatar_url: string | null;
   is_provider: boolean;
+  provider_type: "creator" | "escort" | null;
   verification_status: string;
   created_at: string;
 };
@@ -672,7 +673,7 @@ export async function getRecentSignups(limit = 15): Promise<RecentUser[]> {
 
   const { data } = await supabase
     .from("profiles")
-    .select("id, username, avatar_url, is_provider, verification_status, created_at")
+    .select("id, username, avatar_url, is_provider, provider_type, verification_status, created_at")
     .order("created_at", { ascending: false })
     .limit(limit);
 

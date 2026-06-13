@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { ClassicHome } from "@/components/classic/ClassicHome";
 import { ProviderDashboard } from "@/components/provider/ProviderDashboard";
+import { CreatorDashboard } from "@/components/creator/CreatorDashboard";
 import { createServerClient } from "@/lib/supabase/server";
 
 export default async function Page() {
@@ -14,7 +15,7 @@ export default async function Page() {
     if (user) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("is_provider, onboarding_completed")
+        .select("provider_type, onboarding_completed")
         .eq("id", user.id)
         .single();
 
@@ -22,8 +23,12 @@ export default async function Page() {
         redirect("/onboarding");
       }
 
-      if (profile?.is_provider) {
+      if (profile?.provider_type === "escort") {
         return <ProviderDashboard />;
+      }
+
+      if (profile?.provider_type === "creator") {
+        return <CreatorDashboard />;
       }
     }
   }

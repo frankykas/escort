@@ -59,7 +59,7 @@ export function SimilarProfiles({ profileId, city, serviceCategories }: Props) {
       let query = supabase
         .from("profiles")
         .select("id, username, avatar_url, city, age, verification_status, tagline")
-        .eq("is_provider", true)
+        .eq("provider_type", "escort")
         .neq("id", profileId)
         .limit(12);
 
@@ -80,7 +80,7 @@ export function SimilarProfiles({ profileId, city, serviceCategories }: Props) {
         const { data: more } = await supabase
           .from("profiles")
           .select("id, username, avatar_url, city, age, verification_status, tagline")
-          .eq("is_provider", true)
+          .eq("provider_type", "escort")
           .not("id", "in", `(${[...existingIds].join(",")})`)
           .limit(12 - organicResults.length);
         organicResults = [...organicResults, ...((more ?? []) as SimilarProfile[])];

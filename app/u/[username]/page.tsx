@@ -53,7 +53,7 @@ export default async function ProfilePage({ params }: Props) {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select(
-      `id, username, avatar_url, bio, bio_long, verification_status, is_provider,
+      `id, username, avatar_url, bio, bio_long, verification_status, is_provider, provider_type,
        city, country_code, incall, outcall, age, available_until,
        height_cm, build, hair_color, eye_color, nationality, languages,
        completed_bookings_count,
@@ -192,7 +192,7 @@ export default async function ProfilePage({ params }: Props) {
   const lastSeenStr = formatLastSeen((profile as Record<string, unknown>).last_seen_at as string | null ?? null);
 
   return (
-    <main className={cn("min-h-screen bg-[#fafbfc]", !isOwnProfile && profile.is_provider ? "pb-44" : "pb-24")}>
+    <main className={cn("min-h-screen bg-[#fafbfc]", !isOwnProfile && profile.provider_type === "escort" ? "pb-44" : "pb-24")}>
       {/* ── Sticky header ── */}
       <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-gray-200 bg-white/90 px-4 py-3 backdrop-blur-xl backdrop-saturate-150">
         <BackButton />
@@ -318,7 +318,7 @@ export default async function ProfilePage({ params }: Props) {
             initialIsFollowing={initialIsFollowing}
             userId={currentUserId}
             isOwnProfile={isOwnProfile}
-            isProvider={profile.is_provider as boolean}
+            isProvider={profile.provider_type != null}
           />
           {!isOwnProfile && (
             <div className="mt-3 flex justify-center">
@@ -334,11 +334,11 @@ export default async function ProfilePage({ params }: Props) {
         listings={listings as import("./ProfileTabs").ListingItem[]}
         attributes={attributes}
         isOwnProfile={isOwnProfile}
-        isProvider={profile.is_provider as boolean}
+        isProvider={profile.provider_type === "escort"}
       />
 
-      {/* ── Profile sections (other providers only) ── */}
-      {!isOwnProfile && (profile.is_provider as boolean) && (
+      {/* ── Profile sections (escorts only) ── */}
+      {!isOwnProfile && profile.provider_type === "escort" && (
         <>
           {/* Availability spotlight — today's hours */}
           <AvailabilitySpotlight
@@ -378,8 +378,8 @@ export default async function ProfilePage({ params }: Props) {
         </>
       )}
 
-      {/* ── Sticky enquire bar (other providers only — never on own profile) ── */}
-      {!isOwnProfile && (profile.is_provider as boolean) && (
+      {/* ── Sticky enquire bar (escorts only — never on own profile) ── */}
+      {!isOwnProfile && profile.provider_type === "escort" && (
         <EnquireBar
           username={profile.username as string}
           providerId={profile.id as string}

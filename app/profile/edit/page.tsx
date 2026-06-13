@@ -90,6 +90,7 @@ type ProfileForm = {
   city: string;
   country_code: string;
   is_provider: boolean;
+  provider_type: "creator" | "escort" | null;
   incall: boolean;
   outcall: boolean;
   hourly_rate: string;
@@ -119,7 +120,7 @@ type ProfileForm = {
 const EMPTY_FORM: ProfileForm = {
   username: "", bio: "", bio_long: "", tagline: "", age: "", nationality: "",
   languages: [], height_cm: "", build: "", hair_color: "", eye_color: "",
-  city: "", country_code: "CA", is_provider: false, incall: true,
+  city: "", country_code: "CA", is_provider: false, provider_type: null, incall: true,
   outcall: true, hourly_rate: "", service_categories: [], avatar_url: null,
   contact_whatsapp: "", contact_telegram: "", contact_phone: "",
   website_url: "", tiktok_url: "", snapchat_url: "", instagram_url: "",
@@ -166,7 +167,7 @@ export default function EditProfilePage() {
 
     supabase
       .from("profiles")
-      .select("username, bio, bio_long, tagline, age, nationality, languages, height_cm, build, hair_color, eye_color, city, country_code, is_provider, incall, outcall, hourly_rate, service_categories, avatar_url, contact_whatsapp, contact_telegram, contact_phone, website_url, tiktok_url, snapchat_url, instagram_url, onlyfans_url, twitter_url, facebook_url, show_contact_details, show_social_links, hip_size, bust_size, bra_cup_size, gender, pronouns, caters_to, availability_schedule")
+      .select("username, bio, bio_long, tagline, age, nationality, languages, height_cm, build, hair_color, eye_color, city, country_code, is_provider, provider_type, incall, outcall, hourly_rate, service_categories, avatar_url, contact_whatsapp, contact_telegram, contact_phone, website_url, tiktok_url, snapchat_url, instagram_url, onlyfans_url, twitter_url, facebook_url, show_contact_details, show_social_links, hip_size, bust_size, bra_cup_size, gender, pronouns, caters_to, availability_schedule")
       .eq("id", user.id)
       .single()
       .then(({ data }) => {
@@ -186,6 +187,7 @@ export default function EditProfilePage() {
             city:               data.city ?? "",
             country_code:       data.country_code ?? "CA",
             is_provider:        data.is_provider ?? false,
+            provider_type:      data.provider_type ?? null,
             incall:             data.incall ?? true,
             outcall:            data.outcall ?? true,
             hourly_rate:        data.hourly_rate ? String(Math.round(data.hourly_rate / 100)) : "",
@@ -287,7 +289,7 @@ export default function EditProfilePage() {
       eye_color:          form.eye_color || null,
       city:               form.city.trim() || null,
       country_code:       form.country_code || null,
-      is_provider:        form.is_provider,
+      provider_type:      form.provider_type,
       incall:             form.incall,
       outcall:            form.outcall,
       hourly_rate:        form.hourly_rate ? parseInt(form.hourly_rate, 10) * 100 : null,
@@ -645,15 +647,26 @@ export default function EditProfilePage() {
 
         {/* ── Provider settings ── */}
         <Section icon={Sparkles} title={t("pe_sec_services")}>
+          {/* Provider type display — read-only badge */}
           <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4">
             <div>
-              <p className="text-[14px] font-semibold text-slate-800">{t("pe_offers_services")}</p>
-              <p className="text-[12px] text-slate-400">{t("pe_offers_desc")}</p>
+              <p className="text-[14px] font-semibold text-slate-800">{t("pe_account_type")}</p>
+              <p className="text-[12px] text-slate-400">
+                {form.provider_type === "escort" ? t("pe_type_escort") : form.provider_type === "creator" ? t("pe_type_creator") : t("pe_type_client")}
+              </p>
             </div>
-            <Toggle checked={form.is_provider} onChange={(v) => patch("is_provider", v)} />
+            <span className={cn(
+              "rounded-full px-3 py-1.5 text-[11px] font-bold",
+              form.provider_type === "escort" ? "bg-pink-50 text-pink-500"
+                : form.provider_type === "creator" ? "bg-violet-50 text-violet-500"
+                : "bg-gray-100 text-slate-400"
+            )}>
+              {form.provider_type === "escort" ? t("pe_type_escort") : form.provider_type === "creator" ? t("pe_type_creator") : t("pe_type_client")}
+            </span>
           </div>
 
-          {form.is_provider && (
+          {/* Escort-only fields: incall/outcall, rate, categories */}
+          {form.provider_type === "escort" && (
             <div className="space-y-4 pt-1">
               {/* Incall / Outcall */}
               <div className="grid grid-cols-2 gap-3">
@@ -697,7 +710,12 @@ export default function EditProfilePage() {
                 />
                 <Hint>{t("pe_service_cats_hint")}</Hint>
               </Field>
+            </div>
+          )}
 
+          {/* Contact methods — both creator and escort */}
+          {form.provider_type != null && (
+            <div className="space-y-4 pt-1">
               {/* Contact methods */}
               <Field label={t("pe_whatsapp")}>
                 <input
