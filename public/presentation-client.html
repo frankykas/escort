@@ -589,6 +589,64 @@
         color: var(--muted);
       }
 
+      /* ── Placeholder images ── */
+      .m-photo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .m-avatar-photo {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+      .m-story-photo {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #fff;
+      }
+      /* Blurred locked content — server-side blur mockup */
+      .m-blur-preview {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+      }
+      .m-blur-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        /* This simulates a server-blurred image. In production, the actual
+           image served is a pre-destroyed 32px JPEG — no CSS needed. */
+        filter: blur(20px) saturate(1.2);
+        transform: scale(1.15);
+      }
+      .m-blur-scrim {
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.4);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+      .m-blur-note {
+        position: absolute;
+        bottom: 8px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 7px;
+        font-weight: 700;
+        color: rgba(255,255,255,0.5);
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
       /* ── Shared mockup atoms ── */
       .m-header {
         position: sticky;
@@ -1212,26 +1270,28 @@
 
                     <!-- Stories bar -->
                     <div class="m-stories-bar">
-                      <div class="m-story"><div class="m-story-ring"><div class="m-story-inner"></div></div><span>sophia</span></div>
-                      <div class="m-story"><div class="m-story-ring"><div class="m-story-inner"></div></div><span>jade_mtl</span></div>
-                      <div class="m-story"><div class="m-story-ring seen"><div class="m-story-inner"></div></div><span>bella</span></div>
-                      <div class="m-story"><div class="m-story-ring"><div class="m-story-inner"></div></div><span>emma</span></div>
-                      <div class="m-story"><div class="m-story-ring seen"><div class="m-story-inner"></div></div><span>luna_qc</span></div>
+                      <div class="m-story"><div class="m-story-ring"><img class="m-story-photo" src="https://i.pravatar.cc/96?img=1" alt=""></div><span>sophia</span></div>
+                      <div class="m-story"><div class="m-story-ring"><img class="m-story-photo" src="https://i.pravatar.cc/96?img=5" alt=""></div><span>jade_mtl</span></div>
+                      <div class="m-story"><div class="m-story-ring seen"><img class="m-story-photo" src="https://i.pravatar.cc/96?img=9" alt=""></div><span>bella</span></div>
+                      <div class="m-story"><div class="m-story-ring"><img class="m-story-photo" src="https://i.pravatar.cc/96?img=16" alt=""></div><span>emma</span></div>
+                      <div class="m-story"><div class="m-story-ring seen"><img class="m-story-photo" src="https://i.pravatar.cc/96?img=25" alt=""></div><span>luna_qc</span></div>
                     </div>
 
                     <div class="m-divider"></div>
 
-                    <!-- Post 1 — normal post -->
+                    <!-- Post 1 — normal post (with real placeholder image) -->
                     <div style="padding:10px 14px;">
                       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                        <div class="m-avatar sm"><div class="m-avatar-inner">S</div></div>
+                        <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/64?img=1" alt=""></div>
                         <div style="flex:1;">
                           <span style="font-weight:700;font-size:11px;">sophia_rose</span>
                           <span style="color:#f6339a;font-size:9px;margin-left:3px;">✓</span>
                         </div>
                         <button class="m-btn-pink" style="font-size:9px;padding:4px 10px;">Follow</button>
                       </div>
-                      <div style="width:100%;aspect-ratio:1;background:linear-gradient(135deg,#fdf2f8,#e0e7ff,#fce7f3);border-radius:10px;display:grid;place-items:center;color:#cbd5e1;font-size:28px;">📷</div>
+                      <div style="width:100%;aspect-ratio:1;border-radius:10px;overflow:hidden;">
+                        <img class="m-photo" src="https://picsum.photos/seed/sophia1/600/600" alt="">
+                      </div>
                       <div style="display:flex;gap:14px;padding:8px 0 4px;font-size:16px;">
                         <span>♡</span><span>💬</span><span>↗</span><span style="margin-left:auto;">🔖</span>
                       </div>
@@ -1242,22 +1302,25 @@
 
                     <div class="m-divider"></div>
 
-                    <!-- Post 2 — PPV locked -->
+                    <!-- Post 2 — PPV locked (BLURRED PREVIEW — not CSS, server-blurred) -->
                     <div style="padding:10px 14px;">
                       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                        <div class="m-avatar sm"><div class="m-avatar-inner">J</div></div>
+                        <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/64?img=5" alt=""></div>
                         <div style="flex:1;">
                           <span style="font-weight:700;font-size:11px;">jade_luxe</span>
                           <span style="color:#f6339a;font-size:9px;margin-left:3px;">✓</span>
                         </div>
                         <span class="m-badge gold">PRO</span>
                       </div>
-                      <!-- Locked content overlay -->
-                      <div class="m-lock-overlay">
-                        <div class="m-lock-icon">🔒</div>
-                        <div style="font-weight:700;font-size:12px;color:#1e293b;">Pay-per-view content</div>
-                        <div style="font-size:10px;color:#64748b;">Unlock this exclusive post</div>
-                        <button class="m-btn-pink" style="margin-top:4px;">Unlock · CA$9.99</button>
+                      <!-- Blurred preview — simulates the server-destroyed image -->
+                      <div class="m-blur-preview" style="aspect-ratio:1;border-radius:10px;">
+                        <img src="https://picsum.photos/seed/jade_ppv/600/600" alt="">
+                        <div class="m-blur-scrim">
+                          <div class="m-lock-icon" style="background:rgba(255,255,255,0.9);">🔒</div>
+                          <div style="font-weight:700;font-size:12px;color:#fff;">Pay-per-view content</div>
+                          <button class="m-btn-pink" style="margin-top:4px;">Unlock · CA$9.99</button>
+                          <div class="m-blur-note">Image is server-blurred — not CSS</div>
+                        </div>
                       </div>
                       <div style="display:flex;gap:14px;padding:8px 0 4px;font-size:16px;">
                         <span>♡</span><span>💬</span><span>↗</span><span style="margin-left:auto;">🔖</span>
@@ -1268,21 +1331,24 @@
 
                     <div class="m-divider"></div>
 
-                    <!-- Post 3 — subscribers only -->
+                    <!-- Post 3 — subscribers only (BLURRED PREVIEW) -->
                     <div style="padding:10px 14px;">
                       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                        <div class="m-avatar sm"><div class="m-avatar-inner">E</div></div>
+                        <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/64?img=16" alt=""></div>
                         <div style="flex:1;">
                           <span style="font-weight:700;font-size:11px;">emma_elite</span>
                           <span style="color:#f6339a;font-size:9px;margin-left:3px;">✓</span>
                         </div>
                         <span class="m-badge pink">VIP</span>
                       </div>
-                      <div class="m-lock-overlay" style="background:linear-gradient(135deg,#fdf2f8,#faf5ff);">
-                        <div class="m-lock-icon">⭐</div>
-                        <div style="font-weight:700;font-size:12px;color:#1e293b;">Subscribers only</div>
-                        <div style="font-size:10px;color:#64748b;">Subscribe to view this content</div>
-                        <button class="m-btn-pink" style="margin-top:4px;">Subscribe · CA$14.99/mo</button>
+                      <div class="m-blur-preview" style="aspect-ratio:1;border-radius:10px;">
+                        <img src="https://picsum.photos/seed/emma_sub/600/600" alt="">
+                        <div class="m-blur-scrim">
+                          <div class="m-lock-icon" style="background:rgba(255,255,255,0.9);">⭐</div>
+                          <div style="font-weight:700;font-size:12px;color:#fff;">Subscribers only</div>
+                          <button class="m-btn-pink" style="margin-top:4px;">Subscribe · CA$14.99/mo</button>
+                          <div class="m-blur-note">Image is server-blurred — not CSS</div>
+                        </div>
                       </div>
                     </div>
 
@@ -1320,13 +1386,15 @@
                 <div class="phone-frame">
                   <div class="phone-notch"></div>
                   <div class="phone-screen">
-                    <!-- Hero image -->
-                    <div style="width:100%;aspect-ratio:4/3;background:linear-gradient(135deg,#1e1714,#4d274a,#1e1714);position:relative;">
+                    <!-- Hero banner image -->
+                    <div style="width:100%;aspect-ratio:4/3;position:relative;overflow:hidden;">
+                      <img class="m-photo" src="https://picsum.photos/seed/banner_sophia/600/450" alt="" style="position:absolute;inset:0;">
+                      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.1),rgba(0,0,0,0.45));"></div>
                       <div style="position:absolute;top:36px;left:10px;" class="m-back">←</div>
                       <div style="position:absolute;top:36px;right:10px;" class="m-back">⋯</div>
                       <!-- Avatar overlapping hero -->
                       <div style="position:absolute;bottom:-28px;left:14px;">
-                        <div class="m-avatar xl"><div class="m-avatar-inner" style="font-size:22px;">S</div></div>
+                        <div class="m-avatar xl"><img class="m-avatar-photo" src="https://i.pravatar.cc/150?img=1" alt=""></div>
                       </div>
                     </div>
 
@@ -1338,7 +1406,7 @@
                       </div>
                       <div style="font-style:italic;font-size:10px;color:#64748b;margin-top:2px;">Your premium companion in Montreal</div>
                       <div style="font-size:10px;color:#94a3b8;margin-top:4px;">📍 Montreal · 25 · Last seen 2h ago</div>
-                      <p style="font-size:10px;color:#475569;margin:8px 0;">Exclusive content, private shows, and personal connections. Subscribe for the full experience. 💎</p>
+                      <p style="font-size:10px;color:#475569;margin:8px 0;">Exclusive content, private shows, and personal connections. Subscribe for the full experience.</p>
                     </div>
 
                     <!-- Stats row -->
@@ -1363,20 +1431,26 @@
                       <div class="m-tab">Reviews</div>
                     </div>
 
-                    <!-- Post grid preview -->
+                    <!-- Post grid with real images + blurred locked thumbnails -->
                     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:2px;">
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#fce7f3,#e0e7ff);display:grid;place-items:center;font-size:18px;">📷</div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#fdf2f8,#faf5ff);display:grid;place-items:center;position:relative;">
-                        <span style="font-size:18px;">📷</span>
-                        <div style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.5);color:#fff;font-size:7px;padding:2px 5px;border-radius:4px;">🔒 PPV</div>
+                      <div style="aspect-ratio:1;overflow:hidden;"><img class="m-photo" src="https://picsum.photos/seed/grid1/200/200" alt=""></div>
+                      <!-- PPV locked — blurred thumbnail with lock -->
+                      <div style="aspect-ratio:1;overflow:hidden;position:relative;">
+                        <img class="m-photo" src="https://picsum.photos/seed/grid2/200/200" alt="" style="filter:blur(12px) saturate(1.1);transform:scale(1.2);">
+                        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.3);display:grid;place-items:center;">
+                          <div style="text-align:center;"><div style="font-size:12px;">🔒</div><div style="font-size:6px;font-weight:700;color:#fff;margin-top:1px;">PPV</div></div>
+                        </div>
                       </div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#e0e7ff,#fce7f3);display:grid;place-items:center;font-size:18px;">📷</div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#faf5ff,#fdf2f8);display:grid;place-items:center;position:relative;">
-                        <span style="font-size:18px;">📷</span>
-                        <div style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.5);color:#fff;font-size:7px;padding:2px 5px;border-radius:4px;">🔒 SUB</div>
+                      <div style="aspect-ratio:1;overflow:hidden;"><img class="m-photo" src="https://picsum.photos/seed/grid3/200/200" alt=""></div>
+                      <!-- SUB locked — blurred thumbnail with lock -->
+                      <div style="aspect-ratio:1;overflow:hidden;position:relative;">
+                        <img class="m-photo" src="https://picsum.photos/seed/grid4/200/200" alt="" style="filter:blur(12px) saturate(1.1);transform:scale(1.2);">
+                        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.3);display:grid;place-items:center;">
+                          <div style="text-align:center;"><div style="font-size:12px;">🔒</div><div style="font-size:6px;font-weight:700;color:#fff;margin-top:1px;">SUB</div></div>
+                        </div>
                       </div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#fce7f3,#faf5ff);display:grid;place-items:center;font-size:18px;">🎬</div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#e0e7ff,#fdf2f8);display:grid;place-items:center;font-size:18px;">📷</div>
+                      <div style="aspect-ratio:1;overflow:hidden;"><img class="m-photo" src="https://picsum.photos/seed/grid5/200/200" alt=""></div>
+                      <div style="aspect-ratio:1;overflow:hidden;"><img class="m-photo" src="https://picsum.photos/seed/grid6/200/200" alt=""></div>
                     </div>
 
                     <!-- Bottom nav -->
@@ -1401,7 +1475,7 @@
                     <div class="m-header">
                       <div class="m-back">←</div>
                       <div style="display:flex;align-items:center;gap:6px;">
-                        <div class="m-avatar sm"><div class="m-avatar-inner" style="font-size:9px;">J</div></div>
+                        <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/64?img=5" alt=""></div>
                         <div>
                           <span style="font-weight:700;font-size:11px;">jade_luxe</span>
                           <span style="color:#f6339a;font-size:8px;">✓</span>
@@ -1424,14 +1498,16 @@
                       <div class="m-bubble received">I just posted something special 🔥 Check your DMs...</div>
                       <div class="m-bubble-time">2:33 PM</div>
 
-                      <!-- Locked photo DM -->
+                      <!-- Locked photo DM — blurred preview -->
                       <div style="max-width:75%;margin-right:auto;">
                         <div style="background:#f1f5f9;border-radius:14px;border-bottom-left-radius:4px;padding:8px;text-align:center;">
-                          <div style="background:linear-gradient(135deg,#fdf2f8,#faf5ff);border-radius:8px;padding:20px 12px;">
-                            <div class="m-lock-icon" style="margin:0 auto 6px;">🔒</div>
-                            <div style="font-weight:700;font-size:10px;">Locked photo</div>
-                            <div style="font-size:9px;color:#64748b;margin:3px 0;">Exclusive content</div>
-                            <button class="m-btn-pink" style="font-size:9px;margin-top:4px;">Unlock · CA$4.99</button>
+                          <div style="border-radius:8px;overflow:hidden;position:relative;aspect-ratio:4/3;">
+                            <img src="https://picsum.photos/seed/dm_locked/400/300" alt="" style="width:100%;height:100%;object-fit:cover;filter:blur(16px) saturate(1.2);transform:scale(1.2);">
+                            <div style="position:absolute;inset:0;background:rgba(0,0,0,0.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;">
+                              <div class="m-lock-icon" style="background:rgba(255,255,255,0.9);">🔒</div>
+                              <div style="font-weight:700;font-size:10px;color:#fff;">Locked photo</div>
+                              <button class="m-btn-pink" style="font-size:9px;margin-top:2px;">Unlock · CA$4.99</button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1573,68 +1649,72 @@
                       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                         <!-- Live 1 -->
                         <div style="border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;background:#fff;">
-                          <div style="aspect-ratio:4/5;background:linear-gradient(135deg,#1e1714,#4d274a);position:relative;display:grid;place-items:center;">
-                            <div style="font-size:28px;opacity:0.4;">📹</div>
+                          <div style="aspect-ratio:4/5;position:relative;overflow:hidden;">
+                            <img class="m-photo" src="https://picsum.photos/seed/live1/300/375" alt="" style="position:absolute;inset:0;">
+                            <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.5));"></div>
                             <div style="position:absolute;top:6px;left:6px;background:#ef4444;color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:4px;">● LIVE</div>
                             <div style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:8px;padding:2px 6px;border-radius:4px;">👁 234</div>
                             <div style="position:absolute;bottom:6px;left:6px;">
-                              <div class="m-avatar sm"><div class="m-avatar-inner" style="font-size:8px;">S</div></div>
+                              <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/56?img=1" alt=""></div>
                             </div>
                           </div>
                           <div style="padding:8px;">
                             <div style="font-weight:700;font-size:10px;">sophia_rose</div>
-                            <div style="font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Late night vibes 🌙</div>
+                            <div style="font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Late night vibes</div>
                             <div style="font-size:9px;color:#f6339a;font-weight:700;margin-top:3px;">CA$4.99</div>
                           </div>
                         </div>
 
                         <!-- Live 2 -->
                         <div style="border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;background:#fff;">
-                          <div style="aspect-ratio:4/5;background:linear-gradient(135deg,#4d274a,#17130f);position:relative;display:grid;place-items:center;">
-                            <div style="font-size:28px;opacity:0.4;">📹</div>
+                          <div style="aspect-ratio:4/5;position:relative;overflow:hidden;">
+                            <img class="m-photo" src="https://picsum.photos/seed/live2/300/375" alt="" style="position:absolute;inset:0;">
+                            <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.5));"></div>
                             <div style="position:absolute;top:6px;left:6px;background:#ef4444;color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:4px;">● LIVE</div>
                             <div style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:8px;padding:2px 6px;border-radius:4px;">👁 87</div>
                             <div style="position:absolute;bottom:6px;left:6px;">
-                              <div class="m-avatar sm"><div class="m-avatar-inner" style="font-size:8px;">E</div></div>
+                              <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/56?img=16" alt=""></div>
                             </div>
                           </div>
                           <div style="padding:8px;">
                             <div style="font-weight:700;font-size:10px;">emma_elite</div>
-                            <div style="font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Q&A with fans 💎</div>
+                            <div style="font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Q&A with fans</div>
                             <div style="font-size:9px;color:#10b981;font-weight:700;margin-top:3px;">Free</div>
                           </div>
                         </div>
 
                         <!-- Live 3 -->
                         <div style="border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;background:#fff;">
-                          <div style="aspect-ratio:4/5;background:linear-gradient(135deg,#17130f,#3b2038);position:relative;display:grid;place-items:center;">
-                            <div style="font-size:28px;opacity:0.4;">📹</div>
+                          <div style="aspect-ratio:4/5;position:relative;overflow:hidden;">
+                            <img class="m-photo" src="https://picsum.photos/seed/live3/300/375" alt="" style="position:absolute;inset:0;">
+                            <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.5));"></div>
                             <div style="position:absolute;top:6px;left:6px;background:#ef4444;color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:4px;">● LIVE</div>
                             <div style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:8px;padding:2px 6px;border-radius:4px;">👁 412</div>
                             <div style="position:absolute;bottom:6px;left:6px;">
-                              <div class="m-avatar sm"><div class="m-avatar-inner" style="font-size:8px;">B</div></div>
+                              <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/56?img=9" alt=""></div>
                             </div>
                           </div>
                           <div style="padding:8px;">
                             <div style="font-weight:700;font-size:10px;">bella_mtl</div>
-                            <div style="font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Private show 🔥</div>
+                            <div style="font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Private show</div>
                             <div style="font-size:9px;color:#f6339a;font-weight:700;margin-top:3px;">CA$9.99</div>
                           </div>
                         </div>
 
                         <!-- Live 4 -->
                         <div style="border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;background:#fff;">
-                          <div style="aspect-ratio:4/5;background:linear-gradient(135deg,#3b2038,#1e1714);position:relative;display:grid;place-items:center;">
-                            <div style="font-size:28px;opacity:0.4;">📹</div>
+                          <div style="aspect-ratio:4/5;position:relative;overflow:hidden;">
+                            <img class="m-photo" src="https://picsum.photos/seed/live4/300/375" alt="" style="position:absolute;inset:0;">
+                            <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.5));"></div>
                             <div style="position:absolute;top:6px;left:6px;background:#ef4444;color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:4px;">● LIVE</div>
                             <div style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:8px;padding:2px 6px;border-radius:4px;">👁 56</div>
                             <div style="position:absolute;bottom:6px;left:6px;">
-                              <div class="m-avatar sm"><div class="m-avatar-inner" style="font-size:8px;">L</div></div>
+                              <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/56?img=25" alt=""></div>
                             </div>
                           </div>
                           <div style="padding:8px;">
                             <div style="font-weight:700;font-size:10px;">luna_qc</div>
-                            <div style="font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Chill stream ✨</div>
+                            <div style="font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Chill stream</div>
                             <div style="font-size:9px;color:#f6339a;font-weight:700;margin-top:3px;">CA$2.99</div>
                           </div>
                         </div>
@@ -1718,7 +1798,7 @@
 
                         <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:10px;margin-bottom:6px;">
                           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                            <div class="m-avatar sm"><div class="m-avatar-inner" style="font-size:8px;">A</div></div>
+                            <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/56?img=32" alt=""></div>
                             <div style="flex:1;">
                               <div style="font-weight:700;font-size:10px;color:#fff;">anna_qc</div>
                               <div style="font-size:8px;color:rgba(255,255,255,0.4);">Submitted 2h ago</div>
@@ -1733,7 +1813,7 @@
 
                         <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:10px;margin-bottom:6px;">
                           <div style="display:flex;align-items:center;gap:8px;">
-                            <div class="m-avatar sm"><div class="m-avatar-inner" style="font-size:8px;">M</div></div>
+                            <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/56?img=44" alt=""></div>
                             <div style="flex:1;">
                               <div style="font-weight:700;font-size:10px;color:#fff;">maya_luxe</div>
                               <div style="font-size:8px;color:rgba(255,255,255,0.4);">Submitted 5h ago</div>
@@ -2059,12 +2139,14 @@
                 <div class="phone-frame">
                   <div class="phone-notch"></div>
                   <div class="phone-screen">
-                    <!-- Hero image -->
-                    <div style="width:100%;aspect-ratio:4/3;background:linear-gradient(135deg,#4d274a,#8b5cf6,#1e1714);position:relative;">
+                    <!-- Hero banner image -->
+                    <div style="width:100%;aspect-ratio:4/3;position:relative;overflow:hidden;">
+                      <img class="m-photo" src="https://picsum.photos/seed/banner_jade/600/450" alt="" style="position:absolute;inset:0;">
+                      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.1),rgba(0,0,0,0.45));"></div>
                       <div style="position:absolute;top:36px;left:10px;" class="m-back">←</div>
                       <div style="position:absolute;top:36px;right:10px;" class="m-back">⋯</div>
                       <div style="position:absolute;bottom:-28px;left:14px;">
-                        <div class="m-avatar xl"><div class="m-avatar-inner" style="font-size:22px;">J</div></div>
+                        <div class="m-avatar xl"><img class="m-avatar-photo" src="https://i.pravatar.cc/150?img=5" alt=""></div>
                       </div>
                     </div>
 
@@ -2098,20 +2180,24 @@
                       <div class="m-tab">Reviews</div>
                     </div>
 
-                    <!-- Post grid -->
+                    <!-- Post grid with real images + blurred locked thumbnails -->
                     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:2px;">
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#f5f3ff,#fdf2f8);display:grid;place-items:center;font-size:18px;">📷</div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#fdf2f8,#e0e7ff);display:grid;place-items:center;position:relative;">
-                        <span style="font-size:18px;">📷</span>
-                        <div style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.5);color:#fff;font-size:7px;padding:2px 5px;border-radius:4px;">🔒 PPV</div>
+                      <div style="aspect-ratio:1;overflow:hidden;"><img class="m-photo" src="https://picsum.photos/seed/jgrid1/200/200" alt=""></div>
+                      <div style="aspect-ratio:1;overflow:hidden;position:relative;">
+                        <img class="m-photo" src="https://picsum.photos/seed/jgrid2/200/200" alt="" style="filter:blur(12px) saturate(1.1);transform:scale(1.2);">
+                        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.3);display:grid;place-items:center;">
+                          <div style="text-align:center;"><div style="font-size:12px;">🔒</div><div style="font-size:6px;font-weight:700;color:#fff;">PPV</div></div>
+                        </div>
                       </div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#e0e7ff,#f5f3ff);display:grid;place-items:center;font-size:18px;">🎬</div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#fce7f3,#f5f3ff);display:grid;place-items:center;position:relative;">
-                        <span style="font-size:18px;">📷</span>
-                        <div style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.5);color:#fff;font-size:7px;padding:2px 5px;border-radius:4px;">🔒 SUB</div>
+                      <div style="aspect-ratio:1;overflow:hidden;"><img class="m-photo" src="https://picsum.photos/seed/jgrid3/200/200" alt=""></div>
+                      <div style="aspect-ratio:1;overflow:hidden;position:relative;">
+                        <img class="m-photo" src="https://picsum.photos/seed/jgrid4/200/200" alt="" style="filter:blur(12px) saturate(1.1);transform:scale(1.2);">
+                        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.3);display:grid;place-items:center;">
+                          <div style="text-align:center;"><div style="font-size:12px;">🔒</div><div style="font-size:6px;font-weight:700;color:#fff;">SUB</div></div>
+                        </div>
                       </div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#f5f3ff,#fce7f3);display:grid;place-items:center;font-size:18px;">📷</div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#fdf2f8,#f5f3ff);display:grid;place-items:center;font-size:18px;">📷</div>
+                      <div style="aspect-ratio:1;overflow:hidden;"><img class="m-photo" src="https://picsum.photos/seed/jgrid5/200/200" alt=""></div>
+                      <div style="aspect-ratio:1;overflow:hidden;"><img class="m-photo" src="https://picsum.photos/seed/jgrid6/200/200" alt=""></div>
                     </div>
 
                     <!-- Bottom nav -->
@@ -2209,12 +2295,14 @@
                 <div class="phone-frame">
                   <div class="phone-notch"></div>
                   <div class="phone-screen">
-                    <!-- Hero -->
-                    <div style="width:100%;aspect-ratio:4/3;background:linear-gradient(135deg,#1e1714,#f6339a20,#4d274a);position:relative;">
+                    <!-- Hero banner -->
+                    <div style="width:100%;aspect-ratio:4/3;position:relative;overflow:hidden;">
+                      <img class="m-photo" src="https://picsum.photos/seed/banner_escort/600/450" alt="" style="position:absolute;inset:0;">
+                      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.1),rgba(0,0,0,0.45));"></div>
                       <div style="position:absolute;top:36px;left:10px;" class="m-back">←</div>
                       <div style="position:absolute;top:36px;right:10px;" class="m-back">⋯</div>
                       <div style="position:absolute;bottom:-28px;left:14px;">
-                        <div class="m-avatar xl"><div class="m-avatar-inner" style="font-size:22px;">S</div></div>
+                        <div class="m-avatar xl"><img class="m-avatar-photo" src="https://i.pravatar.cc/150?img=1" alt=""></div>
                       </div>
                     </div>
 
