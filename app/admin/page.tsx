@@ -328,7 +328,7 @@ export default function AdminDashboard() {
                           )}
                         </div>
                         <p className="text-[11px] text-slate-500">
-                          {u.is_provider ? "Provider" : "Client"} · {timeAgo(u.created_at)}
+                          {u.provider_type === "escort" ? "Escort" : u.provider_type === "creator" ? "Creator" : "Client"} · {timeAgo(u.created_at)}
                         </p>
                       </div>
                       <span className="text-[10px] font-mono text-slate-300 flex-shrink-0">

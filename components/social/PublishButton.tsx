@@ -36,13 +36,13 @@ export function PublishButton() {
 
     supabase
       .from("profiles")
-      .select("is_provider, verification_status")
+      .select("provider_type, verification_status")
       .eq("id", user.id)
       .single()
       .then(({ data }) => {
         setProviderStatus({
           isVerifiedProvider:
-            !!data?.is_provider && data?.verification_status === "verified",
+            data?.provider_type != null && data?.verification_status === "verified",
           checked: true,
         });
       });

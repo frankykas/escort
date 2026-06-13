@@ -18,11 +18,14 @@ import { useLastActive } from "@/hooks/useLastActive";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export type ProviderType = "creator" | "escort" | null;
+
 export type UserProfile = {
   id: string;
   username: string;
   avatar_url: string | null;
   is_provider: boolean;
+  provider_type: ProviderType;
   verification_status: "none" | "pending" | "verified";
   onboarding_completed: boolean;
 };
@@ -30,8 +33,14 @@ export type UserProfile = {
 type ProfileContextValue = {
   /** null when signed out or still loading */
   profile: UserProfile | null;
-  /** Convenience shorthand — false while loading */
+  /** true if creator OR escort — backward-compat shorthand */
   isProvider: boolean;
+  /** true only for content-only creators (OF section) */
+  isCreator: boolean;
+  /** true only for escorts (listings + content) */
+  isEscort: boolean;
+  /** Raw provider type value */
+  providerType: ProviderType;
   /** True until both auth and profile have resolved */
   loading: boolean;
   /** Call after any profile mutation to sync context */
@@ -43,6 +52,9 @@ type ProfileContextValue = {
 const ProfileContext = createContext<ProfileContextValue>({
   profile: null,
   isProvider: false,
+  isCreator: false,
+  isEscort: false,
+  providerType: null,
   loading: true,
   refetch: () => {},
 });
@@ -60,7 +72,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, username, avatar_url, is_provider, verification_status, onboarding_completed")
+      .select("id, username, avatar_url, is_provider, provider_type, verification_status, onboarding_completed")
       .eq("id", userId)
       .single();
 
@@ -89,7 +101,10 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<ProfileContextValue>(
     () => ({
       profile,
-      isProvider: profile?.is_provider ?? false,
+      isProvider: profile?.provider_type != null,
+      isCreator: profile?.provider_type === "creator",
+      isEscort: profile?.provider_type === "escort",
+      providerType: profile?.provider_type ?? null,
       loading: !checked || profileLoading,
       refetch: () => { if (user) fetchProfile(user.id); },
     }),

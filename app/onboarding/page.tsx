@@ -30,7 +30,7 @@ const COUNTRY_OPTIONS = [
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type Role = "client" | "provider" | null;
+type Role = "client" | "creator" | "escort" | null;
 type Step = "role" | "profile" | "rate" | "listing" | "kyc" | "done";
 
 const inputCls =
@@ -118,14 +118,17 @@ export default function OnboardingPage() {
 
     const payload: Record<string, any> = {
       username: username.trim().toLowerCase().replace(/\s+/g, "."),
-      is_provider: role === "provider",
+      provider_type: role === "client" ? null : role, // 'creator' | 'escort' | null
       onboarding_completed: true,
     };
 
-    if (role === "provider") {
+    if (role === "creator" || role === "escort") {
       if (bio.trim()) payload.bio = bio.trim();
       if (city.trim()) payload.city = city.trim();
       payload.country_code = countryCode;
+    }
+
+    if (role === "escort") {
       if (categories.length > 0) payload.service_categories = categories;
       if (hourlyRate) payload.hourly_rate = Math.round(parseFloat(hourlyRate) * 100);
     }
@@ -148,8 +151,8 @@ export default function OnboardingPage() {
       return;
     }
 
-    // Create first listing if provided
-    if (role === "provider" && listingTitle.trim() && listingPrice) {
+    // Create first listing if provided (escorts only)
+    if (role === "escort" && listingTitle.trim() && listingPrice) {
       await supabase.from("listings").insert({
         provider_id: user.id,
         title: listingTitle.trim(),
@@ -162,9 +165,9 @@ export default function OnboardingPage() {
 
     setSaving(false);
     refetch();
-    // Providers see the KYC reminder step before the success screen.
+    // Creators and escorts see the KYC reminder step before the success screen.
     // Clients skip straight to done — they don't need ID verification.
-    setStep(role === "provider" ? "kyc" : "done");
+    setStep(role !== "client" ? "kyc" : "done");
   }
 
   if (!checked) {
@@ -199,6 +202,7 @@ export default function OnboardingPage() {
                 <p className="mt-1.5 text-[14px] text-slate-500">{t("onb_how_use")}</p>
               </div>
 
+              {/* Browsing / Client */}
               <button
                 onClick={() => selectRole("client")}
                 className="flex w-full items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-5 text-left transition-all hover:border-pink-300 hover:bg-white active:scale-[0.99]"
@@ -215,17 +219,35 @@ export default function OnboardingPage() {
                 <ArrowRight size={18} className="flex-shrink-0 text-slate-400" />
               </button>
 
+              {/* Content Creator (OF section) */}
               <button
-                onClick={() => selectRole("provider")}
+                onClick={() => selectRole("creator")}
+                className="flex w-full items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-5 text-left transition-all hover:border-violet-300 hover:bg-white active:scale-[0.99]"
+              >
+                <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-violet-50">
+                  <Camera size={24} className="text-violet-500" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[16px] font-semibold text-slate-800">{t("onb_creator")}</p>
+                  <p className="mt-0.5 text-[13px] text-slate-500">
+                    {t("onb_creator_desc")}
+                  </p>
+                </div>
+                <ArrowRight size={18} className="flex-shrink-0 text-slate-400" />
+              </button>
+
+              {/* Escort (listings + content) */}
+              <button
+                onClick={() => selectRole("escort")}
                 className="flex w-full items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-5 text-left transition-all hover:border-pink-300 hover:bg-white active:scale-[0.99]"
               >
                 <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-pink-50">
                   <Crown size={24} className="text-pink-500" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-[16px] font-semibold text-slate-800">{t("onb_provider")}</p>
+                  <p className="text-[16px] font-semibold text-slate-800">{t("onb_escort")}</p>
                   <p className="mt-0.5 text-[13px] text-slate-500">
-                    {t("onb_provider_desc")}
+                    {t("onb_escort_desc")}
                   </p>
                 </div>
                 <ArrowRight size={18} className="flex-shrink-0 text-slate-400" />
@@ -242,10 +264,10 @@ export default function OnboardingPage() {
               className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl"
             >
               <h1 className="text-[18px] font-bold text-slate-800">
-                {role === "provider" ? t("onb_setup_profile") : t("onb_choose_username")}
+                {role !== "client" ? t("onb_setup_profile") : t("onb_choose_username")}
               </h1>
               <p className="mt-1 text-[13px] text-slate-500">
-                {role === "provider" ? t("onb_provider_intro") : t("onb_client_intro")}
+                {role === "escort" ? t("onb_escort_intro") : role === "creator" ? t("onb_creator_intro") : t("onb_client_intro")}
               </p>
 
               <div className="mt-6 space-y-5">
@@ -300,8 +322,8 @@ export default function OnboardingPage() {
                   />
                 </div>
 
-                {/* Provider-only fields */}
-                {role === "provider" && (
+                {/* Creator + Escort shared fields: bio, location */}
+                {(role === "creator" || role === "escort") && (
                   <>
                     {/* Bio */}
                     <div>
@@ -348,43 +370,45 @@ export default function OnboardingPage() {
                         </select>
                       </div>
                     </div>
-
-                    {/* Categories */}
-                    <div>
-                      <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-slate-500">
-                        {t("onb_services")}
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {SERVICE_CATS.map((cat) => (
-                          <button
-                            key={cat}
-                            onClick={() => toggleCategory(cat)}
-                            className={cn(
-                              "rounded-full border px-3 py-1.5 text-[12px] font-medium transition-all",
-                              categories.includes(cat)
-                                ? "border-pink-400 bg-pink-50 text-pink-500"
-                                : "border-gray-200 bg-gray-100 text-slate-500 hover:border-gray-300 hover:text-slate-700"
-                            )}
-                          >
-                            {cat}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
                   </>
+                )}
+
+                {/* Escort-only: service categories */}
+                {role === "escort" && (
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+                      {t("onb_services")}
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {SERVICE_CATS.map((cat) => (
+                        <button
+                          key={cat}
+                          onClick={() => toggleCategory(cat)}
+                          className={cn(
+                            "rounded-full border px-3 py-1.5 text-[12px] font-medium transition-all",
+                            categories.includes(cat)
+                              ? "border-pink-400 bg-pink-50 text-pink-500"
+                              : "border-gray-200 bg-gray-100 text-slate-500 hover:border-gray-300 hover:text-slate-700"
+                          )}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 )}
 
                 {error && <p className="text-[12px] text-red-500">{error}</p>}
 
                 <button
-                  onClick={() => role === "provider" ? setStep("rate") : handleFinish()}
+                  onClick={() => role === "escort" ? setStep("rate") : role === "creator" ? handleFinish() : handleFinish()}
                   disabled={saving || !username.trim()}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-[rgb(246,51,154)] py-3.5 text-[14px] font-bold text-white transition hover:brightness-105 active:scale-[0.99] disabled:opacity-40"
                 >
                   {saving ? (
                     <><Loader2 size={14} className="animate-spin" /> {t("onb_saving")}</>
                   ) : (
-                    <>{role === "provider" ? t("onb_next") : t("onb_get_started")} <ArrowRight size={15} /></>
+                    <>{role === "escort" ? t("onb_next") : t("onb_get_started")} <ArrowRight size={15} /></>
                   )}
                 </button>
 
@@ -632,10 +656,10 @@ export default function OnboardingPage() {
                 <CheckCircle size={32} className="text-pink-500" />
               </div>
               <h1 className="mt-4 text-[20px] font-bold text-slate-800">
-                {role === "provider" ? t("onb_live") : t("onb_welcome_aboard")}
+                {role === "escort" ? t("onb_live") : role === "creator" ? t("onb_creator_ready") : t("onb_welcome_aboard")}
               </h1>
               <p className="mt-2 text-[14px] text-slate-500">
-                {role === "provider" ? t("onb_live_body") : t("onb_client_body")}
+                {role === "escort" ? t("onb_live_body") : role === "creator" ? t("onb_creator_ready_body") : t("onb_client_body")}
               </p>
               <button
                 onClick={() => {
@@ -646,7 +670,7 @@ export default function OnboardingPage() {
                 className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[rgb(246,51,154)] py-3.5 text-[14px] font-bold text-white transition hover:brightness-105"
               >
                 <ArrowRight size={16} />
-                {role === "provider" ? t("onb_go_dashboard") : t("onb_start_exploring")}
+                {role === "client" ? t("onb_start_exploring") : t("onb_go_dashboard")}
               </button>
             </motion.div>
           )}

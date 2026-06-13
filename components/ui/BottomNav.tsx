@@ -143,7 +143,7 @@ function BottomNavInner() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading: sessionLoading } = useSession();
-  const { isProvider, loading, profile } = useProfile();
+  const { isProvider, isCreator, isEscort, loading, profile } = useProfile();
   const { t } = useTranslation();
   const { count: unreadNotifs } = useUnreadCount();
   const unreadMsgs = useUnreadMessages();
@@ -183,14 +183,15 @@ function BottomNavInner() {
       bg: "bg-pink-50",
       action: () => handleCreate("post"),
     },
-    {
+    // Listings only available to escorts, not content creators
+    ...(isEscort ? [{
       label: t("create_listing"),
       description: t("create_listing_desc"),
       icon: ListOrdered,
       color: "text-violet-500",
       bg: "bg-violet-50",
       action: () => handleCreate("listing"),
-    },
+    }] : []),
   ];
 
   return (

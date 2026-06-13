@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-fetch";
 import { useSession } from "@/hooks/useSession";
+import { useProfile } from "@/contexts/ProfileContext";
 import { supabase } from "@/lib/supabase/client";
 import { compressImage } from "@/lib/image";
 import { useTranslation } from "@/lib/i18n/useTranslation";
@@ -123,6 +124,12 @@ export default function ListingsPage() {
   const router = useRouter();
   const { t } = useTranslation();
   const { user, loading: sessionLoading } = useSession();
+  const { isEscort, loading: profileLoading } = useProfile();
+
+  // Listings are escort-only — redirect creators/clients away
+  useEffect(() => {
+    if (!profileLoading && !isEscort) router.replace("/profile");
+  }, [profileLoading, isEscort, router]);
   const [listings, setListings]         = useState<Listing[]>([]);
   const [loading, setLoading]           = useState(true);
   const [drawerOpen, setDrawerOpen]     = useState(false);

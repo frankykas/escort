@@ -34,8 +34,8 @@ export default function LiveIndexPage() {
 
   useEffect(() => {
     if (!checked || !user) return;
-    supabase.from("profiles").select("is_provider").eq("id", user.id).maybeSingle()
-      .then(({ data }) => setIsProvider(!!data?.is_provider));
+    supabase.from("profiles").select("provider_type").eq("id", user.id).maybeSingle()
+      .then(({ data }) => setIsProvider(data?.provider_type != null));
   }, [checked, user]);
 
   if (!USE_LIVE_SHOWS) {

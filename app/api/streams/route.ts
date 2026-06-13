@@ -25,10 +25,10 @@ export async function POST(req: NextRequest) {
   // Only providers can broadcast.
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_provider")
+    .select("provider_type")
     .eq("id", auth.user.id)
     .maybeSingle();
-  if (!profile?.is_provider) {
+  if (!profile?.provider_type) {
     return NextResponse.json({ error: "Only providers can go live" }, { status: 403 });
   }
 
