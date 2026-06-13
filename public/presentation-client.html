@@ -1,0 +1,1059 @@
+<!doctype html>
+<html lang="fr-CA">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Présentation client | Plateforme Cleopatra</title>
+    <meta
+      name="description"
+      content="Présentation client en français canadien des nouvelles fonctionnalités et de la vision produit."
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #17130f;
+        --muted: #6f655b;
+        --soft: #fff7f0;
+        --paper: #fffdf9;
+        --gold: #e6aa20;
+        --rose: #ff4f91;
+        --plum: #4d274a;
+        --teal: #137b78;
+        --line: rgba(23, 19, 15, 0.13);
+        --shadow: 0 24px 70px rgba(34, 20, 12, 0.18);
+        --radius: 18px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at top left, rgba(255, 79, 145, 0.16), transparent 34rem),
+          linear-gradient(135deg, #fffdf9 0%, #fff2e5 44%, #f8eef6 100%);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        line-height: 1.45;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .page {
+        overflow: hidden;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.55);
+        background: rgba(255, 253, 249, 0.78);
+        backdrop-filter: blur(18px);
+      }
+
+      .topbar-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        width: min(1160px, calc(100% - 36px));
+        margin: 0 auto;
+        padding: 14px 0;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #17130f, #4d274a);
+        color: #fff8e9;
+        font-weight: 800;
+        box-shadow: 0 12px 30px rgba(77, 39, 74, 0.25);
+      }
+
+      .brand-title {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      .brand-subtitle {
+        margin: 2px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .nav {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .nav a,
+      .print-button {
+        display: inline-flex;
+        align-items: center;
+        min-height: 36px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.62);
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .print-button {
+        cursor: pointer;
+      }
+
+      .hero {
+        position: relative;
+        min-height: 92vh;
+        display: grid;
+        align-items: end;
+        isolation: isolate;
+        background:
+          linear-gradient(180deg, rgba(20, 12, 10, 0.1), rgba(20, 12, 10, 0.72)),
+          url("./cleopatra-hero-bgmatch.png") center / cover no-repeat;
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background: linear-gradient(90deg, rgba(10, 7, 5, 0.82), rgba(10, 7, 5, 0.28) 58%, rgba(10, 7, 5, 0.62));
+      }
+
+      .hero-content {
+        width: min(1160px, calc(100% - 36px));
+        margin: 0 auto;
+        padding: 94px 0 78px;
+        color: #fffaf0;
+      }
+
+      .kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 20px;
+        padding: 7px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.34);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffe8b6;
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .kicker::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--gold);
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        max-width: 860px;
+        margin-bottom: 18px;
+        font-size: clamp(48px, 8vw, 98px);
+        line-height: 0.92;
+        letter-spacing: 0;
+      }
+
+      .hero-lede {
+        max-width: 680px;
+        margin-bottom: 30px;
+        color: rgba(255, 250, 240, 0.86);
+        font-size: clamp(18px, 2.3vw, 26px);
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 42px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        min-height: 48px;
+        border: 1px solid rgba(255, 255, 255, 0.26);
+        border-radius: 999px;
+        padding: 13px 18px;
+        background: #fff7e7;
+        color: #1b120a;
+        font-weight: 850;
+        text-decoration: none;
+      }
+
+      .button.secondary {
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff7e7;
+      }
+
+      .hero-stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        max-width: 860px;
+      }
+
+      .hero-stat {
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: var(--radius);
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.11);
+        backdrop-filter: blur(14px);
+      }
+
+      .hero-stat strong {
+        display: block;
+        font-size: 28px;
+        line-height: 1;
+      }
+
+      .hero-stat span {
+        display: block;
+        margin-top: 7px;
+        color: rgba(255, 250, 240, 0.72);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      section {
+        position: relative;
+        padding: 84px 0;
+      }
+
+      .wrap {
+        width: min(1160px, calc(100% - 36px));
+        margin: 0 auto;
+      }
+
+      .section-head {
+        display: grid;
+        grid-template-columns: minmax(0, 0.88fr) minmax(260px, 0.42fr);
+        gap: 44px;
+        align-items: end;
+        margin-bottom: 34px;
+      }
+
+      .eyebrow {
+        margin-bottom: 12px;
+        color: var(--rose);
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      h2 {
+        margin-bottom: 0;
+        font-size: clamp(34px, 5vw, 64px);
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      .section-copy {
+        margin: 0;
+        color: var(--muted);
+        font-size: 17px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 18px;
+      }
+
+      .grid.three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .grid.four {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .grid.two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 24px;
+        background: rgba(255, 255, 255, 0.72);
+        box-shadow: 0 12px 42px rgba(34, 20, 12, 0.08);
+      }
+
+      .card.dark {
+        border-color: rgba(255, 255, 255, 0.14);
+        background: linear-gradient(145deg, #1e1714, #3b2038);
+        color: #fff7e7;
+      }
+
+      .card.accent {
+        background: linear-gradient(145deg, #fffdf9, #fff0d6);
+      }
+
+      .card h3 {
+        margin-bottom: 10px;
+        font-size: 20px;
+        line-height: 1.15;
+      }
+
+      .card p {
+        margin-bottom: 0;
+        color: var(--muted);
+      }
+
+      .card.dark p,
+      .card.dark .micro {
+        color: rgba(255, 247, 231, 0.73);
+      }
+
+      .micro {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 18px;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 6px 10px;
+        background: rgba(230, 170, 32, 0.14);
+        color: #7a5012;
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .feature-icon {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        margin-bottom: 18px;
+        place-items: center;
+        border-radius: 14px;
+        background: #17130f;
+        color: #ffe1a1;
+      }
+
+      .feature-icon svg {
+        width: 21px;
+        height: 21px;
+        stroke: currentColor;
+      }
+
+      .product-strip {
+        display: grid;
+        grid-template-columns: 0.82fr 1fr;
+        gap: 28px;
+        align-items: stretch;
+      }
+
+      .media-panel {
+        min-height: 560px;
+        border-radius: 24px;
+        overflow: hidden;
+        background:
+          linear-gradient(180deg, rgba(18, 12, 10, 0.08), rgba(18, 12, 10, 0.64)),
+          url("./cleopatra-hero.png") center / cover no-repeat;
+        box-shadow: var(--shadow);
+      }
+
+      .storyline {
+        display: grid;
+        gap: 14px;
+      }
+
+      .story-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 16px;
+        align-items: start;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 18px;
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .step-number {
+        display: grid;
+        width: 48px;
+        height: 48px;
+        place-items: center;
+        border-radius: 16px;
+        background: #17130f;
+        color: #ffe8b6;
+        font-weight: 900;
+      }
+
+      .story-step h3 {
+        margin-bottom: 5px;
+        font-size: 18px;
+      }
+
+      .story-step p {
+        margin-bottom: 0;
+        color: var(--muted);
+      }
+
+      .metric-band {
+        background: #17130f;
+        color: #fff7e7;
+      }
+
+      .metric-band .eyebrow {
+        color: #ffd37a;
+      }
+
+      .metric-band .section-copy {
+        color: rgba(255, 247, 231, 0.72);
+      }
+
+      .metric-card {
+        border-color: rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.07);
+        box-shadow: none;
+      }
+
+      .metric-card strong {
+        display: block;
+        margin-bottom: 10px;
+        color: #ffd37a;
+        font-size: 44px;
+        line-height: 1;
+      }
+
+      .metric-card p {
+        color: rgba(255, 247, 231, 0.72);
+      }
+
+      .comparison {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.78);
+        box-shadow: 0 12px 42px rgba(34, 20, 12, 0.08);
+      }
+
+      .comparison th,
+      .comparison td {
+        padding: 18px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .comparison th {
+        background: #17130f;
+        color: #fff7e7;
+        font-size: 13px;
+        text-transform: uppercase;
+      }
+
+      .comparison tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .check {
+        display: inline-grid;
+        width: 24px;
+        height: 24px;
+        margin-right: 8px;
+        place-items: center;
+        border-radius: 50%;
+        background: rgba(19, 123, 120, 0.14);
+        color: var(--teal);
+        font-weight: 900;
+      }
+
+      .roadmap {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+        counter-reset: roadmap;
+      }
+
+      .roadmap .card {
+        counter-increment: roadmap;
+      }
+
+      .roadmap .card::before {
+        content: "0" counter(roadmap);
+        display: inline-flex;
+        margin-bottom: 30px;
+        color: var(--rose);
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .closing {
+        min-height: 72vh;
+        display: grid;
+        align-items: center;
+        background:
+          linear-gradient(135deg, rgba(23, 19, 15, 0.88), rgba(77, 39, 74, 0.9)),
+          url("./cleopatra-hero-bgmatch.png") center / cover no-repeat;
+        color: #fff7e7;
+      }
+
+      .closing h2 {
+        max-width: 900px;
+        margin-bottom: 24px;
+      }
+
+      .closing p {
+        max-width: 720px;
+        color: rgba(255, 247, 231, 0.76);
+        font-size: 20px;
+      }
+
+      .footer-note {
+        margin-top: 34px;
+        color: rgba(255, 247, 231, 0.58);
+        font-size: 13px;
+      }
+
+      @media (max-width: 900px) {
+        .topbar-inner {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .nav {
+          width: 100%;
+          overflow-x: auto;
+          padding-bottom: 2px;
+        }
+
+        .hero-stats,
+        .grid.three,
+        .grid.four,
+        .grid.two,
+        .section-head,
+        .product-strip,
+        .roadmap {
+          grid-template-columns: 1fr;
+        }
+
+        .media-panel {
+          min-height: 390px;
+        }
+      }
+
+      @media (max-width: 560px) {
+        section {
+          padding: 64px 0;
+        }
+
+        .hero {
+          min-height: 96vh;
+        }
+
+        .hero-content {
+          padding-bottom: 48px;
+        }
+
+        .hero-stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .comparison {
+          display: block;
+          overflow-x: auto;
+          white-space: nowrap;
+        }
+      }
+
+      @media print {
+        body {
+          background: #fff;
+        }
+
+        .topbar,
+        .hero-actions {
+          display: none;
+        }
+
+        .hero,
+        .closing,
+        section {
+          min-height: auto;
+          break-inside: avoid;
+        }
+
+        .card,
+        .comparison {
+          box-shadow: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <div class="topbar-inner">
+          <div class="brand" aria-label="Plateforme Cleopatra">
+            <div class="brand-mark">C</div>
+            <div>
+              <p class="brand-title">Cleopatra</p>
+              <p class="brand-subtitle">Présentation client · version fonctionnalités</p>
+            </div>
+          </div>
+          <nav class="nav" aria-label="Sections de la présentation">
+            <a href="#vision">Vision</a>
+            <a href="#nouveautes">Nouveautés</a>
+            <a href="#parcours">Parcours</a>
+            <a href="#monetisation">Monétisation</a>
+            <a href="#suite">Suite</a>
+            <button class="print-button" type="button" onclick="window.print()">Imprimer</button>
+          </nav>
+        </div>
+      </header>
+
+      <main>
+        <section class="hero" aria-label="Introduction">
+          <div class="hero-content">
+            <p class="kicker">Présentation client · Québec</p>
+            <h1>Une plateforme sociale premium prête à générer des revenus.</h1>
+            <p class="hero-lede">
+              Cleopatra combine découverte, profils créateurs, messagerie, contenus payants,
+              événements live et outils d'administration dans une expérience mobile-first élégante.
+            </p>
+            <div class="hero-actions">
+              <a class="button" href="#nouveautes">Voir les nouveautés</a>
+              <a class="button secondary" href="#suite">Plan de lancement</a>
+            </div>
+            <div class="hero-stats" aria-label="Résumé rapide">
+              <div class="hero-stat"><strong>85</strong><span>routes web générées</span></div>
+              <div class="hero-stat"><strong>13+</strong><span>nouveaux endpoints</span></div>
+              <div class="hero-stat"><strong>8</strong><span>écrans majeurs ajoutés</span></div>
+              <div class="hero-stat"><strong>10</strong><span>migrations de données</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="vision">
+          <div class="wrap">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Vision produit</p>
+                <h2>Un écosystème complet, pas juste une vitrine.</h2>
+              </div>
+              <p class="section-copy">
+                L'application couvre le cycle complet: attirer, convertir, engager,
+                monétiser et gérer la communauté avec des contrôles professionnels.
+              </p>
+            </div>
+
+            <div class="grid three">
+              <article class="card">
+                <div class="feature-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                    <path d="M4 12a8 8 0 1 0 16 0a8 8 0 0 0-16 0Z" />
+                    <path d="M12 8v8M8 12h8" />
+                  </svg>
+                </div>
+                <h3>Découverte sociale</h3>
+                <p>
+                  Fil d'actualité, profils publics, recherche, catégories, favoris, stories
+                  et notifications pour garder les utilisateurs actifs.
+                </p>
+              </article>
+
+              <article class="card accent">
+                <div class="feature-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                    <path d="M6 8h12v12H6z" />
+                    <path d="M8 8V6a4 4 0 0 1 8 0v2" />
+                    <path d="M12 13v3" />
+                  </svg>
+                </div>
+                <h3>Accès premium</h3>
+                <p>
+                  Abonnements, publications verrouillées, photos payantes en messages privés,
+                  pourboires et billets de live.
+                </p>
+              </article>
+
+              <article class="card dark">
+                <div class="feature-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                    <path d="M12 3l7 4v5c0 5-3 8-7 9c-4-1-7-4-7-9V7z" />
+                    <path d="M9 12l2 2l4-4" />
+                  </svg>
+                </div>
+                <h3>Confiance et contrôle</h3>
+                <p>
+                  Vérification d'âge, modération admin, accès média sécurisé,
+                  rôles utilisateurs et paramètres de confidentialité.
+                </p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section id="nouveautes">
+          <div class="wrap">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Nouveautés livrées</p>
+                <h2>La nouvelle version ajoute une vraie couche de revenus.</h2>
+              </div>
+              <p class="section-copy">
+                Les fonctionnalités sont conçues pour soutenir plusieurs modèles d'affaires:
+                gratuit avec upsell, abonnement mensuel, achat à la carte et événements.
+              </p>
+            </div>
+
+            <div class="grid three">
+              <article class="card">
+                <h3>Abonnements créateur</h3>
+                <p>
+                  Chaque créateur peut offrir un accès mensuel payant ou gratuit à son contenu privé.
+                </p>
+                <div class="tag-list">
+                  <span class="tag">CA$/mois</span>
+                  <span class="tag">Avantages</span>
+                  <span class="tag">Annulation</span>
+                </div>
+              </article>
+              <article class="card">
+                <h3>Pay-per-view</h3>
+                <p>
+                  Publications et photos en DM peuvent être verrouillées derrière un prix unique.
+                </p>
+                <div class="tag-list">
+                  <span class="tag">Posts PPV</span>
+                  <span class="tag">DM verrouillés</span>
+                </div>
+              </article>
+              <article class="card">
+                <h3>Live shows</h3>
+                <p>
+                  Les créateurs peuvent lancer une diffusion en direct avec billet d'entrée et pourboires.
+                </p>
+                <div class="tag-list">
+                  <span class="tag">LiveKit</span>
+                  <span class="tag">Billets</span>
+                  <span class="tag">Tips</span>
+                </div>
+              </article>
+              <article class="card">
+                <h3>Bundles all-access</h3>
+                <p>
+                  Un forfait global peut débloquer le contenu abonné de tous les créateurs participants.
+                </p>
+                <div class="tag-list">
+                  <span class="tag">Différenciateur</span>
+                  <span class="tag">Admin</span>
+                </div>
+              </article>
+              <article class="card">
+                <h3>Revenus et retraits</h3>
+                <p>
+                  Tableau de bord créateur avec revenus disponibles, en attente, à vie et historique.
+                </p>
+                <div class="tag-list">
+                  <span class="tag">Payouts</span>
+                  <span class="tag">Soldes</span>
+                </div>
+              </article>
+              <article class="card">
+                <h3>Modération avancée</h3>
+                <p>
+                  File d'attente admin pour les contenus explicites, consentement, blocage régional et vérification.
+                </p>
+                <div class="tag-list">
+                  <span class="tag">Yoti</span>
+                  <span class="tag">Admin</span>
+                  <span class="tag">Conformité</span>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section id="parcours">
+          <div class="wrap">
+            <div class="product-strip">
+              <div class="media-panel" role="img" aria-label="Visuel de marque Cleopatra"></div>
+              <div>
+                <p class="eyebrow">Expérience utilisateur</p>
+                <h2>Un parcours simple: découvrir, suivre, payer, revenir.</h2>
+                <p class="section-copy" style="margin: 18px 0 26px">
+                  La version actuelle met l'accent sur les gestes qui créent de la valeur:
+                  trouver un profil, interagir, débloquer du contenu et recevoir des notifications.
+                </p>
+
+                <div class="storyline">
+                  <article class="story-step">
+                    <div class="step-number">1</div>
+                    <div>
+                      <h3>Découverte</h3>
+                      <p>Exploration par fil, catégories, profils, listings, stories et recherche.</p>
+                    </div>
+                  </article>
+                  <article class="story-step">
+                    <div class="step-number">2</div>
+                    <div>
+                      <h3>Conversion</h3>
+                      <p>Abonnement, achat PPV, billet live, bundle ou pourboire directement dans le parcours.</p>
+                    </div>
+                  </article>
+                  <article class="story-step">
+                    <div class="step-number">3</div>
+                    <div>
+                      <h3>Engagement</h3>
+                      <p>Messagerie, notifications, demandes de chat, favoris et contenu exclusif.</p>
+                    </div>
+                  </article>
+                  <article class="story-step">
+                    <div class="step-number">4</div>
+                    <div>
+                      <h3>Gestion</h3>
+                      <p>Profil, abonnements, confidentialité, vérification, revenus et outils admin.</p>
+                    </div>
+                  </article>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="monetisation" class="metric-band">
+          <div class="wrap">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Monétisation</p>
+                <h2>Plusieurs leviers de revenus dans la même plateforme.</h2>
+              </div>
+              <p class="section-copy">
+                Les créateurs ne sont pas limités à un seul modèle. Ils peuvent combiner abonnements,
+                contenu à la carte, lives et pourboires selon leur stratégie.
+              </p>
+            </div>
+
+            <div class="grid four">
+              <article class="card metric-card">
+                <strong>01</strong>
+                <h3>Abonnement mensuel</h3>
+                <p>Revenu récurrent par créateur, avec accès réservé aux membres.</p>
+              </article>
+              <article class="card metric-card">
+                <strong>02</strong>
+                <h3>À la carte</h3>
+                <p>Prix individuel pour publications, photos en DM et contenus spéciaux.</p>
+              </article>
+              <article class="card metric-card">
+                <strong>03</strong>
+                <h3>Événements live</h3>
+                <p>Billet d'accès, interactions en direct et pourboires pendant la diffusion.</p>
+              </article>
+              <article class="card metric-card">
+                <strong>04</strong>
+                <h3>Bundle global</h3>
+                <p>Forfait plateforme pour offrir un accès élargi et augmenter la valeur perçue.</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="wrap">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Comparaison commerciale</p>
+                <h2>Un modèle inspiré des plateformes de créateurs, avec des ajouts propres.</h2>
+              </div>
+              <p class="section-copy">
+                L'objectif est de garder les mécaniques connues par les utilisateurs, tout en ajoutant
+                des options de croissance plus flexibles pour l'opérateur.
+              </p>
+            </div>
+
+            <table class="comparison">
+              <thead>
+                <tr>
+                  <th>Fonction</th>
+                  <th>Dans Cleopatra</th>
+                  <th>Impact client</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="check">✓</span>Abonnement créateur</td>
+                  <td>Prix mensuel, accès privé, abonnement gratuit possible.</td>
+                  <td>Revenus récurrents et meilleure fidélisation.</td>
+                </tr>
+                <tr>
+                  <td><span class="check">✓</span>Pay-per-view</td>
+                  <td>Contenu débloqué par achat unique dans le feed ou en message privé.</td>
+                  <td>Monétisation même sans abonnement mensuel.</td>
+                </tr>
+                <tr>
+                  <td><span class="check">✓</span>Live payant</td>
+                  <td>Billets, diffusion en direct et pourboires.</td>
+                  <td>Événements premium et pics de revenus.</td>
+                </tr>
+                <tr>
+                  <td><span class="check">✓</span>All-access bundle</td>
+                  <td>Un pass débloque le contenu abonné à l'échelle de la plateforme.</td>
+                  <td>Offre différenciée et panier moyen plus élevé.</td>
+                </tr>
+                <tr>
+                  <td><span class="check">✓</span>Conformité</td>
+                  <td>Vérification, opt-in adulte, revue admin et blocage régional.</td>
+                  <td>Réduit le risque opérationnel et protège la marque.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section>
+          <div class="wrap">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Administration</p>
+                <h2>Des outils pour opérer la plateforme au quotidien.</h2>
+              </div>
+              <p class="section-copy">
+                L'équipe peut suivre les créateurs, gérer les contenus sensibles,
+                valider les paiements et configurer les offres.
+              </p>
+            </div>
+
+            <div class="grid two">
+              <article class="card">
+                <h3>Tableau de bord admin</h3>
+                <p>
+                  Accès aux métriques, packages, modération, vérifications et paramètres clés
+                  pour gérer l'exploitation.
+                </p>
+              </article>
+              <article class="card">
+                <h3>Modération de contenu</h3>
+                <p>
+                  Les publications sensibles peuvent être retenues en revue avant publication,
+                  avec traces de conformité.
+                </p>
+              </article>
+              <article class="card">
+                <h3>Santé des paiements</h3>
+                <p>
+                  Endpoints de vérification pour confirmer que la passerelle Payram est configurée
+                  et joignable.
+                </p>
+              </article>
+              <article class="card">
+                <h3>Gestion des bundles</h3>
+                <p>
+                  Création, prix et activation des forfaits all-access directement dans l'interface admin.
+                </p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section id="suite">
+          <div class="wrap">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Plan de lancement</p>
+                <h2>Ce qu'il reste à brancher pour passer en production commerciale.</h2>
+              </div>
+              <p class="section-copy">
+                La base produit est en place. La prochaine étape est surtout opérationnelle:
+                paiements réels, règles de contenu, comptes créateurs pilotes et suivi.
+              </p>
+            </div>
+
+            <div class="roadmap">
+              <article class="card">
+                <h3>Connecter la passerelle de paiement</h3>
+                <p>
+                  Finaliser Payram ou la passerelle choisie pour activer achats, abonnements,
+                  pourboires et retraits.
+                </p>
+              </article>
+              <article class="card">
+                <h3>Lancer avec créateurs pilotes</h3>
+                <p>
+                  Sélectionner un groupe restreint, valider les prix, les contenus premium
+                  et les premières conversions.
+                </p>
+              </article>
+              <article class="card">
+                <h3>Brancher la conformité avancée</h3>
+                <p>
+                  Ajouter un fournisseur de scan média si requis, puis définir les règles
+                  de modération et de pays bloqués.
+                </p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="closing">
+          <div class="wrap">
+            <p class="kicker">Conclusion</p>
+            <h2>Cleopatra est maintenant positionnée comme une plateforme sociale premium monétisable.</h2>
+            <p>
+              La nouvelle version transforme l'application en produit complet: découverte,
+              messagerie, contenu exclusif, live, revenus créateur, administration et conformité.
+            </p>
+            <p class="footer-note">
+              Présentation préparée pour revue client. Les chiffres techniques reflètent la version actuelle
+              déployée sur le projet Vercel frais.
+            </p>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
