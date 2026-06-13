@@ -116,3 +116,80 @@ function canCanvasEncode(mime: string): boolean {
   webpSupported = canvas.toDataURL("image/webp").startsWith("data:image/webp");
   return webpSupported;
 }
+
+// ─── Blur preview for locked content ─────────────────────────────────────────
+//
+// Generates a tiny, heavily pixelated, low-quality JPEG preview that
+// irreversibly destroys the image data. This is NOT a CSS filter — the actual
+// pixel data is reduced to ~32px, then scaled back up, so removing styles in
+// DevTools reveals nothing useful.
+//
+// The multi-pass approach (shrink → pixelate → blur via repeated downscale)
+// makes it impossible to reconstruct the original from the preview.
+
+const BLUR_SIZE = 32;
+const BLUR_QUALITY = 0.25;
+
+/**
+ * Generate a server-side-quality blurred preview of an image file.
+ * Returns a tiny JPEG File (~1-3KB) suitable for upload to a public bucket.
+ * Returns null for non-image files or on failure.
+ */
+export async function generateBlurPreview(file: File): Promise<File | null> {
+  if (!file.type.startsWith("image/") || file.type === "image/gif") return null;
+
+  let img: HTMLImageElement;
+  try {
+    img = await loadImage(file);
+  } catch {
+    return null;
+  }
+
+  // Pass 1: Shrink to tiny size (destroys detail irreversibly)
+  const { width: w1, height: h1 } = scaleDimensions(img.width, img.height, BLUR_SIZE);
+  const tiny = document.createElement("canvas");
+  tiny.width = w1;
+  tiny.height = h1;
+  const tinyCtx = tiny.getContext("2d");
+  if (!tinyCtx) return null;
+
+  // Disable smoothing for the first pass to get blocky pixels
+  tinyCtx.imageSmoothingEnabled = false;
+  tinyCtx.drawImage(img, 0, 0, w1, h1);
+
+  // Pass 2: Scale back up to a usable size with smoothing ON (creates the blur)
+  const upscaleSize = 200;
+  const { width: w2, height: h2 } = scaleDimensions(w1, h1, upscaleSize);
+  const blurred = document.createElement("canvas");
+  blurred.width = w2;
+  blurred.height = h2;
+  const blurCtx = blurred.getContext("2d");
+  if (!blurCtx) return null;
+
+  blurCtx.imageSmoothingEnabled = true;
+  blurCtx.imageSmoothingQuality = "low";
+  blurCtx.drawImage(tiny, 0, 0, w2, h2);
+
+  // Pass 3: Apply additional canvas filter blur to destroy any remaining edges
+  if (typeof blurCtx.filter !== "undefined") {
+    const final = document.createElement("canvas");
+    final.width = w2;
+    final.height = h2;
+    const finalCtx = final.getContext("2d");
+    if (finalCtx) {
+      finalCtx.filter = "blur(8px)";
+      finalCtx.drawImage(blurred, 0, 0);
+      // Use the further-blurred result
+      blurCtx.drawImage(final, 0, 0);
+    }
+  }
+
+  // Encode as very low quality JPEG
+  const blob = await new Promise<Blob | null>((resolve) =>
+    blurred.toBlob(resolve, "image/jpeg", BLUR_QUALITY)
+  );
+  if (!blob) return null;
+
+  const baseName = file.name.replace(/\.[^.]+$/, "");
+  return new File([blob], `${baseName}-blur.jpg`, { type: "image/jpeg" });
+}

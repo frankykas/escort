@@ -74,7 +74,7 @@ export default async function ProfilePage({ params }: Props) {
     await Promise.all([
       supabase
         .from("status_updates")
-        .select("id, media_url, likes_count, comments_count")
+        .select("id, media_url, blur_url, is_premium, likes_count, comments_count")
         .eq("provider_id", profile.id)
         .eq("post_type", "post")
         .order("created_at", { ascending: false }),

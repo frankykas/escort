@@ -17,6 +17,7 @@ import {
   Calendar,
   Users,
   ExternalLink,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/useTranslation";
@@ -29,6 +30,8 @@ import { CATEGORIES } from "@/lib/categories";
 export type PostItem = {
   id: string;
   media_url: string | null;
+  blur_url?: string | null;
+  is_premium?: boolean;
   likes_count: number;
   comments_count: number;
 };
@@ -204,6 +207,20 @@ function PostsGrid({ posts, isOwnProfile }: { posts: PostItem[]; isOwnProfile: b
                 className="object-cover transition-transform duration-200 group-hover:scale-105"
                 sizes="(max-width: 768px) 33vw, 200px"
               />
+            ) : post.is_premium && post.blur_url ? (
+              /* Premium post with server-blurred preview — not CSS blur */
+              <div className="relative h-full w-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={post.blur_url} alt="" className="h-full w-full object-cover" />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                  <Lock size={16} className="text-white" />
+                </div>
+              </div>
+            ) : post.is_premium ? (
+              /* Premium post without blur preview (legacy) */
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-pink-50 to-sky-50">
+                <Lock size={16} className="text-pink-300" />
+              </div>
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-gray-50">
                 <span className="text-[10px] text-slate-300">No image</span>

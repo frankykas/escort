@@ -100,7 +100,10 @@ function PremiumMedia({ postId, mediaType, alt }: { postId: string; mediaType: s
   );
 }
 
-// Blurred lock state for premium content the viewer hasn't unlocked.
+// Locked state for premium content the viewer hasn't unlocked.
+// Shows a server-side blurred preview (tiny pixelated JPEG — not CSS blur, so
+// it can't be "un-blurred" via DevTools) with a dark overlay and CTA on top.
+// Falls back to a gradient placeholder when no blur preview exists yet.
 function LockedMedia({
   post,
   onError,
@@ -109,13 +112,35 @@ function LockedMedia({
   onError: (msg: string) => void;
 }) {
   const isPpv = post.unlock_price != null;
+  const hasBlur = !!post.blur_url;
   return (
-    <div className="relative flex aspect-square w-full flex-col items-center justify-center gap-3 overflow-hidden bg-gradient-to-br from-pink-50 via-white to-sky-50">
-      <div className="absolute inset-0 backdrop-blur-2xl" />
-      <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/80 shadow-sm">
+    <div className="relative flex aspect-square w-full flex-col items-center justify-center gap-3 overflow-hidden">
+      {/* Background: server-blurred preview or gradient fallback */}
+      {hasBlur ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={post.blur_url!}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          {/* Dark scrim so CTA text is readable on any blur color */}
+          <div className="absolute inset-0 bg-black/40" />
+        </>
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-50 via-white to-sky-50" />
+      )}
+      <div className={cn(
+        "relative flex h-14 w-14 items-center justify-center rounded-full shadow-sm",
+        hasBlur ? "bg-white/90" : "bg-white/80"
+      )}>
         <Lock size={24} className="text-pink-500" />
       </div>
-      <p className="relative text-[13px] font-semibold text-slate-700">
+      <p className={cn(
+        "relative text-[13px] font-semibold",
+        hasBlur ? "text-white" : "text-slate-700"
+      )}>
         {isPpv ? "Pay-per-view content" : "Subscribers only"}
       </p>
       <div className="relative">

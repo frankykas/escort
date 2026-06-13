@@ -29,6 +29,7 @@ export type FeedPostData = {
   unlock_price?: number | null;
   content_rating?: string;
   media_path?: string | null;
+  blur_url?: string | null;
   latest_comments: {
     id: string;
     user_id: string;
