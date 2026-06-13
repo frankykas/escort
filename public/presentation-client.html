@@ -999,6 +999,7 @@
             <a href="#vision">Vision</a>
             <a href="#nouveautes">Nouveautés</a>
             <a href="#ecrans">Écrans</a>
+            <a href="#split">Créateur / Escorte</a>
             <a href="#parcours">Parcours</a>
             <a href="#monetisation">Monétisation</a>
             <a href="#suite">Suite</a>
@@ -1767,6 +1768,873 @@
                 </div>
                 <p class="screen-label">Administration</p>
                 <p class="screen-sublabel">Métriques, vérifications, modération</p>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- SECTION: Creator / Escort Split                                     -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <section id="split">
+          <div class="wrap">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Nouveau · Séparation des rôles</p>
+                <h2>Deux sections distinctes dans la même app.</h2>
+              </div>
+              <p class="section-copy">
+                L'application est maintenant divisée en <strong>Section OF</strong> (créatrices de contenu)
+                et <strong>Section Escortes</strong>. Les escortes héritent de tout ce qu'une créatrice a,
+                en plus des listings, réservations et disponibilités.
+              </p>
+            </div>
+
+            <!-- Comparison table: Creator vs Escort -->
+            <table class="comparison" style="margin-bottom:48px;">
+              <thead>
+                <tr>
+                  <th>Fonctionnalité</th>
+                  <th>Créatrice (OF)</th>
+                  <th>Escorte</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Posts & Stories</td>
+                  <td><span class="check">✓</span>Oui</td>
+                  <td><span class="check">✓</span>Oui</td>
+                </tr>
+                <tr>
+                  <td>Abonnements & PPV</td>
+                  <td><span class="check">✓</span>Oui</td>
+                  <td><span class="check">✓</span>Oui</td>
+                </tr>
+                <tr>
+                  <td>DMs payants & Pourboires</td>
+                  <td><span class="check">✓</span>Oui</td>
+                  <td><span class="check">✓</span>Oui</td>
+                </tr>
+                <tr>
+                  <td>Live shows</td>
+                  <td><span class="check">✓</span>Oui</td>
+                  <td><span class="check">✓</span>Oui</td>
+                </tr>
+                <tr>
+                  <td>Revenus & Retraits</td>
+                  <td><span class="check">✓</span>Oui</td>
+                  <td><span class="check">✓</span>Oui</td>
+                </tr>
+                <tr>
+                  <td>Listings / Annonces</td>
+                  <td style="color:#94a3b8;">✕ Non</td>
+                  <td><span class="check">✓</span>Oui</td>
+                </tr>
+                <tr>
+                  <td>Disponibilité / Horaires</td>
+                  <td style="color:#94a3b8;">✕ Non</td>
+                  <td><span class="check">✓</span>Oui</td>
+                </tr>
+                <tr>
+                  <td>Réservations</td>
+                  <td style="color:#94a3b8;">✕ Non</td>
+                  <td><span class="check">✓</span>Oui</td>
+                </tr>
+                <tr>
+                  <td>Taux horaire</td>
+                  <td style="color:#94a3b8;">✕ Non</td>
+                  <td><span class="check">✓</span>Oui</td>
+                </tr>
+                <tr>
+                  <td>Bouton « Enquire »</td>
+                  <td style="color:#94a3b8;">✕ Non</td>
+                  <td><span class="check">✓</span>Oui</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- ── ROW 1: Onboarding, Creator Dashboard, Escort Profile ── -->
+            <div class="screens-gallery">
+
+              <!-- SCREEN A ─ Onboarding: 3 Role Selection -->
+              <div>
+                <div class="phone-frame">
+                  <div class="phone-notch"></div>
+                  <div class="phone-screen">
+                    <div style="padding:44px 16px 20px;text-align:center;">
+                      <div style="width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,#17130f,#4d274a);display:grid;place-items:center;margin:0 auto 14px;color:#ffe1a1;font-size:20px;font-weight:900;">C</div>
+                      <div style="font-weight:800;font-size:18px;color:#1e293b;">Bienvenue sur Cleopatra</div>
+                      <div style="font-size:11px;color:#64748b;margin-top:6px;">Choisis ton type de compte pour commencer.</div>
+                    </div>
+
+                    <!-- Role cards -->
+                    <div style="padding:0 14px;display:flex;flex-direction:column;gap:10px;">
+                      <!-- Client -->
+                      <div style="border:2px solid #e0f2fe;border-radius:16px;padding:14px;background:linear-gradient(135deg,#f0f9ff,#fff);display:flex;align-items:center;gap:12px;">
+                        <div style="width:44px;height:44px;border-radius:14px;background:rgba(56,189,248,0.12);display:grid;place-items:center;font-size:18px;flex-shrink:0;">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                          <div style="font-weight:800;font-size:13px;color:#1e293b;">Client</div>
+                          <div style="font-size:10px;color:#64748b;margin-top:2px;">Découvre, suit et interagis avec du contenu premium.</div>
+                        </div>
+                        <div style="width:18px;height:18px;border-radius:50%;border:2px solid #d1d5db;flex-shrink:0;"></div>
+                      </div>
+
+                      <!-- Creator -->
+                      <div style="border:2px solid #ddd6fe;border-radius:16px;padding:14px;background:linear-gradient(135deg,#f5f3ff,#fff);display:flex;align-items:center;gap:12px;position:relative;">
+                        <div style="position:absolute;top:-6px;right:12px;">
+                          <span class="m-badge" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:#fff;font-size:8px;padding:2px 8px;">NOUVEAU</span>
+                        </div>
+                        <div style="width:44px;height:44px;border-radius:14px;background:rgba(139,92,246,0.12);display:grid;place-items:center;font-size:18px;flex-shrink:0;">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                          <div style="font-weight:800;font-size:13px;color:#1e293b;">Créatrice de contenu</div>
+                          <div style="font-size:10px;color:#64748b;margin-top:2px;">Vends du contenu: vidéos, photos, abonnements, PPV, lives.</div>
+                        </div>
+                        <div style="width:18px;height:18px;border-radius:50%;border:2px solid #8b5cf6;flex-shrink:0;background:#8b5cf6;display:grid;place-items:center;">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                        </div>
+                      </div>
+
+                      <!-- Escort -->
+                      <div style="border:2px solid #fce7f3;border-radius:16px;padding:14px;background:linear-gradient(135deg,#fdf2f8,#fff);display:flex;align-items:center;gap:12px;">
+                        <div style="width:44px;height:44px;border-radius:14px;background:rgba(246,51,154,0.12);display:grid;place-items:center;font-size:18px;flex-shrink:0;">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f6339a" stroke-width="2"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7L12 17l-6.4 4 2.3-7L2 9.4h7.6z"/></svg>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                          <div style="font-weight:800;font-size:13px;color:#1e293b;">Escorte</div>
+                          <div style="font-size:10px;color:#64748b;margin-top:2px;">Listings, réservations + tout ce qu'une créatrice offre.</div>
+                        </div>
+                        <div style="width:18px;height:18px;border-radius:50%;border:2px solid #d1d5db;flex-shrink:0;"></div>
+                      </div>
+                    </div>
+
+                    <!-- Continue button -->
+                    <div style="padding:20px 14px 10px;">
+                      <button class="m-btn-pink" style="width:100%;justify-content:center;padding:10px;font-size:12px;border-radius:12px;">Continuer</button>
+                    </div>
+
+                    <!-- Steps indicator -->
+                    <div style="display:flex;justify-content:center;gap:6px;padding:8px 0 16px;">
+                      <div style="width:24px;height:4px;border-radius:2px;background:#8b5cf6;"></div>
+                      <div style="width:24px;height:4px;border-radius:2px;background:#e2e8f0;"></div>
+                      <div style="width:24px;height:4px;border-radius:2px;background:#e2e8f0;"></div>
+                    </div>
+                  </div>
+                </div>
+                <p class="screen-label">Inscription — Choix du rôle</p>
+                <p class="screen-sublabel">3 chemins: Client, Créatrice, Escorte</p>
+              </div>
+
+              <!-- SCREEN B ─ Creator Dashboard (Home) -->
+              <div>
+                <div class="phone-frame">
+                  <div class="phone-notch"></div>
+                  <div class="phone-screen">
+                    <div class="m-header">
+                      <div class="m-header-title" style="background:linear-gradient(90deg,#8b5cf6,#7dd3fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Cleopatra</div>
+                      <span class="m-badge" style="background:rgba(139,92,246,0.12);color:#8b5cf6;font-size:8px;">Créatrice</span>
+                    </div>
+
+                    <!-- Balance banner -->
+                    <div style="margin:10px;padding:16px;border-radius:16px;background:linear-gradient(135deg,#f5f3ff,#fdf2f8);border:1px solid #ede9fe;">
+                      <div style="font-size:9px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Solde disponible</div>
+                      <div style="font-size:28px;font-weight:900;color:#8b5cf6;margin:4px 0;">CA$2,847</div>
+                      <div style="font-size:9px;color:#94a3b8;">+CA$340 en attente</div>
+                    </div>
+
+                    <!-- Stats row -->
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:0 10px 10px;">
+                      <div style="text-align:center;padding:8px 4px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;">
+                        <div style="font-size:14px;font-weight:800;color:#1e293b;">8.2K</div>
+                        <div style="font-size:8px;color:#94a3b8;font-weight:600;">Vues</div>
+                      </div>
+                      <div style="text-align:center;padding:8px 4px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;">
+                        <div style="font-size:14px;font-weight:800;color:#1e293b;">1.4K</div>
+                        <div style="font-size:8px;color:#94a3b8;font-weight:600;">Likes</div>
+                      </div>
+                      <div style="text-align:center;padding:8px 4px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;">
+                        <div style="font-size:14px;font-weight:800;color:#f6339a;">482</div>
+                        <div style="font-size:8px;color:#94a3b8;font-weight:600;">Abonnés</div>
+                      </div>
+                      <div style="text-align:center;padding:8px 4px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;">
+                        <div style="font-size:14px;font-weight:800;color:#1e293b;">127</div>
+                        <div style="font-size:8px;color:#94a3b8;font-weight:600;">Posts</div>
+                      </div>
+                    </div>
+
+                    <!-- Quick actions grid -->
+                    <div style="padding:0 10px 6px;font-weight:700;font-size:11px;color:#1e293b;">Actions rapides</div>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 10px 10px;">
+                      <div style="text-align:center;padding:10px 4px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;">
+                        <div style="font-size:18px;margin-bottom:4px;">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" style="margin:0 auto;display:block;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        </div>
+                        <div style="font-size:9px;font-weight:700;color:#1e293b;">Publier</div>
+                      </div>
+                      <div style="text-align:center;padding:10px 4px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;">
+                        <div style="font-size:18px;margin-bottom:4px;">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f6339a" stroke-width="2" style="margin:0 auto;display:block;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                        </div>
+                        <div style="font-size:9px;font-weight:700;color:#1e293b;">Go live</div>
+                      </div>
+                      <div style="text-align:center;padding:10px 4px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;">
+                        <div style="font-size:18px;margin-bottom:4px;">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" style="margin:0 auto;display:block;"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                        </div>
+                        <div style="font-size:9px;font-weight:700;color:#1e293b;">Revenus</div>
+                      </div>
+                      <div style="text-align:center;padding:10px 4px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;">
+                        <div style="font-size:18px;margin-bottom:4px;">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2" style="margin:0 auto;display:block;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                        <div style="font-size:9px;font-weight:700;color:#1e293b;">Mon profil</div>
+                      </div>
+                      <div style="text-align:center;padding:10px 4px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;">
+                        <div style="font-size:18px;margin-bottom:4px;">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" style="margin:0 auto;display:block;"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7L12 17l-6.4 4 2.3-7L2 9.4h7.6z"/></svg>
+                        </div>
+                        <div style="font-size:9px;font-weight:700;color:#1e293b;">Abonnements</div>
+                      </div>
+                      <div style="text-align:center;padding:10px 4px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;">
+                        <div style="font-size:18px;margin-bottom:4px;">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" style="margin:0 auto;display:block;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                        </div>
+                        <div style="font-size:9px;font-weight:700;color:#1e293b;">Messages</div>
+                      </div>
+                    </div>
+
+                    <!-- Messages shortcut -->
+                    <div class="m-card" style="display:flex;align-items:center;gap:10px;">
+                      <div class="m-avatar sm"><div class="m-avatar-inner" style="font-size:9px;">F</div></div>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-weight:700;font-size:10px;">fan_2847</div>
+                        <div style="font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Hey! J'adore ton dernier post 💕</div>
+                      </div>
+                      <span class="m-badge pink" style="font-size:8px;">Nouveau</span>
+                    </div>
+                    <div class="m-card" style="display:flex;align-items:center;gap:10px;">
+                      <div class="m-avatar sm"><div class="m-avatar-inner" style="font-size:9px;">M</div></div>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-weight:700;font-size:10px;">mike_vip</div>
+                        <div style="font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Merci pour le contenu exclusif!</div>
+                      </div>
+                      <span style="font-size:8px;color:#94a3b8;">2h</span>
+                    </div>
+
+                    <!-- Bottom nav (no listings) -->
+                    <div class="m-bottomnav">
+                      <div class="m-bottomnav-item active">
+                        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0v-6a1 1 0 011-1h2a1 1 0 011 1v6"/></svg>
+                        <span>Home</span>
+                      </div>
+                      <div class="m-bottomnav-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                        <span>Explore</span>
+                      </div>
+                      <div class="m-bottomnav-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                        <span>Créer</span>
+                      </div>
+                      <div class="m-bottomnav-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                        <span>Messages</span>
+                      </div>
+                      <div class="m-bottomnav-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <span>Profil</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p class="screen-label">Dashboard Créatrice</p>
+                <p class="screen-sublabel">Solde, stats, actions rapides — pas de listings</p>
+              </div>
+
+              <!-- SCREEN C ─ Creator Profile Page (public view) -->
+              <div>
+                <div class="phone-frame">
+                  <div class="phone-notch"></div>
+                  <div class="phone-screen">
+                    <!-- Hero image -->
+                    <div style="width:100%;aspect-ratio:4/3;background:linear-gradient(135deg,#4d274a,#8b5cf6,#1e1714);position:relative;">
+                      <div style="position:absolute;top:36px;left:10px;" class="m-back">←</div>
+                      <div style="position:absolute;top:36px;right:10px;" class="m-back">⋯</div>
+                      <div style="position:absolute;bottom:-28px;left:14px;">
+                        <div class="m-avatar xl"><div class="m-avatar-inner" style="font-size:22px;">J</div></div>
+                      </div>
+                    </div>
+
+                    <div style="padding:36px 14px 6px;">
+                      <div style="display:flex;align-items:center;gap:6px;">
+                        <span style="font-weight:800;font-size:16px;">jade_content</span>
+                        <span style="color:#f6339a;font-size:11px;">✓</span>
+                        <span class="m-badge" style="background:rgba(139,92,246,0.12);color:#8b5cf6;font-size:8px;">Créatrice</span>
+                      </div>
+                      <div style="font-style:italic;font-size:10px;color:#64748b;margin-top:2px;">Contenu exclusif & behind the scenes</div>
+                      <div style="font-size:10px;color:#94a3b8;margin-top:4px;">📍 Montreal · 23</div>
+                    </div>
+
+                    <!-- Stats — NO listings count -->
+                    <div style="display:flex;text-align:center;padding:4px 14px 10px;gap:0;">
+                      <div style="flex:1;border-right:1px solid #e5e7eb;"><strong style="font-size:15px;">184</strong><br><span style="font-size:9px;color:#94a3b8;">Posts</span></div>
+                      <div style="flex:1;border-right:1px solid #e5e7eb;"><strong style="font-size:15px;">9.8K</strong><br><span style="font-size:9px;color:#94a3b8;">Followers</span></div>
+                      <div style="flex:1;"><strong style="font-size:15px;">67</strong><br><span style="font-size:9px;color:#94a3b8;">Following</span></div>
+                    </div>
+
+                    <!-- Action buttons — Subscribe + Message (no Enquire) -->
+                    <div style="display:flex;gap:8px;padding:0 14px 12px;">
+                      <button class="m-btn-pink" style="flex:1;justify-content:center;padding:8px;">Subscribe · CA$9.99/mo</button>
+                      <button class="m-btn-outline" style="padding:8px 14px;">Message</button>
+                    </div>
+
+                    <!-- Tabs — NO listings tab -->
+                    <div class="m-tabs">
+                      <div class="m-tab active">Posts</div>
+                      <div class="m-tab">About</div>
+                      <div class="m-tab">Reviews</div>
+                    </div>
+
+                    <!-- Post grid -->
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:2px;">
+                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#f5f3ff,#fdf2f8);display:grid;place-items:center;font-size:18px;">📷</div>
+                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#fdf2f8,#e0e7ff);display:grid;place-items:center;position:relative;">
+                        <span style="font-size:18px;">📷</span>
+                        <div style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.5);color:#fff;font-size:7px;padding:2px 5px;border-radius:4px;">🔒 PPV</div>
+                      </div>
+                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#e0e7ff,#f5f3ff);display:grid;place-items:center;font-size:18px;">🎬</div>
+                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#fce7f3,#f5f3ff);display:grid;place-items:center;position:relative;">
+                        <span style="font-size:18px;">📷</span>
+                        <div style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.5);color:#fff;font-size:7px;padding:2px 5px;border-radius:4px;">🔒 SUB</div>
+                      </div>
+                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#f5f3ff,#fce7f3);display:grid;place-items:center;font-size:18px;">📷</div>
+                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#fdf2f8,#f5f3ff);display:grid;place-items:center;font-size:18px;">📷</div>
+                    </div>
+
+                    <!-- Bottom nav -->
+                    <div class="m-bottomnav">
+                      <div class="m-bottomnav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><span>Home</span></div>
+                      <div class="m-bottomnav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><span>Explore</span></div>
+                      <div class="m-bottomnav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span>Messages</span></div>
+                      <div class="m-bottomnav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg><span>Alerts</span></div>
+                      <div class="m-bottomnav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></div>
+                    </div>
+                  </div>
+                </div>
+                <p class="screen-label">Profil créatrice (vue publique)</p>
+                <p class="screen-sublabel">Pas de listings, pas d'Enquire — contenu seulement</p>
+              </div>
+
+            </div>
+
+            <!-- ── ROW 2: Profile Settings, Escort Profile, Create Menu ── -->
+            <div class="screens-gallery" style="margin-top:48px;">
+
+              <!-- SCREEN D ─ Profile Edit (Creator vs Escort) -->
+              <div>
+                <div class="phone-frame">
+                  <div class="phone-notch"></div>
+                  <div class="phone-screen">
+                    <div class="m-header">
+                      <div class="m-back">←</div>
+                      <div class="m-header-title">Modifier le profil</div>
+                      <button class="m-btn-pink" style="font-size:9px;padding:4px 10px;">Sauvegarder</button>
+                    </div>
+
+                    <!-- Account type badge -->
+                    <div style="padding:10px 14px 0;">
+                      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:linear-gradient(135deg,#f5f3ff,#fdf2f8);border:1px solid #ede9fe;border-radius:12px;">
+                        <div>
+                          <div style="font-size:9px;color:#64748b;font-weight:600;">Type de compte</div>
+                          <div style="font-weight:800;font-size:13px;color:#8b5cf6;">Créatrice</div>
+                        </div>
+                        <span class="m-badge" style="background:rgba(139,92,246,0.12);color:#8b5cf6;font-size:9px;">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2.5" style="margin-right:3px;"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                          OF
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Shared fields -->
+                    <div style="padding:14px;">
+                      <div style="font-weight:700;font-size:11px;color:#1e293b;margin-bottom:8px;">Informations de base</div>
+                      <div style="margin-bottom:8px;">
+                        <div style="font-size:9px;color:#64748b;font-weight:600;margin-bottom:3px;">Nom d'utilisateur</div>
+                        <div style="padding:8px 10px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;font-size:10px;">jade_content</div>
+                      </div>
+                      <div style="margin-bottom:8px;">
+                        <div style="font-size:9px;color:#64748b;font-weight:600;margin-bottom:3px;">Bio</div>
+                        <div style="padding:8px 10px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;font-size:10px;min-height:36px;">Contenu exclusif & behind the scenes</div>
+                      </div>
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                        <div>
+                          <div style="font-size:9px;color:#64748b;font-weight:600;margin-bottom:3px;">Ville</div>
+                          <div style="padding:8px 10px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;font-size:10px;">Montreal</div>
+                        </div>
+                        <div>
+                          <div style="font-size:9px;color:#64748b;font-weight:600;margin-bottom:3px;">Pays</div>
+                          <div style="padding:8px 10px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;font-size:10px;">🇨🇦 Canada</div>
+                        </div>
+                      </div>
+
+                      <!-- Contact methods (both types) -->
+                      <div style="font-weight:700;font-size:11px;color:#1e293b;margin:12px 0 8px;">Contact</div>
+                      <div style="margin-bottom:8px;">
+                        <div style="font-size:9px;color:#64748b;font-weight:600;margin-bottom:3px;">Email</div>
+                        <div style="padding:8px 10px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;font-size:10px;">jade@example.com</div>
+                      </div>
+
+                      <!-- Escort-only fields — HIDDEN for creators -->
+                      <div style="margin-top:12px;padding:10px;background:#f8fafc;border:1px dashed #d1d5db;border-radius:10px;">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                          <span style="font-size:10px;font-weight:700;color:#94a3b8;">Champs escorte uniquement</span>
+                        </div>
+                        <div style="font-size:9px;color:#94a3b8;line-height:1.4;">
+                          Taux horaire, catégories de services, incall/outcall, disponibilités — visibles uniquement pour les comptes Escorte.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p class="screen-label">Modifier profil (Créatrice)</p>
+                <p class="screen-sublabel">Champs escorte masqués — type de compte affiché</p>
+              </div>
+
+              <!-- SCREEN E ─ Escort Profile (public view with Enquire + Listings) -->
+              <div>
+                <div class="phone-frame">
+                  <div class="phone-notch"></div>
+                  <div class="phone-screen">
+                    <!-- Hero -->
+                    <div style="width:100%;aspect-ratio:4/3;background:linear-gradient(135deg,#1e1714,#f6339a20,#4d274a);position:relative;">
+                      <div style="position:absolute;top:36px;left:10px;" class="m-back">←</div>
+                      <div style="position:absolute;top:36px;right:10px;" class="m-back">⋯</div>
+                      <div style="position:absolute;bottom:-28px;left:14px;">
+                        <div class="m-avatar xl"><div class="m-avatar-inner" style="font-size:22px;">S</div></div>
+                      </div>
+                    </div>
+
+                    <div style="padding:36px 14px 6px;">
+                      <div style="display:flex;align-items:center;gap:6px;">
+                        <span style="font-weight:800;font-size:16px;">sophia_rose</span>
+                        <span style="color:#f6339a;font-size:11px;">✓</span>
+                        <span class="m-badge pink" style="font-size:8px;">Escorte</span>
+                        <span class="m-badge green" style="font-size:8px;">● Dispo</span>
+                      </div>
+                      <div style="font-style:italic;font-size:10px;color:#64748b;margin-top:2px;">Premium companion in Montreal</div>
+                      <div style="font-size:10px;color:#94a3b8;margin-top:4px;">📍 Montreal · 25 · CA$300/h</div>
+                    </div>
+
+                    <!-- Stats WITH listings -->
+                    <div style="display:flex;text-align:center;padding:4px 14px 10px;gap:0;">
+                      <div style="flex:1;border-right:1px solid #e5e7eb;"><strong style="font-size:15px;">248</strong><br><span style="font-size:9px;color:#94a3b8;">Posts</span></div>
+                      <div style="flex:1;border-right:1px solid #e5e7eb;"><strong style="font-size:15px;">12.4K</strong><br><span style="font-size:9px;color:#94a3b8;">Followers</span></div>
+                      <div style="flex:1;border-right:1px solid #e5e7eb;"><strong style="font-size:15px;">89</strong><br><span style="font-size:9px;color:#94a3b8;">Following</span></div>
+                      <div style="flex:1;"><strong style="font-size:15px;color:#f6339a;">6</strong><br><span style="font-size:9px;color:#94a3b8;">Listings</span></div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div style="display:flex;gap:8px;padding:0 14px 12px;">
+                      <button class="m-btn-pink" style="flex:1;justify-content:center;padding:8px;">Subscribe · CA$14.99/mo</button>
+                      <button class="m-btn-outline" style="padding:8px 14px;">Message</button>
+                    </div>
+
+                    <!-- Tabs WITH listings -->
+                    <div class="m-tabs">
+                      <div class="m-tab active">Posts</div>
+                      <div class="m-tab" style="color:#f6339a;border-bottom-color:#f6339a;">Listings</div>
+                      <div class="m-tab">About</div>
+                      <div class="m-tab">Reviews</div>
+                    </div>
+
+                    <!-- Listings preview -->
+                    <div style="padding:10px;">
+                      <div style="border:1px solid #e5e7eb;border-radius:12px;padding:10px;margin-bottom:8px;display:flex;gap:10px;">
+                        <div style="width:60px;height:60px;border-radius:10px;background:linear-gradient(135deg,#fdf2f8,#fce7f3);display:grid;place-items:center;flex-shrink:0;font-size:14px;">💎</div>
+                        <div style="flex:1;min-width:0;">
+                          <div style="font-weight:700;font-size:11px;">Premium Experience</div>
+                          <div style="font-size:9px;color:#64748b;margin-top:2px;">2 hours · Incall & Outcall</div>
+                          <div style="font-size:11px;font-weight:800;color:#f6339a;margin-top:4px;">CA$500</div>
+                        </div>
+                      </div>
+                      <div style="border:1px solid #e5e7eb;border-radius:12px;padding:10px;display:flex;gap:10px;">
+                        <div style="width:60px;height:60px;border-radius:10px;background:linear-gradient(135deg,#e0e7ff,#f5f3ff);display:grid;place-items:center;flex-shrink:0;font-size:14px;">🌙</div>
+                        <div style="flex:1;min-width:0;">
+                          <div style="font-weight:700;font-size:11px;">Evening Companion</div>
+                          <div style="font-size:9px;color:#64748b;margin-top:2px;">3 hours · Outcall only</div>
+                          <div style="font-size:11px;font-weight:800;color:#f6339a;margin-top:4px;">CA$700</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Enquire bar (escort only) -->
+                    <div style="position:sticky;bottom:0;padding:10px 14px;background:#fff;border-top:1px solid #e5e7eb;display:flex;gap:8px;">
+                      <button class="m-btn-pink" style="flex:1;justify-content:center;padding:10px;font-size:11px;border-radius:12px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" style="margin-right:4px;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                        Enquire Now
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <p class="screen-label">Profil escorte (vue publique)</p>
+                <p class="screen-sublabel">Listings, Enquire, disponibilité, taux — tout inclus</p>
+              </div>
+
+              <!-- SCREEN F ─ Create Menu (Creator vs Escort) -->
+              <div>
+                <div class="phone-frame">
+                  <div class="phone-notch"></div>
+                  <div class="phone-screen">
+                    <div class="m-header">
+                      <div class="m-header-title" style="background:linear-gradient(90deg,#f6339a,#7dd3fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Cleopatra</div>
+                      <div style="display:flex;gap:8px;">
+                        <div class="m-back">♡</div>
+                        <div class="m-back">✉</div>
+                      </div>
+                    </div>
+
+                    <!-- Backdrop overlay -->
+                    <div style="position:relative;min-height:400px;background:rgba(0,0,0,0.4);">
+
+                      <!-- Creator menu -->
+                      <div style="position:absolute;bottom:100px;left:50%;transform:translateX(-50%);width:85%;">
+                        <div style="background:#fff;border-radius:18px;padding:6px;box-shadow:0 20px 60px rgba(0,0,0,0.3);margin-bottom:18px;">
+                          <div style="padding:10px 14px;font-weight:800;font-size:12px;color:#8b5cf6;border-bottom:1px solid #f1f5f9;">Menu Créatrice</div>
+                          <div style="padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #f1f5f9;">
+                            <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#fdf2f8,#fce7f3);display:grid;place-items:center;">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f6339a" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+                            </div>
+                            <div>
+                              <div style="font-weight:700;font-size:11px;color:#1e293b;">Story</div>
+                              <div style="font-size:9px;color:#94a3b8;">Partage un moment éphémère</div>
+                            </div>
+                          </div>
+                          <div style="padding:12px 14px;display:flex;align-items:center;gap:10px;">
+                            <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#f5f3ff,#ede9fe);display:grid;place-items:center;">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                            </div>
+                            <div>
+                              <div style="font-weight:700;font-size:11px;color:#1e293b;">Post</div>
+                              <div style="font-size:9px;color:#94a3b8;">Publie une photo ou vidéo</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Escort menu below -->
+                        <div style="background:#fff;border-radius:18px;padding:6px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                          <div style="padding:10px 14px;font-weight:800;font-size:12px;color:#f6339a;border-bottom:1px solid #f1f5f9;">Menu Escorte</div>
+                          <div style="padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #f1f5f9;">
+                            <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#fdf2f8,#fce7f3);display:grid;place-items:center;">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f6339a" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+                            </div>
+                            <div>
+                              <div style="font-weight:700;font-size:11px;color:#1e293b;">Story</div>
+                              <div style="font-size:9px;color:#94a3b8;">Partage un moment éphémère</div>
+                            </div>
+                          </div>
+                          <div style="padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #f1f5f9;">
+                            <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#f5f3ff,#ede9fe);display:grid;place-items:center;">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                            </div>
+                            <div>
+                              <div style="font-weight:700;font-size:11px;color:#1e293b;">Post</div>
+                              <div style="font-size:9px;color:#94a3b8;">Publie une photo ou vidéo</div>
+                            </div>
+                          </div>
+                          <div style="padding:12px 14px;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#fff5f9,#fff);">
+                            <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#fce7f3,#fdf2f8);display:grid;place-items:center;">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f6339a" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15h6"/></svg>
+                            </div>
+                            <div>
+                              <div style="font-weight:700;font-size:11px;color:#f6339a;">Listing</div>
+                              <div style="font-size:9px;color:#94a3b8;">Crée une annonce de service</div>
+                            </div>
+                            <span class="m-badge pink" style="font-size:7px;margin-left:auto;">Escorte only</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Bottom nav -->
+                    <div class="m-bottomnav">
+                      <div class="m-bottomnav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><span>Home</span></div>
+                      <div class="m-bottomnav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><span>Explore</span></div>
+                      <div class="m-bottomnav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span>Créer</span></div>
+                      <div class="m-bottomnav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span>Messages</span></div>
+                      <div class="m-bottomnav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profil</span></div>
+                    </div>
+                  </div>
+                </div>
+                <p class="screen-label">Menu Créer (comparaison)</p>
+                <p class="screen-sublabel">Créatrice: Story + Post · Escorte: + Listing</p>
+              </div>
+
+            </div>
+
+            <!-- ── ROW 3: Profile Menu Creator, Profile Menu Escort, Escort Dashboard ── -->
+            <div class="screens-gallery" style="margin-top:48px;">
+
+              <!-- SCREEN G ─ Profile Menu (Creator) -->
+              <div>
+                <div class="phone-frame">
+                  <div class="phone-notch"></div>
+                  <div class="phone-screen">
+                    <div class="m-header">
+                      <div class="m-back">←</div>
+                      <div class="m-header-title">Mon profil</div>
+                      <div style="width:28px;"></div>
+                    </div>
+
+                    <!-- Profile card -->
+                    <div style="padding:14px;text-align:center;">
+                      <div class="m-avatar xl" style="margin:0 auto;"><div class="m-avatar-inner" style="font-size:22px;">J</div></div>
+                      <div style="font-weight:800;font-size:16px;margin-top:8px;">jade_content</div>
+                      <div style="font-size:10px;color:#64748b;">@jade_content</div>
+                      <span class="m-badge" style="background:rgba(139,92,246,0.12);color:#8b5cf6;font-size:9px;margin-top:6px;display:inline-flex;">Créatrice</span>
+                    </div>
+
+                    <div class="m-divider"></div>
+
+                    <!-- Creator section -->
+                    <div style="padding:10px 14px 4px;">
+                      <div style="font-size:10px;font-weight:800;color:#8b5cf6;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Section créatrice</div>
+                    </div>
+                    <div style="padding:0 14px;">
+                      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <span style="font-size:11px;font-weight:600;flex:1;">Publier du contenu</span>
+                        <span style="color:#94a3b8;font-size:12px;">›</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7L12 17l-6.4 4 2.3-7L2 9.4h7.6z"/></svg>
+                        <span style="font-size:11px;font-weight:600;flex:1;">Paliers d'abonnement</span>
+                        <span style="color:#94a3b8;font-size:12px;">›</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                        <span style="font-size:11px;font-weight:600;flex:1;">Revenus</span>
+                        <span style="color:#94a3b8;font-size:12px;">›</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+                        <span style="font-size:11px;font-weight:600;flex:1;">Live shows</span>
+                        <span style="color:#94a3b8;font-size:12px;">›</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                        <span style="font-size:11px;font-weight:600;flex:1;">Commentaires</span>
+                        <span style="color:#94a3b8;font-size:12px;">›</span>
+                      </div>
+                    </div>
+
+                    <div class="m-divider" style="margin-top:4px;"></div>
+
+                    <!-- No escort section -->
+                    <div style="padding:12px 14px;text-align:center;">
+                      <div style="font-size:9px;color:#94a3b8;">
+                        Les listings, réservations et disponibilités sont réservés aux comptes Escorte.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p class="screen-label">Profil menu (Créatrice)</p>
+                <p class="screen-sublabel">Contenu, abonnements, revenus — pas de listings</p>
+              </div>
+
+              <!-- SCREEN H ─ Profile Menu (Escort — full) -->
+              <div>
+                <div class="phone-frame">
+                  <div class="phone-notch"></div>
+                  <div class="phone-screen">
+                    <div class="m-header">
+                      <div class="m-back">←</div>
+                      <div class="m-header-title">Mon profil</div>
+                      <div style="width:28px;"></div>
+                    </div>
+
+                    <!-- Profile card -->
+                    <div style="padding:14px;text-align:center;">
+                      <div class="m-avatar xl" style="margin:0 auto;"><div class="m-avatar-inner" style="font-size:22px;">S</div></div>
+                      <div style="font-weight:800;font-size:16px;margin-top:8px;">sophia_rose</div>
+                      <div style="font-size:10px;color:#64748b;">@sophia_rose</div>
+                      <span class="m-badge pink" style="font-size:9px;margin-top:6px;display:inline-flex;">Escorte</span>
+                    </div>
+
+                    <div class="m-divider"></div>
+
+                    <!-- Escort section -->
+                    <div style="padding:10px 14px 4px;">
+                      <div style="font-size:10px;font-weight:800;color:#f6339a;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Section escorte</div>
+                    </div>
+                    <div style="padding:0 14px;">
+                      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f6339a" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+                        <span style="font-size:10px;font-weight:600;flex:1;">Mes listings</span>
+                        <span class="m-badge pink" style="font-size:7px;">6</span>
+                        <span style="color:#94a3b8;font-size:12px;">›</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f6339a" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span style="font-size:10px;font-weight:600;flex:1;">Réservations</span>
+                        <span style="color:#94a3b8;font-size:12px;">›</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f6339a" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span style="font-size:10px;font-weight:600;flex:1;">Disponibilités</span>
+                        <span class="m-badge green" style="font-size:7px;">● Active</span>
+                        <span style="color:#94a3b8;font-size:12px;">›</span>
+                      </div>
+                    </div>
+
+                    <div class="m-divider" style="margin-top:4px;"></div>
+
+                    <!-- Creator section (escorts get this too) -->
+                    <div style="padding:10px 14px 4px;">
+                      <div style="font-size:10px;font-weight:800;color:#8b5cf6;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Section créatrice</div>
+                    </div>
+                    <div style="padding:0 14px;">
+                      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <span style="font-size:10px;font-weight:600;flex:1;">Publier</span>
+                        <span style="color:#94a3b8;font-size:12px;">›</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7L12 17l-6.4 4 2.3-7L2 9.4h7.6z"/></svg>
+                        <span style="font-size:10px;font-weight:600;flex:1;">Abonnements</span>
+                        <span style="color:#94a3b8;font-size:12px;">›</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                        <span style="font-size:10px;font-weight:600;flex:1;">Revenus</span>
+                        <span style="color:#94a3b8;font-size:12px;">›</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+                        <span style="font-size:10px;font-weight:600;flex:1;">Live shows</span>
+                        <span style="color:#94a3b8;font-size:12px;">›</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                        <span style="font-size:10px;font-weight:600;flex:1;">Commentaires</span>
+                        <span style="color:#94a3b8;font-size:12px;">›</span>
+                      </div>
+                    </div>
+
+                    <div style="height:10px;"></div>
+                  </div>
+                </div>
+                <p class="screen-label">Profil menu (Escorte)</p>
+                <p class="screen-sublabel">Tout: listings + réservations + contenu + revenus</p>
+              </div>
+
+              <!-- SCREEN I ─ Escort Dashboard (Home) -->
+              <div>
+                <div class="phone-frame">
+                  <div class="phone-notch"></div>
+                  <div class="phone-screen">
+                    <div class="m-header">
+                      <div class="m-header-title" style="background:linear-gradient(90deg,#f6339a,#7dd3fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Cleopatra</div>
+                      <span class="m-badge pink" style="font-size:8px;">Escorte</span>
+                    </div>
+
+                    <!-- Availability toggle -->
+                    <div style="margin:10px;padding:12px;border-radius:12px;background:linear-gradient(135deg,#ecfdf5,#f0fdf4);border:1px solid #bbf7d0;display:flex;align-items:center;gap:10px;">
+                      <div style="width:36px;height:20px;border-radius:10px;background:#10b981;position:relative;">
+                        <div style="width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;right:2px;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+                      </div>
+                      <div>
+                        <div style="font-weight:700;font-size:11px;color:#065f46;">Disponible maintenant</div>
+                        <div style="font-size:9px;color:#6b7280;">Visible dans les résultats</div>
+                      </div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 10px 10px;">
+                      <div style="text-align:center;padding:10px 4px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;">
+                        <div style="font-size:16px;font-weight:800;color:#f6339a;">CA$4.2K</div>
+                        <div style="font-size:8px;color:#94a3b8;font-weight:600;">Revenus</div>
+                      </div>
+                      <div style="text-align:center;padding:10px 4px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;">
+                        <div style="font-size:16px;font-weight:800;color:#1e293b;">6</div>
+                        <div style="font-size:8px;color:#94a3b8;font-weight:600;">Listings actifs</div>
+                      </div>
+                      <div style="text-align:center;padding:10px 4px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;">
+                        <div style="font-size:16px;font-weight:800;color:#1e293b;">3</div>
+                        <div style="font-size:8px;color:#94a3b8;font-weight:600;">Réservations</div>
+                      </div>
+                    </div>
+
+                    <!-- Quick actions -->
+                    <div style="padding:0 10px 6px;font-weight:700;font-size:11px;color:#1e293b;">Actions rapides</div>
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:0 10px 10px;">
+                      <div style="display:flex;align-items:center;gap:8px;padding:10px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f6339a" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15h6"/></svg>
+                        <span style="font-size:10px;font-weight:700;">Nouveau listing</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:8px;padding:10px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <span style="font-size:10px;font-weight:700;">Publier</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:8px;padding:10px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                        <span style="font-size:10px;font-weight:700;">Revenus</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:8px;padding:10px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+                        <span style="font-size:10px;font-weight:700;">Go live</span>
+                      </div>
+                    </div>
+
+                    <!-- Recent bookings -->
+                    <div style="padding:0 10px 6px;font-weight:700;font-size:11px;color:#1e293b;">Réservations récentes</div>
+                    <div class="m-card" style="display:flex;align-items:center;gap:10px;">
+                      <div class="m-avatar sm"><div class="m-avatar-inner" style="font-size:9px;">A</div></div>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-weight:700;font-size:10px;">alex_mtl</div>
+                        <div style="font-size:9px;color:#64748b;">Premium Experience · Demain 19h</div>
+                      </div>
+                      <span class="m-badge green" style="font-size:8px;">Confirmé</span>
+                    </div>
+                    <div class="m-card" style="display:flex;align-items:center;gap:10px;">
+                      <div class="m-avatar sm"><div class="m-avatar-inner" style="font-size:9px;">D</div></div>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-weight:700;font-size:10px;">david_vip</div>
+                        <div style="font-size:9px;color:#64748b;">Evening Companion · Samedi 20h</div>
+                      </div>
+                      <span class="m-badge gold" style="font-size:8px;">En attente</span>
+                    </div>
+
+                    <!-- Bottom nav -->
+                    <div class="m-bottomnav">
+                      <div class="m-bottomnav-item active">
+                        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0v-6a1 1 0 011-1h2a1 1 0 011 1v6"/></svg>
+                        <span>Home</span>
+                      </div>
+                      <div class="m-bottomnav-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                        <span>Explore</span>
+                      </div>
+                      <div class="m-bottomnav-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                        <span>Créer</span>
+                      </div>
+                      <div class="m-bottomnav-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                        <span>Messages</span>
+                      </div>
+                      <div class="m-bottomnav-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <span>Profil</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p class="screen-label">Dashboard Escorte</p>
+                <p class="screen-sublabel">Dispo, listings, réservations + contenu + revenus</p>
               </div>
 
             </div>
