@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { generateBlurPreview } from "@/lib/image";
 
 export type PostVisibility = "public" | "subscribers" | "ppv";
 export type ContentRating = "sfw" | "suggestive" | "explicit";
@@ -66,6 +67,23 @@ export function useUploadStatus(): UseUploadStatusReturn {
         ? null
         : supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
 
+      // 3b. Premium posts: generate + upload an irreversibly blurred preview.
+      //     The blur is a tiny (~32px) pixelated JPEG uploaded to the public
+      //     bucket — not a CSS filter, so it can't be "un-blurred" in DevTools.
+      let blurUrl: string | null = null;
+      if (isPremium && mediaType === "image") {
+        const blurFile = await generateBlurPreview(file);
+        if (blurFile) {
+          const blurPath = `${userId}/blur/${Date.now()}-blur.jpg`;
+          const { error: blurError } = await supabase.storage
+            .from("status-updates")
+            .upload(blurPath, blurFile, { upsert: false, contentType: "image/jpeg" });
+          if (!blurError) {
+            blurUrl = supabase.storage.from("status-updates").getPublicUrl(blurPath).data.publicUrl;
+          }
+        }
+      }
+
       // 4. Insert the status_update record. Explicit posts start in moderation
       //    and stay hidden from the feed until an admin approves them.
       const expiresAt = new Date("2099-01-01T00:00:00Z").toISOString();
@@ -85,6 +103,7 @@ export function useUploadStatus(): UseUploadStatusReturn {
           unlock_price: visibility === "ppv" ? options.priceCents ?? null : null,
           content_rating: rating,
           moderation_status: isExplicit ? "pending" : "approved",
+          blur_url: blurUrl,
         })
         .select("id")
         .single();

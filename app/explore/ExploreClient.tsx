@@ -25,6 +25,8 @@ import { PullToRefreshIndicator } from "@/components/ui/PullToRefresh";
 import { ScrollReveal } from "@/components/ui/AmbientEffects";
 import { SearchModal } from "@/components/social/SearchModal";
 import { ActivityIndicator } from "@/components/ui/ActivityIndicator";
+import { useSection } from "@/contexts/SectionContext";
+import { SectionToggle } from "@/components/ui/SectionToggle";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -101,6 +103,17 @@ const CATEGORY_CHIPS = [
   { id: "BDSM",         label: "BDSM & Fetish" },
   { id: "Domination",   label: "Domination" },
   { id: "Tantric",      label: "Tantric" },
+];
+
+const CREATOR_CHIPS = [
+  { id: "all",          label: "All" },
+  { id: "trending",     label: "Trending" },
+  { id: "new",          label: "New Creators" },
+  { id: "live",         label: "Live Now" },
+  { id: "photos",       label: "Photos" },
+  { id: "videos",       label: "Videos" },
+  { id: "free",         label: "Free" },
+  { id: "subscriptions", label: "Subscriptions" },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -709,6 +722,7 @@ export function ExploreClient() {
   const { t } = useTranslation();
   const { user } = useSession();
   const { isProvider, profile } = useProfile();
+  const { section, isCreatorSection } = useSection();
   const router = useRouter();
   const [cityQuery, setCityQuery]         = useState("");
   const [filters, setFilters]             = useState<Filters>(DEFAULT_FILTERS);
@@ -914,106 +928,35 @@ export function ExploreClient() {
   const displayPosts = feedPosts;
 
   // ══════════════════════════════════════════════════════════════════════════
-  // PROVIDER VIEW
+  // SHARED SECTION HEADER — always visible at top
   // ══════════════════════════════════════════════════════════════════════════
 
-  if (isProvider) {
-    return (
-      <div className="min-h-screen bg-[#fafbfc] pb-24 pt-[calc(env(safe-area-inset-top,0px)+28px)]">
-        <PullToRefreshIndicator pulling={pulling} refreshing={refreshing} pullDistance={pullDistance} progress={progress} />
-
-        {!loading && <StarredBar stars={starredListings} />}
-        {loading ? <BumpedBarSkeleton /> : <BumpedBar bumps={bumpedListings} />}
-        {!loading && <SponsoredAdBanner />}
-
-        {!loading && feedPosts.length > 0 && (
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
-            <div className="h-1 w-1 rounded-full bg-pink-400" />
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-              {t("explore_latest")}
-            </span>
-          </div>
-        )}
-
-        {loading ? (
-          <FeedSkeleton />
-        ) : feedPosts.length === 0 ? (
-          <EmptyState variant="no-results" />
-        ) : (
-          <div className="flex flex-col pt-1">
-            {feedPosts.map((post, i) => (
-              <ScrollReveal key={post.post_id} delay={Math.min(i * 40, 300)}>
-                <FeedPost
-                  post={post}
-                  isLiked={likedPostIds.has(post.post_id)}
-                  isFollowing={followedIds.has(post.provider_id)}
-                  userId={user?.id ?? null}
-                  priority={i === 0}
-                />
-              </ScrollReveal>
-            ))}
-            <div ref={sentinelRef} className="h-1" />
-            {loadingMore && (
-              <div className="flex items-center justify-center py-6 text-slate-400">
-                <Loader2 size={18} className="animate-spin" />
-              </div>
-            )}
-            {!hasMore && feedPosts.length > 0 && (
-              <div className="py-8 text-center text-[11px] uppercase tracking-widest text-slate-300">
-                {t("explore_all_caught_up")}
-              </div>
-            )}
-          </div>
-        )}
-
-        <ExploreToolsFab
-          activeCount={activeCount}
-          cityActive={!!cityQuery}
-          onClick={() => setToolsOpen(true)}
-          label={t("explore_tools_title")}
-        />
-
-        <ExploreToolsSheet
-          open={toolsOpen}
-          onClose={() => setToolsOpen(false)}
-          cityQuery={cityQuery}
-          setCityQuery={setCityQuery}
-          handleNearMe={handleNearMe}
-          geoLoading={geoLoading}
-          onOpenSearch={() => setSearchModalOpen(true)}
-          onOpenFilters={() => setDrawerOpen(true)}
-          activeCount={activeCount}
-          t={t}
-        />
-
-        <AnimatePresence>
-          {drawerOpen && (
-            <FilterDrawer
-              filters={filters}
-              onApply={(f) => { setFilters(f); setDrawerOpen(false); setActiveChip("all"); }}
-              onClose={() => setDrawerOpen(false)}
-            />
-          )}
-        </AnimatePresence>
-
-        <SearchModal open={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
+  const sectionHeader = (
+    <div className="sticky top-0 z-20 border-b bg-white/70 backdrop-blur-xl backdrop-saturate-150"
+      style={{ borderColor: isCreatorSection ? "#ede9fe" : "#f3e8ff50" }}
+    >
+      <div className="flex items-center justify-between px-4 py-3">
+        <span
+          className="text-[20px] font-bold tracking-tight bg-clip-text text-transparent"
+          style={{
+            backgroundImage: isCreatorSection
+              ? "linear-gradient(to right, #8b5cf6, #c084fc)"
+              : "linear-gradient(to right, #f472b6, #38bdf8)",
+          }}
+        >
+          Cleopatra
+        </span>
+        <SectionToggle compact className="w-[210px]" />
       </div>
-    );
-  }
+    </div>
+  );
 
   // ══════════════════════════════════════════════════════════════════════════
-  // CLIENT VIEW
+  // SHARED FEED — reused in all views (escort section shows listings too)
   // ══════════════════════════════════════════════════════════════════════════
 
-  return (
-    <div className="min-h-screen overflow-x-hidden bg-[#fafbfc] pb-24 pt-[calc(env(safe-area-inset-top,0px)+28px)]">
-      <PullToRefreshIndicator pulling={pulling} refreshing={refreshing} pullDistance={pullDistance} progress={progress} />
-
-      {!loading && <StarredBar stars={starredListings} />}
-      {loading ? <BumpedBarSkeleton /> : <BumpedBar bumps={bumpedListings} />}
-      {!loading && <SponsoredAdBanner />}
-
-      {/* ── Social feed ── */}
+  const feedContent = (
+    <>
       {loading ? (
         <FeedSkeleton />
       ) : displayPosts.length === 0 ? (
@@ -1031,7 +974,6 @@ export function ExploreClient() {
               />
             </ScrollReveal>
           ))}
-
           <div ref={sentinelRef} className="h-1" />
           {loadingMore && (
             <div className="flex items-center justify-center py-6 text-slate-400">
@@ -1045,7 +987,11 @@ export function ExploreClient() {
           )}
         </div>
       )}
+    </>
+  );
 
+  const sharedOverlays = (
+    <>
       <ExploreToolsFab
         activeCount={activeCount}
         cityActive={!!cityQuery}
@@ -1076,11 +1022,146 @@ export function ExploreClient() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {categoriesOpen && <CategoriesDrawer onClose={() => setCategoriesOpen(false)} />}
-      </AnimatePresence>
-
       <SearchModal open={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
+    </>
+  );
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // CREATOR SECTION — content-focused, purple accent, no listings
+  // ══════════════════════════════════════════════════════════════════════════
+
+  if (isCreatorSection) {
+    return (
+      <div className="min-h-screen overflow-x-hidden bg-[#fafbfc] pb-24">
+        <PullToRefreshIndicator pulling={pulling} refreshing={refreshing} pullDistance={pullDistance} progress={progress} />
+
+        {sectionHeader}
+
+        {/* Creator trending strip */}
+        <CreatorTrendingStrip />
+
+        {/* Creator category chips */}
+        <div className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-hide bg-white border-b border-violet-100/50">
+          {CREATOR_CHIPS.map((chip) => (
+            <button
+              key={chip.id}
+              type="button"
+              onClick={() => setActiveChip(chip.id)}
+              className={cn(
+                "flex-shrink-0 rounded-full px-3.5 py-1.5 text-[11px] font-semibold transition-colors whitespace-nowrap",
+                activeChip === chip.id
+                  ? "bg-violet-500 text-white shadow-sm"
+                  : "bg-violet-50 text-violet-600 hover:bg-violet-100"
+              )}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Content feed — no listings */}
+        {feedContent}
+
+        {sharedOverlays}
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // ESCORT SECTION — classifieds + listings (current design, pink accent)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  return (
+    <div className="min-h-screen overflow-x-hidden bg-[#fafbfc] pb-24">
+      <PullToRefreshIndicator pulling={pulling} refreshing={refreshing} pullDistance={pullDistance} progress={progress} />
+
+      {sectionHeader}
+
+      {!loading && <StarredBar stars={starredListings} />}
+      {loading ? <BumpedBarSkeleton /> : <BumpedBar bumps={bumpedListings} />}
+      {!loading && <SponsoredAdBanner />}
+
+      {!isProvider && (
+        <AnimatePresence>
+          {categoriesOpen && <CategoriesDrawer onClose={() => setCategoriesOpen(false)} />}
+        </AnimatePresence>
+      )}
+
+      {!loading && feedPosts.length > 0 && (
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
+          <div className="h-1 w-1 rounded-full bg-pink-400" />
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            {t("explore_latest")}
+          </span>
+        </div>
+      )}
+
+      {feedContent}
+
+      {sharedOverlays}
+    </div>
+  );
+}
+
+// ─── CreatorTrendingStrip — horizontal scroll of trending creator avatars ─────
+
+function CreatorTrendingStrip() {
+  const [creators, setCreators] = useState<{ id: string; username: string; avatar_url: string | null }[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("profiles")
+      .select("id, username, avatar_url")
+      .eq("provider_type", "creator")
+      .order("created_at", { ascending: false })
+      .limit(15)
+      .then(({ data }) => { if (data) setCreators(data); });
+  }, []);
+
+  if (creators.length === 0) return null;
+
+  return (
+    <div className="bg-gradient-to-b from-violet-50/60 to-white pt-1 pb-2">
+      <div className="flex items-center gap-2 px-4 pt-2 pb-0.5">
+        <Sparkles size={12} className="text-violet-400 fill-violet-400/30" />
+        <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-violet-400">
+          Trending Creators
+        </span>
+      </div>
+
+      <div className="flex gap-3 overflow-x-auto px-4 pt-2 pb-2.5 scrollbar-hide">
+        {creators.map((c) => (
+          <Link
+            key={c.id}
+            href={`/u/${c.username}`}
+            className="group flex flex-shrink-0 flex-col items-center gap-1.5"
+          >
+            <div className="rounded-full p-[2px] bg-gradient-to-tr from-violet-400 via-purple-400 to-fuchsia-400 shadow-[0_4px_12px_-4px_rgba(139,92,246,0.5)] transition-shadow group-hover:shadow-[0_6px_16px_-2px_rgba(139,92,246,0.6)]">
+              <div className="rounded-full p-[1.5px] bg-white">
+                {c.avatar_url ? (
+                  <div className="relative h-[56px] w-[56px] overflow-hidden rounded-full">
+                    <Image
+                      src={c.avatar_url}
+                      alt={c.username}
+                      fill
+                      className="object-cover"
+                      sizes="56px"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-[56px] w-[56px] items-center justify-center rounded-full bg-violet-50 text-sm font-bold text-violet-400">
+                    {c.username[0]?.toUpperCase()}
+                  </div>
+                )}
+              </div>
+            </div>
+            <span className="max-w-[64px] truncate text-[10px] font-semibold text-slate-600">
+              {c.username}
+            </span>
+          </Link>
+        ))}
+        <div className="w-1 flex-shrink-0" />
+      </div>
     </div>
   );
 }

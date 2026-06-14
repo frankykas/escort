@@ -5,6 +5,7 @@ import { BottomNav } from "@/components/ui/BottomNav";
 import { LocaleSwitcher } from "@/components/ui/LocaleSwitcher";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
+import { SectionProvider } from "@/contexts/SectionContext";
 import { ClientShell } from "@/components/ui/ClientShell";
 import { NativeShellInit } from "@/components/ui/NativeShellInit";
 
@@ -69,13 +70,15 @@ export default function RootLayout({
         </a>
         <AccessibilityProvider>
           <ProfileProvider>
-            <NativeShellInit />
-            <ClientShell />
-            <main id="main-content" tabIndex={-1} className="contents">
-              {children}
-            </main>
-            <BottomNav />
-            <LocaleSwitcher />
+            <SectionProvider>
+              <NativeShellInit />
+              <ClientShell />
+              <main id="main-content" tabIndex={-1} className="contents">
+                {children}
+              </main>
+              <BottomNav />
+              <LocaleSwitcher />
+            </SectionProvider>
           </ProfileProvider>
         </AccessibilityProvider>
       </body>

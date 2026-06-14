@@ -35,6 +35,7 @@ interface FeedPost {
   unlock_price: number | null;
   content_rating: string;
   media_path: string | null;
+  blur_url: string | null;
   latest_comments: FeedComment[];
 }
 

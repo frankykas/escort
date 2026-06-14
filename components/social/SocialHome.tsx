@@ -6,6 +6,7 @@ import { FeedTabs } from "./FeedTabs";
 import { FavoriteFeed } from "./FavoriteFeed";
 import { PublishButton } from "./PublishButton";
 import { CategoryStrip } from "@/components/ui/CategoryGrid";
+import { FeedHeader } from "./FeedHeader";
 
 export type FeedPostData = {
   post_id: string;
@@ -29,6 +30,7 @@ export type FeedPostData = {
   unlock_price?: number | null;
   content_rating?: string;
   media_path?: string | null;
+  blur_url?: string | null;
   latest_comments: {
     id: string;
     user_id: string;
@@ -66,12 +68,8 @@ export async function SocialHome({ searchParams }: Props) {
 
   return (
     <main className="flex flex-col flex-1 bg-[#fafbfc]">
-      {/* Nav */}
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/70 px-4 py-4 backdrop-blur-xl backdrop-saturate-150">
-        <div className="flex items-center justify-center">
-          <span className="text-2xl font-bold tracking-tight bg-gradient-to-r from-pink-400 to-sky-400 bg-clip-text text-transparent">Cleopatra</span>
-        </div>
-      </header>
+      {/* Nav with section toggle */}
+      <FeedHeader />
 
       {/* Tab switcher — wrapped in Suspense because FeedTabs uses useSearchParams */}
       <Suspense fallback={<div className="h-[45px] border-b border-gray-200 bg-white" />}>

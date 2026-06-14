@@ -589,6 +589,64 @@
         color: var(--muted);
       }
 
+      /* ── Placeholder images ── */
+      .m-photo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .m-avatar-photo {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+      .m-story-photo {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #fff;
+      }
+      /* Blurred locked content — server-side blur mockup */
+      .m-blur-preview {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+      }
+      .m-blur-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        /* This simulates a server-blurred image. In production, the actual
+           image served is a pre-destroyed 32px JPEG — no CSS needed. */
+        filter: blur(20px) saturate(1.2);
+        transform: scale(1.15);
+      }
+      .m-blur-scrim {
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.4);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+      .m-blur-note {
+        position: absolute;
+        bottom: 8px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 7px;
+        font-weight: 700;
+        color: rgba(255,255,255,0.5);
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
       /* ── Shared mockup atoms ── */
       .m-header {
         position: sticky;
@@ -1212,26 +1270,28 @@
 
                     <!-- Stories bar -->
                     <div class="m-stories-bar">
-                      <div class="m-story"><div class="m-story-ring"><div class="m-story-inner"></div></div><span>sophia</span></div>
-                      <div class="m-story"><div class="m-story-ring"><div class="m-story-inner"></div></div><span>jade_mtl</span></div>
-                      <div class="m-story"><div class="m-story-ring seen"><div class="m-story-inner"></div></div><span>bella</span></div>
-                      <div class="m-story"><div class="m-story-ring"><div class="m-story-inner"></div></div><span>emma</span></div>
-                      <div class="m-story"><div class="m-story-ring seen"><div class="m-story-inner"></div></div><span>luna_qc</span></div>
+                      <div class="m-story"><div class="m-story-ring"><img class="m-story-photo" src="https://i.pravatar.cc/96?img=1" alt=""></div><span>sophia</span></div>
+                      <div class="m-story"><div class="m-story-ring"><img class="m-story-photo" src="https://i.pravatar.cc/96?img=5" alt=""></div><span>jade_mtl</span></div>
+                      <div class="m-story"><div class="m-story-ring seen"><img class="m-story-photo" src="https://i.pravatar.cc/96?img=9" alt=""></div><span>bella</span></div>
+                      <div class="m-story"><div class="m-story-ring"><img class="m-story-photo" src="https://i.pravatar.cc/96?img=16" alt=""></div><span>emma</span></div>
+                      <div class="m-story"><div class="m-story-ring seen"><img class="m-story-photo" src="https://i.pravatar.cc/96?img=25" alt=""></div><span>luna_qc</span></div>
                     </div>
 
                     <div class="m-divider"></div>
 
-                    <!-- Post 1 — normal post -->
+                    <!-- Post 1 — normal post (with real placeholder image) -->
                     <div style="padding:10px 14px;">
                       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                        <div class="m-avatar sm"><div class="m-avatar-inner">S</div></div>
+                        <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/64?img=1" alt=""></div>
                         <div style="flex:1;">
                           <span style="font-weight:700;font-size:11px;">sophia_rose</span>
                           <span style="color:#f6339a;font-size:9px;margin-left:3px;">✓</span>
                         </div>
                         <button class="m-btn-pink" style="font-size:9px;padding:4px 10px;">Follow</button>
                       </div>
-                      <div style="width:100%;aspect-ratio:1;background:linear-gradient(135deg,#fdf2f8,#e0e7ff,#fce7f3);border-radius:10px;display:grid;place-items:center;color:#cbd5e1;font-size:28px;">📷</div>
+                      <div style="width:100%;aspect-ratio:1;border-radius:10px;overflow:hidden;">
+                        <img class="m-photo" src="https://picsum.photos/seed/sophia1/600/600" alt="">
+                      </div>
                       <div style="display:flex;gap:14px;padding:8px 0 4px;font-size:16px;">
                         <span>♡</span><span>💬</span><span>↗</span><span style="margin-left:auto;">🔖</span>
                       </div>
@@ -1242,22 +1302,25 @@
 
                     <div class="m-divider"></div>
 
-                    <!-- Post 2 — PPV locked -->
+                    <!-- Post 2 — PPV locked (BLURRED PREVIEW — not CSS, server-blurred) -->
                     <div style="padding:10px 14px;">
                       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                        <div class="m-avatar sm"><div class="m-avatar-inner">J</div></div>
+                        <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/64?img=5" alt=""></div>
                         <div style="flex:1;">
                           <span style="font-weight:700;font-size:11px;">jade_luxe</span>
                           <span style="color:#f6339a;font-size:9px;margin-left:3px;">✓</span>
                         </div>
                         <span class="m-badge gold">PRO</span>
                       </div>
-                      <!-- Locked content overlay -->
-                      <div class="m-lock-overlay">
-                        <div class="m-lock-icon">🔒</div>
-                        <div style="font-weight:700;font-size:12px;color:#1e293b;">Pay-per-view content</div>
-                        <div style="font-size:10px;color:#64748b;">Unlock this exclusive post</div>
-                        <button class="m-btn-pink" style="margin-top:4px;">Unlock · CA$9.99</button>
+                      <!-- Blurred preview — simulates the server-destroyed image -->
+                      <div class="m-blur-preview" style="aspect-ratio:1;border-radius:10px;">
+                        <img src="https://picsum.photos/seed/jade_ppv/600/600" alt="">
+                        <div class="m-blur-scrim">
+                          <div class="m-lock-icon" style="background:rgba(255,255,255,0.9);">🔒</div>
+                          <div style="font-weight:700;font-size:12px;color:#fff;">Pay-per-view content</div>
+                          <button class="m-btn-pink" style="margin-top:4px;">Unlock · CA$9.99</button>
+                          <div class="m-blur-note">Image is server-blurred — not CSS</div>
+                        </div>
                       </div>
                       <div style="display:flex;gap:14px;padding:8px 0 4px;font-size:16px;">
                         <span>♡</span><span>💬</span><span>↗</span><span style="margin-left:auto;">🔖</span>
@@ -1268,21 +1331,24 @@
 
                     <div class="m-divider"></div>
 
-                    <!-- Post 3 — subscribers only -->
+                    <!-- Post 3 — subscribers only (BLURRED PREVIEW) -->
                     <div style="padding:10px 14px;">
                       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                        <div class="m-avatar sm"><div class="m-avatar-inner">E</div></div>
+                        <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/64?img=16" alt=""></div>
                         <div style="flex:1;">
                           <span style="font-weight:700;font-size:11px;">emma_elite</span>
                           <span style="color:#f6339a;font-size:9px;margin-left:3px;">✓</span>
                         </div>
                         <span class="m-badge pink">VIP</span>
                       </div>
-                      <div class="m-lock-overlay" style="background:linear-gradient(135deg,#fdf2f8,#faf5ff);">
-                        <div class="m-lock-icon">⭐</div>
-                        <div style="font-weight:700;font-size:12px;color:#1e293b;">Subscribers only</div>
-                        <div style="font-size:10px;color:#64748b;">Subscribe to view this content</div>
-                        <button class="m-btn-pink" style="margin-top:4px;">Subscribe · CA$14.99/mo</button>
+                      <div class="m-blur-preview" style="aspect-ratio:1;border-radius:10px;">
+                        <img src="https://picsum.photos/seed/emma_sub/600/600" alt="">
+                        <div class="m-blur-scrim">
+                          <div class="m-lock-icon" style="background:rgba(255,255,255,0.9);">⭐</div>
+                          <div style="font-weight:700;font-size:12px;color:#fff;">Subscribers only</div>
+                          <button class="m-btn-pink" style="margin-top:4px;">Subscribe · CA$14.99/mo</button>
+                          <div class="m-blur-note">Image is server-blurred — not CSS</div>
+                        </div>
                       </div>
                     </div>
 
@@ -1320,13 +1386,15 @@
                 <div class="phone-frame">
                   <div class="phone-notch"></div>
                   <div class="phone-screen">
-                    <!-- Hero image -->
-                    <div style="width:100%;aspect-ratio:4/3;background:linear-gradient(135deg,#1e1714,#4d274a,#1e1714);position:relative;">
+                    <!-- Hero banner image -->
+                    <div style="width:100%;aspect-ratio:4/3;position:relative;overflow:hidden;">
+                      <img class="m-photo" src="https://picsum.photos/seed/banner_sophia/600/450" alt="" style="position:absolute;inset:0;">
+                      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.1),rgba(0,0,0,0.45));"></div>
                       <div style="position:absolute;top:36px;left:10px;" class="m-back">←</div>
                       <div style="position:absolute;top:36px;right:10px;" class="m-back">⋯</div>
                       <!-- Avatar overlapping hero -->
                       <div style="position:absolute;bottom:-28px;left:14px;">
-                        <div class="m-avatar xl"><div class="m-avatar-inner" style="font-size:22px;">S</div></div>
+                        <div class="m-avatar xl"><img class="m-avatar-photo" src="https://i.pravatar.cc/150?img=1" alt=""></div>
                       </div>
                     </div>
 
@@ -1338,7 +1406,7 @@
                       </div>
                       <div style="font-style:italic;font-size:10px;color:#64748b;margin-top:2px;">Your premium companion in Montreal</div>
                       <div style="font-size:10px;color:#94a3b8;margin-top:4px;">📍 Montreal · 25 · Last seen 2h ago</div>
-                      <p style="font-size:10px;color:#475569;margin:8px 0;">Exclusive content, private shows, and personal connections. Subscribe for the full experience. 💎</p>
+                      <p style="font-size:10px;color:#475569;margin:8px 0;">Exclusive content, private shows, and personal connections. Subscribe for the full experience.</p>
                     </div>
 
                     <!-- Stats row -->
@@ -1363,20 +1431,26 @@
                       <div class="m-tab">Reviews</div>
                     </div>
 
-                    <!-- Post grid preview -->
+                    <!-- Post grid with real images + blurred locked thumbnails -->
                     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:2px;">
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#fce7f3,#e0e7ff);display:grid;place-items:center;font-size:18px;">📷</div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#fdf2f8,#faf5ff);display:grid;place-items:center;position:relative;">
-                        <span style="font-size:18px;">📷</span>
-                        <div style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.5);color:#fff;font-size:7px;padding:2px 5px;border-radius:4px;">🔒 PPV</div>
+                      <div style="aspect-ratio:1;overflow:hidden;"><img class="m-photo" src="https://picsum.photos/seed/grid1/200/200" alt=""></div>
+                      <!-- PPV locked — blurred thumbnail with lock -->
+                      <div style="aspect-ratio:1;overflow:hidden;position:relative;">
+                        <img class="m-photo" src="https://picsum.photos/seed/grid2/200/200" alt="" style="filter:blur(12px) saturate(1.1);transform:scale(1.2);">
+                        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.3);display:grid;place-items:center;">
+                          <div style="text-align:center;"><div style="font-size:12px;">🔒</div><div style="font-size:6px;font-weight:700;color:#fff;margin-top:1px;">PPV</div></div>
+                        </div>
                       </div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#e0e7ff,#fce7f3);display:grid;place-items:center;font-size:18px;">📷</div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#faf5ff,#fdf2f8);display:grid;place-items:center;position:relative;">
-                        <span style="font-size:18px;">📷</span>
-                        <div style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.5);color:#fff;font-size:7px;padding:2px 5px;border-radius:4px;">🔒 SUB</div>
+                      <div style="aspect-ratio:1;overflow:hidden;"><img class="m-photo" src="https://picsum.photos/seed/grid3/200/200" alt=""></div>
+                      <!-- SUB locked — blurred thumbnail with lock -->
+                      <div style="aspect-ratio:1;overflow:hidden;position:relative;">
+                        <img class="m-photo" src="https://picsum.photos/seed/grid4/200/200" alt="" style="filter:blur(12px) saturate(1.1);transform:scale(1.2);">
+                        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.3);display:grid;place-items:center;">
+                          <div style="text-align:center;"><div style="font-size:12px;">🔒</div><div style="font-size:6px;font-weight:700;color:#fff;margin-top:1px;">SUB</div></div>
+                        </div>
                       </div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#fce7f3,#faf5ff);display:grid;place-items:center;font-size:18px;">🎬</div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#e0e7ff,#fdf2f8);display:grid;place-items:center;font-size:18px;">📷</div>
+                      <div style="aspect-ratio:1;overflow:hidden;"><img class="m-photo" src="https://picsum.photos/seed/grid5/200/200" alt=""></div>
+                      <div style="aspect-ratio:1;overflow:hidden;"><img class="m-photo" src="https://picsum.photos/seed/grid6/200/200" alt=""></div>
                     </div>
 
                     <!-- Bottom nav -->
@@ -1401,7 +1475,7 @@
                     <div class="m-header">
                       <div class="m-back">←</div>
                       <div style="display:flex;align-items:center;gap:6px;">
-                        <div class="m-avatar sm"><div class="m-avatar-inner" style="font-size:9px;">J</div></div>
+                        <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/64?img=5" alt=""></div>
                         <div>
                           <span style="font-weight:700;font-size:11px;">jade_luxe</span>
                           <span style="color:#f6339a;font-size:8px;">✓</span>
@@ -1424,14 +1498,16 @@
                       <div class="m-bubble received">I just posted something special 🔥 Check your DMs...</div>
                       <div class="m-bubble-time">2:33 PM</div>
 
-                      <!-- Locked photo DM -->
+                      <!-- Locked photo DM — blurred preview -->
                       <div style="max-width:75%;margin-right:auto;">
                         <div style="background:#f1f5f9;border-radius:14px;border-bottom-left-radius:4px;padding:8px;text-align:center;">
-                          <div style="background:linear-gradient(135deg,#fdf2f8,#faf5ff);border-radius:8px;padding:20px 12px;">
-                            <div class="m-lock-icon" style="margin:0 auto 6px;">🔒</div>
-                            <div style="font-weight:700;font-size:10px;">Locked photo</div>
-                            <div style="font-size:9px;color:#64748b;margin:3px 0;">Exclusive content</div>
-                            <button class="m-btn-pink" style="font-size:9px;margin-top:4px;">Unlock · CA$4.99</button>
+                          <div style="border-radius:8px;overflow:hidden;position:relative;aspect-ratio:4/3;">
+                            <img src="https://picsum.photos/seed/dm_locked/400/300" alt="" style="width:100%;height:100%;object-fit:cover;filter:blur(16px) saturate(1.2);transform:scale(1.2);">
+                            <div style="position:absolute;inset:0;background:rgba(0,0,0,0.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;">
+                              <div class="m-lock-icon" style="background:rgba(255,255,255,0.9);">🔒</div>
+                              <div style="font-weight:700;font-size:10px;color:#fff;">Locked photo</div>
+                              <button class="m-btn-pink" style="font-size:9px;margin-top:2px;">Unlock · CA$4.99</button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1573,68 +1649,72 @@
                       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                         <!-- Live 1 -->
                         <div style="border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;background:#fff;">
-                          <div style="aspect-ratio:4/5;background:linear-gradient(135deg,#1e1714,#4d274a);position:relative;display:grid;place-items:center;">
-                            <div style="font-size:28px;opacity:0.4;">📹</div>
+                          <div style="aspect-ratio:4/5;position:relative;overflow:hidden;">
+                            <img class="m-photo" src="https://picsum.photos/seed/live1/300/375" alt="" style="position:absolute;inset:0;">
+                            <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.5));"></div>
                             <div style="position:absolute;top:6px;left:6px;background:#ef4444;color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:4px;">● LIVE</div>
                             <div style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:8px;padding:2px 6px;border-radius:4px;">👁 234</div>
                             <div style="position:absolute;bottom:6px;left:6px;">
-                              <div class="m-avatar sm"><div class="m-avatar-inner" style="font-size:8px;">S</div></div>
+                              <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/56?img=1" alt=""></div>
                             </div>
                           </div>
                           <div style="padding:8px;">
                             <div style="font-weight:700;font-size:10px;">sophia_rose</div>
-                            <div style="font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Late night vibes 🌙</div>
+                            <div style="font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Late night vibes</div>
                             <div style="font-size:9px;color:#f6339a;font-weight:700;margin-top:3px;">CA$4.99</div>
                           </div>
                         </div>
 
                         <!-- Live 2 -->
                         <div style="border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;background:#fff;">
-                          <div style="aspect-ratio:4/5;background:linear-gradient(135deg,#4d274a,#17130f);position:relative;display:grid;place-items:center;">
-                            <div style="font-size:28px;opacity:0.4;">📹</div>
+                          <div style="aspect-ratio:4/5;position:relative;overflow:hidden;">
+                            <img class="m-photo" src="https://picsum.photos/seed/live2/300/375" alt="" style="position:absolute;inset:0;">
+                            <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.5));"></div>
                             <div style="position:absolute;top:6px;left:6px;background:#ef4444;color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:4px;">● LIVE</div>
                             <div style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:8px;padding:2px 6px;border-radius:4px;">👁 87</div>
                             <div style="position:absolute;bottom:6px;left:6px;">
-                              <div class="m-avatar sm"><div class="m-avatar-inner" style="font-size:8px;">E</div></div>
+                              <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/56?img=16" alt=""></div>
                             </div>
                           </div>
                           <div style="padding:8px;">
                             <div style="font-weight:700;font-size:10px;">emma_elite</div>
-                            <div style="font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Q&A with fans 💎</div>
+                            <div style="font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Q&A with fans</div>
                             <div style="font-size:9px;color:#10b981;font-weight:700;margin-top:3px;">Free</div>
                           </div>
                         </div>
 
                         <!-- Live 3 -->
                         <div style="border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;background:#fff;">
-                          <div style="aspect-ratio:4/5;background:linear-gradient(135deg,#17130f,#3b2038);position:relative;display:grid;place-items:center;">
-                            <div style="font-size:28px;opacity:0.4;">📹</div>
+                          <div style="aspect-ratio:4/5;position:relative;overflow:hidden;">
+                            <img class="m-photo" src="https://picsum.photos/seed/live3/300/375" alt="" style="position:absolute;inset:0;">
+                            <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.5));"></div>
                             <div style="position:absolute;top:6px;left:6px;background:#ef4444;color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:4px;">● LIVE</div>
                             <div style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:8px;padding:2px 6px;border-radius:4px;">👁 412</div>
                             <div style="position:absolute;bottom:6px;left:6px;">
-                              <div class="m-avatar sm"><div class="m-avatar-inner" style="font-size:8px;">B</div></div>
+                              <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/56?img=9" alt=""></div>
                             </div>
                           </div>
                           <div style="padding:8px;">
                             <div style="font-weight:700;font-size:10px;">bella_mtl</div>
-                            <div style="font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Private show 🔥</div>
+                            <div style="font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Private show</div>
                             <div style="font-size:9px;color:#f6339a;font-weight:700;margin-top:3px;">CA$9.99</div>
                           </div>
                         </div>
 
                         <!-- Live 4 -->
                         <div style="border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;background:#fff;">
-                          <div style="aspect-ratio:4/5;background:linear-gradient(135deg,#3b2038,#1e1714);position:relative;display:grid;place-items:center;">
-                            <div style="font-size:28px;opacity:0.4;">📹</div>
+                          <div style="aspect-ratio:4/5;position:relative;overflow:hidden;">
+                            <img class="m-photo" src="https://picsum.photos/seed/live4/300/375" alt="" style="position:absolute;inset:0;">
+                            <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.5));"></div>
                             <div style="position:absolute;top:6px;left:6px;background:#ef4444;color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:4px;">● LIVE</div>
                             <div style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:8px;padding:2px 6px;border-radius:4px;">👁 56</div>
                             <div style="position:absolute;bottom:6px;left:6px;">
-                              <div class="m-avatar sm"><div class="m-avatar-inner" style="font-size:8px;">L</div></div>
+                              <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/56?img=25" alt=""></div>
                             </div>
                           </div>
                           <div style="padding:8px;">
                             <div style="font-weight:700;font-size:10px;">luna_qc</div>
-                            <div style="font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Chill stream ✨</div>
+                            <div style="font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Chill stream</div>
                             <div style="font-size:9px;color:#f6339a;font-weight:700;margin-top:3px;">CA$2.99</div>
                           </div>
                         </div>
@@ -1718,7 +1798,7 @@
 
                         <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:10px;margin-bottom:6px;">
                           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                            <div class="m-avatar sm"><div class="m-avatar-inner" style="font-size:8px;">A</div></div>
+                            <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/56?img=32" alt=""></div>
                             <div style="flex:1;">
                               <div style="font-weight:700;font-size:10px;color:#fff;">anna_qc</div>
                               <div style="font-size:8px;color:rgba(255,255,255,0.4);">Submitted 2h ago</div>
@@ -1733,7 +1813,7 @@
 
                         <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:10px;margin-bottom:6px;">
                           <div style="display:flex;align-items:center;gap:8px;">
-                            <div class="m-avatar sm"><div class="m-avatar-inner" style="font-size:8px;">M</div></div>
+                            <div class="m-avatar sm"><img class="m-avatar-photo" src="https://i.pravatar.cc/56?img=44" alt=""></div>
                             <div style="flex:1;">
                               <div style="font-weight:700;font-size:10px;color:#fff;">maya_luxe</div>
                               <div style="font-size:8px;color:rgba(255,255,255,0.4);">Submitted 5h ago</div>
@@ -1781,74 +1861,153 @@
           <div class="wrap">
             <div class="section-head">
               <div>
-                <p class="eyebrow">Nouveau · Séparation des rôles</p>
-                <h2>Deux sections distinctes dans la même app.</h2>
+                <p class="eyebrow">Nouveau · Deux publics, deux expériences</p>
+                <h2>Des modèles OF et des escortes — pas la même clientèle.</h2>
               </div>
               <p class="section-copy">
-                L'application est maintenant divisée en <strong>Section OF</strong> (créatrices de contenu)
-                et <strong>Section Escortes</strong>. Les escortes héritent de tout ce qu'une créatrice a,
-                en plus des listings, réservations et disponibilités.
+                Un modèle OF vend du contenu en ligne: abonnements, photos, vidéos, lives.
+                Une escorte offre des services en personne et utilise la plateforme comme vitrine.
+                Deux métiers différents, deux sections séparées dans la même app.
               </p>
             </div>
 
-            <!-- Comparison table: Creator vs Escort -->
+            <!-- Identity cards: side-by-side -->
+            <div class="grid two" style="margin-bottom:38px;">
+              <article class="card" style="border-color:#ddd6fe;background:linear-gradient(145deg,#faf5ff,#fff);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                  <div style="width:44px;height:44px;border-radius:14px;background:rgba(139,92,246,0.12);display:grid;place-items:center;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  </div>
+                  <div>
+                    <h3 style="margin-bottom:2px;color:#7c3aed;">Section OF — Créatrices</h3>
+                    <p class="micro" style="margin:0;">Monétisation 100% en ligne</p>
+                  </div>
+                </div>
+                <p style="font-size:14px;color:#475569;margin-bottom:14px;">
+                  Le modèle OF ne rencontre jamais ses fans. Son revenu vient du contenu digital:
+                  photos, vidéos, messages exclusifs et interactions live.
+                </p>
+                <div class="tag-list" style="margin-top:0;">
+                  <span class="tag" style="background:rgba(139,92,246,0.1);color:#7c3aed;">Abonnements mensuels</span>
+                  <span class="tag" style="background:rgba(139,92,246,0.1);color:#7c3aed;">Posts PPV</span>
+                  <span class="tag" style="background:rgba(139,92,246,0.1);color:#7c3aed;">DMs payants</span>
+                  <span class="tag" style="background:rgba(139,92,246,0.1);color:#7c3aed;">Live shows</span>
+                  <span class="tag" style="background:rgba(139,92,246,0.1);color:#7c3aed;">Pourboires</span>
+                  <span class="tag" style="background:rgba(139,92,246,0.1);color:#7c3aed;">Revenus & retraits</span>
+                </div>
+              </article>
+
+              <article class="card" style="border-color:#fce7f3;background:linear-gradient(145deg,#fdf2f8,#fff);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                  <div style="width:44px;height:44px;border-radius:14px;background:rgba(246,51,154,0.12);display:grid;place-items:center;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f6339a" stroke-width="2"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7L12 17l-6.4 4 2.3-7L2 9.4h7.6z"/></svg>
+                  </div>
+                  <div>
+                    <h3 style="margin-bottom:2px;color:#e6339a;">Section Escortes</h3>
+                    <p class="micro" style="margin:0;">Services en personne + contenu en bonus</p>
+                  </div>
+                </div>
+                <p style="font-size:14px;color:#475569;margin-bottom:14px;">
+                  L'escorte utilise la plateforme comme vitrine pour ses services en personne.
+                  Elle peut aussi vendre du contenu, mais son revenu principal vient des rencontres.
+                </p>
+                <div class="tag-list" style="margin-top:0;">
+                  <span class="tag" style="background:rgba(246,51,154,0.1);color:#e6339a;">Annonces / Listings</span>
+                  <span class="tag" style="background:rgba(246,51,154,0.1);color:#e6339a;">Taux horaire</span>
+                  <span class="tag" style="background:rgba(246,51,154,0.1);color:#e6339a;">Réservations</span>
+                  <span class="tag" style="background:rgba(246,51,154,0.1);color:#e6339a;">Disponibilités</span>
+                  <span class="tag" style="background:rgba(246,51,154,0.1);color:#e6339a;">Bouton Enquire</span>
+                  <span class="tag" style="background:rgba(139,92,246,0.08);color:#9ca3af;border:1px dashed #d1d5db;">+ tout le contenu OF</span>
+                </div>
+              </article>
+            </div>
+
+            <!-- Feature split table — grouped by business type -->
             <table class="comparison" style="margin-bottom:48px;">
               <thead>
                 <tr>
-                  <th>Fonctionnalité</th>
-                  <th>Créatrice (OF)</th>
-                  <th>Escorte</th>
+                  <th style="width:40%;">Fonctionnalité</th>
+                  <th style="width:30%;">Créatrice OF</th>
+                  <th style="width:30%;">Escorte</th>
                 </tr>
               </thead>
               <tbody>
+                <tr><td colspan="3" style="background:#f5f3ff;font-weight:800;font-size:12px;color:#7c3aed;letter-spacing:0.5px;text-transform:uppercase;padding:10px 18px;">Contenu & monétisation en ligne</td></tr>
                 <tr>
-                  <td>Posts & Stories</td>
+                  <td>Abonnements mensuels (payant + gratuit)</td>
+                  <td><span class="check">✓</span>Revenu principal</td>
+                  <td style="color:#94a3b8;">Optionnel (bonus)</td>
+                </tr>
+                <tr>
+                  <td>Posts PPV (contenu à la carte)</td>
+                  <td><span class="check">✓</span>Revenu principal</td>
+                  <td style="color:#94a3b8;">Optionnel (bonus)</td>
+                </tr>
+                <tr>
+                  <td>DMs payants (photos verrouillées)</td>
+                  <td><span class="check">✓</span>Revenu principal</td>
+                  <td style="color:#94a3b8;">Optionnel (bonus)</td>
+                </tr>
+                <tr>
+                  <td>Live shows (billetterie + pourboires)</td>
+                  <td><span class="check">✓</span>Revenu principal</td>
+                  <td style="color:#94a3b8;">Optionnel (bonus)</td>
+                </tr>
+                <tr>
+                  <td>Pourboires</td>
+                  <td><span class="check">✓</span>Revenu principal</td>
+                  <td style="color:#94a3b8;">Optionnel (bonus)</td>
+                </tr>
+                <tr>
+                  <td>Posts & Stories (feed social)</td>
                   <td><span class="check">✓</span>Oui</td>
                   <td><span class="check">✓</span>Oui</td>
                 </tr>
+                <tr><td colspan="3" style="background:#fdf2f8;font-weight:800;font-size:12px;color:#e6339a;letter-spacing:0.5px;text-transform:uppercase;padding:10px 18px;">Services en personne</td></tr>
                 <tr>
-                  <td>Abonnements & PPV</td>
-                  <td><span class="check">✓</span>Oui</td>
-                  <td><span class="check">✓</span>Oui</td>
+                  <td>Annonces de services (Listings)</td>
+                  <td style="color:#94a3b8;">✕ Non disponible</td>
+                  <td><span class="check">✓</span>Revenu principal</td>
                 </tr>
                 <tr>
-                  <td>DMs payants & Pourboires</td>
-                  <td><span class="check">✓</span>Oui</td>
-                  <td><span class="check">✓</span>Oui</td>
+                  <td>Taux horaire affiché</td>
+                  <td style="color:#94a3b8;">✕ Non disponible</td>
+                  <td><span class="check">✓</span>Sur le profil</td>
                 </tr>
                 <tr>
-                  <td>Live shows</td>
-                  <td><span class="check">✓</span>Oui</td>
-                  <td><span class="check">✓</span>Oui</td>
+                  <td>Réservations clients</td>
+                  <td style="color:#94a3b8;">✕ Non disponible</td>
+                  <td><span class="check">✓</span>Gestion complète</td>
                 </tr>
+                <tr>
+                  <td>Disponibilité / Horaires</td>
+                  <td style="color:#94a3b8;">✕ Non disponible</td>
+                  <td><span class="check">✓</span>Toggle on/off</td>
+                </tr>
+                <tr>
+                  <td>Bouton « Enquire » sur le profil</td>
+                  <td style="color:#94a3b8;">✕ Non disponible</td>
+                  <td><span class="check">✓</span>Prise de contact</td>
+                </tr>
+                <tr>
+                  <td>Catégories de services</td>
+                  <td style="color:#94a3b8;">✕ Non disponible</td>
+                  <td><span class="check">✓</span>Incall / Outcall</td>
+                </tr>
+                <tr><td colspan="3" style="background:#f8fafc;font-weight:800;font-size:12px;color:#475569;letter-spacing:0.5px;text-transform:uppercase;padding:10px 18px;">Commun aux deux</td></tr>
                 <tr>
                   <td>Revenus & Retraits</td>
                   <td><span class="check">✓</span>Oui</td>
                   <td><span class="check">✓</span>Oui</td>
                 </tr>
                 <tr>
-                  <td>Listings / Annonces</td>
-                  <td style="color:#94a3b8;">✕ Non</td>
+                  <td>Vérification d'identité</td>
+                  <td><span class="check">✓</span>Oui</td>
                   <td><span class="check">✓</span>Oui</td>
                 </tr>
                 <tr>
-                  <td>Disponibilité / Horaires</td>
-                  <td style="color:#94a3b8;">✕ Non</td>
+                  <td>Messagerie</td>
                   <td><span class="check">✓</span>Oui</td>
-                </tr>
-                <tr>
-                  <td>Réservations</td>
-                  <td style="color:#94a3b8;">✕ Non</td>
-                  <td><span class="check">✓</span>Oui</td>
-                </tr>
-                <tr>
-                  <td>Taux horaire</td>
-                  <td style="color:#94a3b8;">✕ Non</td>
-                  <td><span class="check">✓</span>Oui</td>
-                </tr>
-                <tr>
-                  <td>Bouton « Enquire »</td>
-                  <td style="color:#94a3b8;">✕ Non</td>
                   <td><span class="check">✓</span>Oui</td>
                 </tr>
               </tbody>
@@ -2059,12 +2218,14 @@
                 <div class="phone-frame">
                   <div class="phone-notch"></div>
                   <div class="phone-screen">
-                    <!-- Hero image -->
-                    <div style="width:100%;aspect-ratio:4/3;background:linear-gradient(135deg,#4d274a,#8b5cf6,#1e1714);position:relative;">
+                    <!-- Hero banner image -->
+                    <div style="width:100%;aspect-ratio:4/3;position:relative;overflow:hidden;">
+                      <img class="m-photo" src="https://picsum.photos/seed/banner_jade/600/450" alt="" style="position:absolute;inset:0;">
+                      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.1),rgba(0,0,0,0.45));"></div>
                       <div style="position:absolute;top:36px;left:10px;" class="m-back">←</div>
                       <div style="position:absolute;top:36px;right:10px;" class="m-back">⋯</div>
                       <div style="position:absolute;bottom:-28px;left:14px;">
-                        <div class="m-avatar xl"><div class="m-avatar-inner" style="font-size:22px;">J</div></div>
+                        <div class="m-avatar xl"><img class="m-avatar-photo" src="https://i.pravatar.cc/150?img=5" alt=""></div>
                       </div>
                     </div>
 
@@ -2098,20 +2259,24 @@
                       <div class="m-tab">Reviews</div>
                     </div>
 
-                    <!-- Post grid -->
+                    <!-- Post grid with real images + blurred locked thumbnails -->
                     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:2px;">
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#f5f3ff,#fdf2f8);display:grid;place-items:center;font-size:18px;">📷</div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#fdf2f8,#e0e7ff);display:grid;place-items:center;position:relative;">
-                        <span style="font-size:18px;">📷</span>
-                        <div style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.5);color:#fff;font-size:7px;padding:2px 5px;border-radius:4px;">🔒 PPV</div>
+                      <div style="aspect-ratio:1;overflow:hidden;"><img class="m-photo" src="https://picsum.photos/seed/jgrid1/200/200" alt=""></div>
+                      <div style="aspect-ratio:1;overflow:hidden;position:relative;">
+                        <img class="m-photo" src="https://picsum.photos/seed/jgrid2/200/200" alt="" style="filter:blur(12px) saturate(1.1);transform:scale(1.2);">
+                        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.3);display:grid;place-items:center;">
+                          <div style="text-align:center;"><div style="font-size:12px;">🔒</div><div style="font-size:6px;font-weight:700;color:#fff;">PPV</div></div>
+                        </div>
                       </div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#e0e7ff,#f5f3ff);display:grid;place-items:center;font-size:18px;">🎬</div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#fce7f3,#f5f3ff);display:grid;place-items:center;position:relative;">
-                        <span style="font-size:18px;">📷</span>
-                        <div style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.5);color:#fff;font-size:7px;padding:2px 5px;border-radius:4px;">🔒 SUB</div>
+                      <div style="aspect-ratio:1;overflow:hidden;"><img class="m-photo" src="https://picsum.photos/seed/jgrid3/200/200" alt=""></div>
+                      <div style="aspect-ratio:1;overflow:hidden;position:relative;">
+                        <img class="m-photo" src="https://picsum.photos/seed/jgrid4/200/200" alt="" style="filter:blur(12px) saturate(1.1);transform:scale(1.2);">
+                        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.3);display:grid;place-items:center;">
+                          <div style="text-align:center;"><div style="font-size:12px;">🔒</div><div style="font-size:6px;font-weight:700;color:#fff;">SUB</div></div>
+                        </div>
                       </div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#f5f3ff,#fce7f3);display:grid;place-items:center;font-size:18px;">📷</div>
-                      <div style="aspect-ratio:1;background:linear-gradient(135deg,#fdf2f8,#f5f3ff);display:grid;place-items:center;font-size:18px;">📷</div>
+                      <div style="aspect-ratio:1;overflow:hidden;"><img class="m-photo" src="https://picsum.photos/seed/jgrid5/200/200" alt=""></div>
+                      <div style="aspect-ratio:1;overflow:hidden;"><img class="m-photo" src="https://picsum.photos/seed/jgrid6/200/200" alt=""></div>
                     </div>
 
                     <!-- Bottom nav -->
@@ -2209,12 +2374,14 @@
                 <div class="phone-frame">
                   <div class="phone-notch"></div>
                   <div class="phone-screen">
-                    <!-- Hero -->
-                    <div style="width:100%;aspect-ratio:4/3;background:linear-gradient(135deg,#1e1714,#f6339a20,#4d274a);position:relative;">
+                    <!-- Hero banner -->
+                    <div style="width:100%;aspect-ratio:4/3;position:relative;overflow:hidden;">
+                      <img class="m-photo" src="https://picsum.photos/seed/banner_escort/600/450" alt="" style="position:absolute;inset:0;">
+                      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.1),rgba(0,0,0,0.45));"></div>
                       <div style="position:absolute;top:36px;left:10px;" class="m-back">←</div>
                       <div style="position:absolute;top:36px;right:10px;" class="m-back">⋯</div>
                       <div style="position:absolute;bottom:-28px;left:14px;">
-                        <div class="m-avatar xl"><div class="m-avatar-inner" style="font-size:22px;">S</div></div>
+                        <div class="m-avatar xl"><img class="m-avatar-photo" src="https://i.pravatar.cc/150?img=1" alt=""></div>
                       </div>
                     </div>
 
@@ -2638,6 +2805,354 @@
               </div>
 
             </div>
+
+            <!-- ── ROW: Section Toggle — Two worlds in one app ── -->
+            <div style="margin-top:56px;margin-bottom:12px;">
+              <div class="section-head" style="text-align:center;margin-bottom:32px;">
+                <p class="eyebrow">Nouveau · Section Toggle</p>
+                <h2 style="font-size:24px;">Deux univers, un toggle.</h2>
+                <p class="section-copy">
+                  Les utilisateurs basculent entre la section Escortes (rose) et Créatrices (violet) d'un tap.
+                  L'accent couleur, le feed, la navigation et les contenus s'adaptent instantanément.
+                </p>
+              </div>
+            </div>
+
+            <div class="screens-gallery" style="margin-top:0;">
+
+              <!-- SCREEN: Explore — Escort Section (Pink) -->
+              <div>
+                <div class="phone-frame">
+                  <div class="phone-notch"></div>
+                  <div class="phone-screen">
+                    <!-- Header with toggle -->
+                    <div style="padding:38px 12px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f3e8ff50;background:rgba(255,255,255,0.85);backdrop-filter:blur(12px);">
+                      <span style="font-size:18px;font-weight:800;background:linear-gradient(90deg,#f472b6,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Cleopatra</span>
+                      <!-- Section toggle pill -->
+                      <div style="display:flex;background:#f1f5f9;border-radius:20px;padding:3px;position:relative;width:160px;">
+                        <div style="position:absolute;top:3px;left:3px;width:calc(50% - 3px);height:calc(100% - 6px);border-radius:17px;background:linear-gradient(90deg,#ec4899,#f43f5e);transition:0.3s;"></div>
+                        <span style="flex:1;text-align:center;font-size:10px;font-weight:700;color:#fff;position:relative;z-index:1;padding:5px 0;display:flex;align-items:center;justify-content:center;gap:3px;">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7L12 17l-6.4 4 2.3-7L2 9.4h7.6z"/></svg>
+                          Escorts
+                        </span>
+                        <span style="flex:1;text-align:center;font-size:10px;font-weight:700;color:#94a3b8;position:relative;z-index:1;padding:5px 0;display:flex;align-items:center;justify-content:center;gap:3px;">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l1.09 3.26L16 6.64l-2.18 2.18.72 3.18L12 10.5l-2.54 1.5.72-3.18L8 6.64l2.91-1.38z"/></svg>
+                          Creators
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Starred bar -->
+                    <div style="padding:8px 10px 6px;">
+                      <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="#f6339a" stroke="none"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7L12 17l-6.4 4 2.3-7L2 9.4h7.6z"/></svg>
+                        <span style="font-size:8px;font-weight:800;color:#f6339a;text-transform:uppercase;letter-spacing:1px;">Vedettes</span>
+                      </div>
+                      <div style="display:flex;gap:8px;overflow:hidden;">
+                        <div style="flex-shrink:0;width:80px;height:110px;border-radius:14px;background:linear-gradient(180deg,#fce7f3,#fdf2f8);overflow:hidden;position:relative;border:1.5px solid #fbcfe8;">
+                          <img class="m-photo" src="https://picsum.photos/seed/escort_star1/160/220" alt="" style="position:absolute;inset:0;">
+                          <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.7));"></div>
+                          <div style="position:absolute;bottom:6px;left:6px;font-size:9px;font-weight:700;color:#fff;">Mia</div>
+                          <div style="position:absolute;top:4px;right:4px;font-size:7px;background:linear-gradient(90deg,#ec4899,#f43f5e);color:#fff;padding:1px 5px;border-radius:8px;font-weight:800;">VIP</div>
+                        </div>
+                        <div style="flex-shrink:0;width:80px;height:110px;border-radius:14px;background:linear-gradient(180deg,#fce7f3,#fdf2f8);overflow:hidden;position:relative;border:1.5px solid #fbcfe8;">
+                          <img class="m-photo" src="https://picsum.photos/seed/escort_star2/160/220" alt="" style="position:absolute;inset:0;">
+                          <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.7));"></div>
+                          <div style="position:absolute;bottom:6px;left:6px;font-size:9px;font-weight:700;color:#fff;">Luna</div>
+                        </div>
+                        <div style="flex-shrink:0;width:80px;height:110px;border-radius:14px;background:linear-gradient(180deg,#fce7f3,#fdf2f8);overflow:hidden;position:relative;border:1.5px solid #fbcfe8;">
+                          <img class="m-photo" src="https://picsum.photos/seed/escort_star3/160/220" alt="" style="position:absolute;inset:0;">
+                          <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.7));"></div>
+                          <div style="position:absolute;bottom:6px;left:6px;font-size:9px;font-weight:700;color:#fff;">Sophie</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Listing card -->
+                    <div style="margin:6px 10px;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;background:#fff;">
+                      <div style="aspect-ratio:4/3;position:relative;overflow:hidden;">
+                        <img class="m-photo" src="https://picsum.photos/seed/escort_listing1/400/300" alt="" style="position:absolute;inset:0;">
+                        <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.7));"></div>
+                        <div style="position:absolute;bottom:8px;left:10px;">
+                          <div style="font-size:16px;font-weight:900;color:#fff;">Valentina · 24</div>
+                          <div style="font-size:9px;color:rgba(255,255,255,0.8);margin-top:2px;">📍 Montreal</div>
+                        </div>
+                      </div>
+                      <div style="padding:10px 12px;display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:12px;font-weight:700;">GFE Experience</span>
+                        <span style="font-size:14px;font-weight:900;color:#f6339a;">$280</span>
+                      </div>
+                    </div>
+
+                    <!-- Pink bottom nav -->
+                    <div style="position:absolute;bottom:0;left:0;right:0;background:#fff1f7;display:flex;padding:8px 12px 16px;justify-content:space-around;border-top:1px solid #fce7f3;">
+                      <div style="text-align:center;font-size:8px;font-weight:600;color:#ff2d8d;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff2d8d" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><br>Home
+                      </div>
+                      <div style="text-align:center;font-size:8px;font-weight:600;color:#ff2d8d;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff2d8d" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><br>Explore
+                      </div>
+                      <div style="text-align:center;font-size:8px;font-weight:600;color:#94a3b8;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><br>Messages
+                      </div>
+                      <div style="text-align:center;font-size:8px;font-weight:600;color:#94a3b8;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg><br>Alertes
+                      </div>
+                      <div style="text-align:center;font-size:8px;font-weight:600;color:#94a3b8;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><br>Profil
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p class="screen-label">Explore — Section Escortes</p>
+                <p class="screen-sublabel">Toggle sur Escorts: thème rose, listings, vedettes</p>
+              </div>
+
+              <!-- SCREEN: Explore — Creator Section (Violet) -->
+              <div>
+                <div class="phone-frame">
+                  <div class="phone-notch"></div>
+                  <div class="phone-screen">
+                    <!-- Header with toggle — Creator mode active -->
+                    <div style="padding:38px 12px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ede9fe;background:rgba(255,255,255,0.85);backdrop-filter:blur(12px);">
+                      <span style="font-size:18px;font-weight:800;background:linear-gradient(90deg,#8b5cf6,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Cleopatra</span>
+                      <!-- Section toggle pill — Creator active -->
+                      <div style="display:flex;background:#f1f5f9;border-radius:20px;padding:3px;position:relative;width:160px;">
+                        <div style="position:absolute;top:3px;right:3px;width:calc(50% - 3px);height:calc(100% - 6px);border-radius:17px;background:linear-gradient(90deg,#8b5cf6,#a855f7);transition:0.3s;"></div>
+                        <span style="flex:1;text-align:center;font-size:10px;font-weight:700;color:#94a3b8;position:relative;z-index:1;padding:5px 0;display:flex;align-items:center;justify-content:center;gap:3px;">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7L12 17l-6.4 4 2.3-7L2 9.4h7.6z"/></svg>
+                          Escorts
+                        </span>
+                        <span style="flex:1;text-align:center;font-size:10px;font-weight:700;color:#fff;position:relative;z-index:1;padding:5px 0;display:flex;align-items:center;justify-content:center;gap:3px;">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2l1.09 3.26L16 6.64l-2.18 2.18.72 3.18L12 10.5l-2.54 1.5.72-3.18L8 6.64l2.91-1.38z"/></svg>
+                          Creators
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Trending creators strip -->
+                    <div style="padding:8px 10px 6px;background:linear-gradient(180deg,#faf5ff80,#fff);">
+                      <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M12 2l1.09 3.26L16 6.64l-2.18 2.18.72 3.18L12 10.5l-2.54 1.5.72-3.18L8 6.64l2.91-1.38z"/></svg>
+                        <span style="font-size:8px;font-weight:800;color:#8b5cf6;text-transform:uppercase;letter-spacing:1px;">Trending Creators</span>
+                      </div>
+                      <div style="display:flex;gap:12px;overflow:hidden;">
+                        <div style="flex-shrink:0;text-align:center;">
+                          <div style="width:50px;height:50px;border-radius:50%;padding:2px;background:linear-gradient(135deg,#8b5cf6,#a855f7,#d946ef);">
+                            <div style="width:100%;height:100%;border-radius:50%;background:#fff;padding:1.5px;">
+                              <img src="https://i.pravatar.cc/100?img=32" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                            </div>
+                          </div>
+                          <div style="font-size:8px;font-weight:600;color:#475569;margin-top:3px;">emma_x</div>
+                        </div>
+                        <div style="flex-shrink:0;text-align:center;">
+                          <div style="width:50px;height:50px;border-radius:50%;padding:2px;background:linear-gradient(135deg,#8b5cf6,#a855f7,#d946ef);">
+                            <div style="width:100%;height:100%;border-radius:50%;background:#fff;padding:1.5px;">
+                              <img src="https://i.pravatar.cc/100?img=16" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                            </div>
+                          </div>
+                          <div style="font-size:8px;font-weight:600;color:#475569;margin-top:3px;">clara_vip</div>
+                        </div>
+                        <div style="flex-shrink:0;text-align:center;">
+                          <div style="width:50px;height:50px;border-radius:50%;padding:2px;background:linear-gradient(135deg,#8b5cf6,#a855f7,#d946ef);">
+                            <div style="width:100%;height:100%;border-radius:50%;background:#fff;padding:1.5px;">
+                              <img src="https://i.pravatar.cc/100?img=25" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                            </div>
+                          </div>
+                          <div style="font-size:8px;font-weight:600;color:#475569;margin-top:3px;">nadia</div>
+                        </div>
+                        <div style="flex-shrink:0;text-align:center;">
+                          <div style="width:50px;height:50px;border-radius:50%;padding:2px;background:linear-gradient(135deg,#8b5cf6,#a855f7,#d946ef);">
+                            <div style="width:100%;height:100%;border-radius:50%;background:#fff;padding:1.5px;">
+                              <img src="https://i.pravatar.cc/100?img=44" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                            </div>
+                          </div>
+                          <div style="font-size:8px;font-weight:600;color:#475569;margin-top:3px;">lily_rose</div>
+                        </div>
+                        <div style="flex-shrink:0;text-align:center;">
+                          <div style="width:50px;height:50px;border-radius:50%;padding:2px;background:linear-gradient(135deg,#8b5cf6,#a855f7,#d946ef);">
+                            <div style="width:100%;height:100%;border-radius:50%;background:#fff;padding:1.5px;">
+                              <img src="https://i.pravatar.cc/100?img=9" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                            </div>
+                          </div>
+                          <div style="font-size:8px;font-weight:600;color:#475569;margin-top:3px;">zara_fit</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Creator category chips -->
+                    <div style="display:flex;gap:5px;padding:6px 10px;overflow:hidden;border-bottom:1px solid #ede9fe80;">
+                      <span style="font-size:9px;font-weight:700;color:#fff;background:#8b5cf6;padding:4px 10px;border-radius:20px;white-space:nowrap;">All</span>
+                      <span style="font-size:9px;font-weight:600;color:#7c3aed;background:#f5f3ff;padding:4px 10px;border-radius:20px;white-space:nowrap;">Trending</span>
+                      <span style="font-size:9px;font-weight:600;color:#7c3aed;background:#f5f3ff;padding:4px 10px;border-radius:20px;white-space:nowrap;">Live Now</span>
+                      <span style="font-size:9px;font-weight:600;color:#7c3aed;background:#f5f3ff;padding:4px 10px;border-radius:20px;white-space:nowrap;">Photos</span>
+                      <span style="font-size:9px;font-weight:600;color:#7c3aed;background:#f5f3ff;padding:4px 10px;border-radius:20px;white-space:nowrap;">Videos</span>
+                    </div>
+
+                    <!-- Content post card (creator style) -->
+                    <div style="margin:8px 10px;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;background:#fff;">
+                      <!-- Post header -->
+                      <div style="padding:8px 10px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f1f5f9;">
+                        <div style="width:28px;height:28px;border-radius:50%;padding:1.5px;background:linear-gradient(135deg,#8b5cf6,#d946ef);">
+                          <img src="https://i.pravatar.cc/56?img=32" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                        </div>
+                        <div style="flex:1;">
+                          <div style="font-size:11px;font-weight:700;">emma_x <span style="color:#8b5cf6;font-size:9px;">✓</span></div>
+                          <div style="font-size:8px;color:#94a3b8;">2h ago</div>
+                        </div>
+                        <button style="font-size:10px;font-weight:700;color:#fff;background:#8b5cf6;border:none;padding:4px 12px;border-radius:20px;">Subscribe</button>
+                      </div>
+                      <!-- Blurred locked content -->
+                      <div style="aspect-ratio:1;position:relative;overflow:hidden;">
+                        <img class="m-photo m-blur-preview" src="https://picsum.photos/seed/creator_post1/400/400" alt="" style="position:absolute;inset:0;filter:blur(20px) saturate(1.3);transform:scale(1.1);">
+                        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.4);"></div>
+                        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
+                          <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.9);display:grid;place-items:center;">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                          </div>
+                          <span style="font-size:11px;font-weight:700;color:#fff;">Subscribers only</span>
+                          <button style="font-size:10px;font-weight:700;color:#fff;background:#8b5cf6;border:none;padding:6px 16px;border-radius:20px;">Subscribe to view</button>
+                        </div>
+                      </div>
+                      <!-- Post actions -->
+                      <div style="padding:8px 10px;display:flex;gap:14px;align-items:center;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="1.8"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        <div style="flex:1;"></div>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+                      </div>
+                      <div style="padding:0 10px 8px;font-size:11px;font-weight:700;color:#1e293b;">247 likes</div>
+                    </div>
+
+                    <!-- Violet bottom nav -->
+                    <div style="position:absolute;bottom:0;left:0;right:0;background:#f5f0ff;display:flex;padding:8px 12px 16px;justify-content:space-around;border-top:1px solid #ede9fe;">
+                      <div style="text-align:center;font-size:8px;font-weight:600;color:#94a3b8;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><br>Home
+                      </div>
+                      <div style="text-align:center;font-size:8px;font-weight:600;color:#8b5cf6;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><br>Explore
+                      </div>
+                      <div style="text-align:center;font-size:8px;font-weight:600;color:#94a3b8;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><br>Messages
+                      </div>
+                      <div style="text-align:center;font-size:8px;font-weight:600;color:#94a3b8;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg><br>Alertes
+                      </div>
+                      <div style="text-align:center;font-size:8px;font-weight:600;color:#94a3b8;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><br>Profil
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p class="screen-label">Explore — Section Créatrices</p>
+                <p class="screen-sublabel">Toggle sur Creators: thème violet, trending, contenu</p>
+              </div>
+
+              <!-- SCREEN: Feed side-by-side comparison -->
+              <div>
+                <div class="phone-frame">
+                  <div class="phone-notch"></div>
+                  <div class="phone-screen">
+                    <!-- Split view showing both themes -->
+                    <div style="padding:38px 12px 8px;text-align:center;border-bottom:1px solid #e5e7eb;">
+                      <div style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:4px;">Un tap, deux univers</div>
+                      <div style="font-size:9px;color:#64748b;">Le feed, la nav, les couleurs — tout change.</div>
+                    </div>
+
+                    <!-- Top half: Escort look -->
+                    <div style="position:relative;overflow:hidden;">
+                      <div style="padding:6px 8px;display:flex;align-items:center;gap:6px;background:linear-gradient(90deg,#fff1f7,#fff);">
+                        <div style="width:5px;height:5px;border-radius:50%;background:#f6339a;"></div>
+                        <span style="font-size:8px;font-weight:800;color:#f6339a;text-transform:uppercase;letter-spacing:1px;">Section Escortes</span>
+                      </div>
+                      <div style="padding:4px 8px;">
+                        <!-- Mini listing preview -->
+                        <div style="display:flex;gap:6px;align-items:center;padding:6px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;">
+                          <div style="width:40px;height:50px;border-radius:8px;overflow:hidden;flex-shrink:0;position:relative;">
+                            <img class="m-photo" src="https://picsum.photos/seed/mini_escort/80/100" alt="" style="position:absolute;inset:0;">
+                          </div>
+                          <div style="flex:1;min-width:0;">
+                            <div style="font-size:10px;font-weight:700;">Valentina · 24</div>
+                            <div style="font-size:8px;color:#94a3b8;">GFE · Montreal</div>
+                            <div style="font-size:11px;font-weight:800;color:#f6339a;margin-top:2px;">$280</div>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- Pink nav indicator -->
+                      <div style="display:flex;gap:2px;padding:4px 8px;">
+                        <div style="flex:1;height:3px;border-radius:2px;background:#ff2d8d;"></div>
+                        <div style="flex:1;height:3px;border-radius:2px;background:#fce7f3;"></div>
+                        <div style="flex:1;height:3px;border-radius:2px;background:#fce7f3;"></div>
+                        <div style="flex:1;height:3px;border-radius:2px;background:#fce7f3;"></div>
+                        <div style="flex:1;height:3px;border-radius:2px;background:#fce7f3;"></div>
+                      </div>
+                    </div>
+
+                    <!-- Divider with arrow -->
+                    <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 0;">
+                      <div style="flex:1;height:1px;background:#e5e7eb;"></div>
+                      <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#ec4899,#8b5cf6);display:grid;place-items:center;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+                      </div>
+                      <div style="flex:1;height:1px;background:#e5e7eb;"></div>
+                    </div>
+
+                    <!-- Bottom half: Creator look -->
+                    <div style="position:relative;overflow:hidden;">
+                      <div style="padding:6px 8px;display:flex;align-items:center;gap:6px;background:linear-gradient(90deg,#faf5ff80,#fff);">
+                        <div style="width:5px;height:5px;border-radius:50%;background:#8b5cf6;"></div>
+                        <span style="font-size:8px;font-weight:800;color:#8b5cf6;text-transform:uppercase;letter-spacing:1px;">Section Créatrices</span>
+                      </div>
+                      <div style="padding:4px 8px;">
+                        <!-- Mini content preview -->
+                        <div style="display:flex;gap:6px;align-items:center;padding:6px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;">
+                          <div style="width:40px;height:40px;border-radius:8px;overflow:hidden;flex-shrink:0;position:relative;">
+                            <img class="m-photo m-blur-preview" src="https://picsum.photos/seed/mini_creator/80/80" alt="" style="position:absolute;inset:0;filter:blur(8px);">
+                            <div style="position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,0.3);">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                            </div>
+                          </div>
+                          <div style="flex:1;min-width:0;">
+                            <div style="font-size:10px;font-weight:700;">emma_x <span style="color:#8b5cf6;">✓</span></div>
+                            <div style="font-size:8px;color:#94a3b8;">Subscribers only</div>
+                            <div style="font-size:9px;font-weight:700;color:#8b5cf6;margin-top:2px;">Subscribe · $9.99/mo</div>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- Violet nav indicator -->
+                      <div style="display:flex;gap:2px;padding:4px 8px;">
+                        <div style="flex:1;height:3px;border-radius:2px;background:#ede9fe;"></div>
+                        <div style="flex:1;height:3px;border-radius:2px;background:#8b5cf6;"></div>
+                        <div style="flex:1;height:3px;border-radius:2px;background:#ede9fe;"></div>
+                        <div style="flex:1;height:3px;border-radius:2px;background:#ede9fe;"></div>
+                        <div style="flex:1;height:3px;border-radius:2px;background:#ede9fe;"></div>
+                      </div>
+                    </div>
+
+                    <!-- Color comparison legend -->
+                    <div style="padding:10px 10px 4px;">
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                        <div style="padding:8px;border-radius:10px;background:#fff1f7;text-align:center;">
+                          <div style="width:16px;height:16px;border-radius:50%;background:#ff2d8d;margin:0 auto 4px;"></div>
+                          <div style="font-size:8px;font-weight:700;color:#be185d;">Nav rose</div>
+                          <div style="font-size:7px;color:#94a3b8;">Listings · Taux · Réservations</div>
+                        </div>
+                        <div style="padding:8px;border-radius:10px;background:#f5f0ff;text-align:center;">
+                          <div style="width:16px;height:16px;border-radius:50%;background:#8b5cf6;margin:0 auto 4px;"></div>
+                          <div style="font-size:8px;font-weight:700;color:#6d28d9;">Nav violet</div>
+                          <div style="font-size:7px;color:#94a3b8;">Contenu · Abonnements · Lives</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p class="screen-label">Comparaison des deux sections</p>
+                <p class="screen-sublabel">Rose = Escortes · Violet = Créatrices</p>
+              </div>
+
+            </div>
+
           </div>
         </section>
 
