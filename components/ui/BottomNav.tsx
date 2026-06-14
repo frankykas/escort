@@ -23,10 +23,12 @@ import { useSession } from "@/hooks/useSession";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { useUnreadCount } from "@/hooks/useNotifications";
 import { useUnreadMessages } from "@/hooks/useUnreadCount";
+import { useSection } from "@/contexts/SectionContext";
 import type { TranslationKey } from "@/lib/i18n/en";
 
 const HIDDEN_ON = ["/auth/signin", "/auth/signup", "/onboarding"];
 const ACTIVE_PINK = "#ff2d8d";
+const ACTIVE_VIOLET = "#8b5cf6";
 
 type TabDef = {
   label: string;
@@ -81,10 +83,12 @@ function NavItemContent({
   tab,
   loading,
   activeOverride = false,
+  accentColor = ACTIVE_PINK,
 }: {
   tab: TabDef;
   loading: boolean;
   activeOverride?: boolean;
+  accentColor?: string;
 }) {
   const Icon = tab.icon;
   const active = tab.active || activeOverride;
@@ -101,21 +105,20 @@ function NavItemContent({
         <Icon
           size={21}
           strokeWidth={active ? 1.95 : 1.65}
-          className={cn(
-            "transition-colors duration-200",
-            active ? "text-[#ff2d8d]" : "text-[#4b5563] group-hover:text-[#111827]",
-          )}
+          className="transition-colors duration-200"
+          style={{ color: active ? accentColor : "#4b5563" }}
         />
         {hasBadge && (
-          <span className="absolute -right-1.5 -top-1 h-2 w-2 rounded-full bg-[#ff2d8d] ring-2 ring-white/85" />
+          <span
+            className="absolute -right-1.5 -top-1 h-2 w-2 rounded-full ring-2 ring-white/85"
+            style={{ backgroundColor: accentColor }}
+          />
         )}
       </span>
 
       <span
-        className={cn(
-          "text-[10px] font-semibold leading-none tracking-normal transition-colors duration-200",
-          active ? "text-[#ff2d8d]" : "text-[#5f6673] group-hover:text-[#111827]",
-        )}
+        className="text-[10px] font-semibold leading-none tracking-normal transition-colors duration-200"
+        style={{ color: active ? accentColor : "#5f6673" }}
       >
         {tab.label}
       </span>
@@ -123,7 +126,7 @@ function NavItemContent({
   );
 }
 
-function NavTab({ tab, loading }: { tab: TabDef; loading: boolean }) {
+function NavTab({ tab, loading, accentColor }: { tab: TabDef; loading: boolean; accentColor?: string }) {
   const hasBadge = tab.badge != null && tab.badge > 0;
   const tourId = `nav-${tab.href.replace(/^\//, "").replace(/\/.*$/, "") || "home"}`;
 
@@ -134,7 +137,7 @@ function NavTab({ tab, loading }: { tab: TabDef; loading: boolean }) {
       data-tour={tourId}
       className="flex flex-1"
     >
-      <NavItemContent tab={tab} loading={loading} />
+      <NavItemContent tab={tab} loading={loading} accentColor={accentColor} />
     </Link>
   );
 }
@@ -144,7 +147,9 @@ function BottomNavInner() {
   const router = useRouter();
   const { user, loading: sessionLoading } = useSession();
   const { isProvider, isCreator, isEscort, loading, profile } = useProfile();
+  const { isCreatorSection } = useSection();
   const { t } = useTranslation();
+  const activeColor = isCreatorSection ? ACTIVE_VIOLET : ACTIVE_PINK;
   const { count: unreadNotifs } = useUnreadCount();
   const unreadMsgs = useUnreadMessages();
   const [createOpen, setCreateOpen] = useState(false);
@@ -243,8 +248,8 @@ function BottomNavInner() {
               type="button"
               onClick={() => setCreateOpen(false)}
               aria-label="Close create menu"
-              className="fixed left-1/2 z-50 flex h-[52px] w-[52px] -translate-x-1/2 items-center justify-center rounded-full border border-white/70 bg-white/90 text-[#ff2d8d] shadow-[0_18px_38px_-26px_rgba(15,23,42,0.45)] backdrop-blur-xl"
-              style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 22px)" }}
+              className="fixed left-1/2 z-50 flex h-[52px] w-[52px] -translate-x-1/2 items-center justify-center rounded-full border border-white/70 bg-white/90 shadow-[0_18px_38px_-26px_rgba(15,23,42,0.45)] backdrop-blur-xl"
+              style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 22px)", color: activeColor }}
             >
               <X size={21} strokeWidth={1.9} />
             </button>
@@ -253,7 +258,10 @@ function BottomNavInner() {
       </AnimatePresence>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+12px)]">
-        <div className="mx-auto max-w-[430px] rounded-full border border-white bg-[#fff1f7] shadow-[0_18px_42px_-22px_rgba(15,23,42,0.38),0_8px_22px_-18px_rgba(15,23,42,0.32),inset_0_1px_0_rgba(255,255,255,0.78)]">
+        <div
+          className="mx-auto max-w-[430px] rounded-full border border-white shadow-[0_18px_42px_-22px_rgba(15,23,42,0.38),0_8px_22px_-18px_rgba(15,23,42,0.32),inset_0_1px_0_rgba(255,255,255,0.78)] transition-colors duration-300"
+          style={{ backgroundColor: isCreatorSection ? "#f5f0ff" : "#fff1f7" }}
+        >
           <div className="relative flex items-center px-2 py-1.5">
             {tabs.map((tab) => {
               if (tab.isCreate) {
@@ -266,11 +274,11 @@ function BottomNavInner() {
                     data-tour="nav-create"
                     className="flex flex-1"
                   >
-                    <NavItemContent tab={tab} loading={loading} activeOverride={createOpen} />
+                    <NavItemContent tab={tab} loading={loading} activeOverride={createOpen} accentColor={activeColor} />
                   </button>
                 );
               }
-              return <NavTab key={tab.label} tab={tab} loading={loading} />;
+              return <NavTab key={tab.label} tab={tab} loading={loading} accentColor={activeColor} />;
             })}
           </div>
         </div>

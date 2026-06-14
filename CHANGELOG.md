@@ -4,15 +4,21 @@ A summary of everything we've built and improved, newest first.
 
 ---
 
-## 13 June 2026 — Creator / Escort Split
+## 13 June 2026 — Creator / Escort Split + Section Toggle
 
 ### What's New
 - **Two provider types** — The app is now divided into **Section OF (Content Creators)** and **Section Escortes**. Creators sell content only (subscriptions, PPV, paid DMs, tips, live shows). Escorts get everything creators have *plus* listings, bookings, and availability.
+- **Section Toggle** — Any user can switch between the Escort world (pink) and Creator world (violet) via an animated pill toggle in the header. The entire UI adapts: accent colors, bottom nav, feed content, and category chips change per section. Choice persists in localStorage.
+- **Creator Explore** — When toggled to Creators, the explore page shows a trending creators strip, creator-specific category chips, and a content-only feed (no listings or classifieds).
+- **Escort Explore** — When toggled to Escorts, the explore page shows the familiar starred/bumped listings, escort profiles, and the classifieds feed.
+- **Section-aware theming** — CSS variables (`--section-accent`, `--section-nav-bg`, etc.) swap between pink and violet palettes. Bottom nav, feed tabs, and headers all adapt.
 - **Three-path onboarding** — New users choose between Client, Content Creator, or Escort during sign-up. Each path shows only the relevant setup steps (creators skip rate/listing, escorts get the full flow).
 - **CreatorDashboard** — Creators land on a focused home screen with earnings, subscriber stats, quick actions (upload, go live, subscription settings), and no escort-specific clutter.
+- **Server-side blur for locked content** — Premium posts show an irreversibly blurred preview image (3-pass canvas destruction, not CSS blur). Stored as `blur_url` on posts.
 - **Feature gating** — Listings, bookings, and availability are escort-only. Content features (posts, subscriptions, earnings, live shows) are available to both creators and escorts. Route guards redirect creators away from escort-only pages.
 - **Database migration** — New `provider_type` column (`'creator' | 'escort' | null`) with a sync trigger that keeps the legacy `is_provider` boolean accurate for backward compatibility.
 - **Updated navigation** — Create menu shows Story + Post for creators; Story + Post + Listing for escorts.
+- **Updated presentation** — New mockup screens showing the section toggle, both explore modes, and visual comparison.
 - **i18n** — All new UI strings translated to French.
 
 ---

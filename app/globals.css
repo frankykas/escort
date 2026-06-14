@@ -7,6 +7,28 @@
   --accent-sky: #38bdf8;
   --accent-violet: #a78bfa;
   --card-border: #e5e7eb;
+
+  /* Section-aware accent — defaults to escort (pink) */
+  --section-accent: #ff2d8d;
+  --section-accent-soft: #fff1f7;
+  --section-accent-rgb: 255, 45, 141;
+  --section-accent-gradient-from: #ec4899;
+  --section-accent-gradient-to: #f43f5e;
+  --section-nav-bg: #fff1f7;
+  --section-header-gradient-from: #f472b6;
+  --section-header-gradient-to: #38bdf8;
+}
+
+/* Creator section (violet/purple) overrides */
+body[data-section="creators"] {
+  --section-accent: #8b5cf6;
+  --section-accent-soft: #f5f0ff;
+  --section-accent-rgb: 139, 92, 246;
+  --section-accent-gradient-from: #8b5cf6;
+  --section-accent-gradient-to: #a855f7;
+  --section-nav-bg: #f5f0ff;
+  --section-header-gradient-from: #8b5cf6;
+  --section-header-gradient-to: #c084fc;
 }
 
 @theme inline {
