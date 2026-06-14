@@ -1861,74 +1861,153 @@
           <div class="wrap">
             <div class="section-head">
               <div>
-                <p class="eyebrow">Nouveau · Séparation des rôles</p>
-                <h2>Deux sections distinctes dans la même app.</h2>
+                <p class="eyebrow">Nouveau · Deux publics, deux expériences</p>
+                <h2>Des modèles OF et des escortes — pas la même clientèle.</h2>
               </div>
               <p class="section-copy">
-                L'application est maintenant divisée en <strong>Section OF</strong> (créatrices de contenu)
-                et <strong>Section Escortes</strong>. Les escortes héritent de tout ce qu'une créatrice a,
-                en plus des listings, réservations et disponibilités.
+                Un modèle OF vend du contenu en ligne: abonnements, photos, vidéos, lives.
+                Une escorte offre des services en personne et utilise la plateforme comme vitrine.
+                Deux métiers différents, deux sections séparées dans la même app.
               </p>
             </div>
 
-            <!-- Comparison table: Creator vs Escort -->
+            <!-- Identity cards: side-by-side -->
+            <div class="grid two" style="margin-bottom:38px;">
+              <article class="card" style="border-color:#ddd6fe;background:linear-gradient(145deg,#faf5ff,#fff);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                  <div style="width:44px;height:44px;border-radius:14px;background:rgba(139,92,246,0.12);display:grid;place-items:center;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  </div>
+                  <div>
+                    <h3 style="margin-bottom:2px;color:#7c3aed;">Section OF — Créatrices</h3>
+                    <p class="micro" style="margin:0;">Monétisation 100% en ligne</p>
+                  </div>
+                </div>
+                <p style="font-size:14px;color:#475569;margin-bottom:14px;">
+                  Le modèle OF ne rencontre jamais ses fans. Son revenu vient du contenu digital:
+                  photos, vidéos, messages exclusifs et interactions live.
+                </p>
+                <div class="tag-list" style="margin-top:0;">
+                  <span class="tag" style="background:rgba(139,92,246,0.1);color:#7c3aed;">Abonnements mensuels</span>
+                  <span class="tag" style="background:rgba(139,92,246,0.1);color:#7c3aed;">Posts PPV</span>
+                  <span class="tag" style="background:rgba(139,92,246,0.1);color:#7c3aed;">DMs payants</span>
+                  <span class="tag" style="background:rgba(139,92,246,0.1);color:#7c3aed;">Live shows</span>
+                  <span class="tag" style="background:rgba(139,92,246,0.1);color:#7c3aed;">Pourboires</span>
+                  <span class="tag" style="background:rgba(139,92,246,0.1);color:#7c3aed;">Revenus & retraits</span>
+                </div>
+              </article>
+
+              <article class="card" style="border-color:#fce7f3;background:linear-gradient(145deg,#fdf2f8,#fff);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                  <div style="width:44px;height:44px;border-radius:14px;background:rgba(246,51,154,0.12);display:grid;place-items:center;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f6339a" stroke-width="2"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7L12 17l-6.4 4 2.3-7L2 9.4h7.6z"/></svg>
+                  </div>
+                  <div>
+                    <h3 style="margin-bottom:2px;color:#e6339a;">Section Escortes</h3>
+                    <p class="micro" style="margin:0;">Services en personne + contenu en bonus</p>
+                  </div>
+                </div>
+                <p style="font-size:14px;color:#475569;margin-bottom:14px;">
+                  L'escorte utilise la plateforme comme vitrine pour ses services en personne.
+                  Elle peut aussi vendre du contenu, mais son revenu principal vient des rencontres.
+                </p>
+                <div class="tag-list" style="margin-top:0;">
+                  <span class="tag" style="background:rgba(246,51,154,0.1);color:#e6339a;">Annonces / Listings</span>
+                  <span class="tag" style="background:rgba(246,51,154,0.1);color:#e6339a;">Taux horaire</span>
+                  <span class="tag" style="background:rgba(246,51,154,0.1);color:#e6339a;">Réservations</span>
+                  <span class="tag" style="background:rgba(246,51,154,0.1);color:#e6339a;">Disponibilités</span>
+                  <span class="tag" style="background:rgba(246,51,154,0.1);color:#e6339a;">Bouton Enquire</span>
+                  <span class="tag" style="background:rgba(139,92,246,0.08);color:#9ca3af;border:1px dashed #d1d5db;">+ tout le contenu OF</span>
+                </div>
+              </article>
+            </div>
+
+            <!-- Feature split table — grouped by business type -->
             <table class="comparison" style="margin-bottom:48px;">
               <thead>
                 <tr>
-                  <th>Fonctionnalité</th>
-                  <th>Créatrice (OF)</th>
-                  <th>Escorte</th>
+                  <th style="width:40%;">Fonctionnalité</th>
+                  <th style="width:30%;">Créatrice OF</th>
+                  <th style="width:30%;">Escorte</th>
                 </tr>
               </thead>
               <tbody>
+                <tr><td colspan="3" style="background:#f5f3ff;font-weight:800;font-size:12px;color:#7c3aed;letter-spacing:0.5px;text-transform:uppercase;padding:10px 18px;">Contenu & monétisation en ligne</td></tr>
                 <tr>
-                  <td>Posts & Stories</td>
+                  <td>Abonnements mensuels (payant + gratuit)</td>
+                  <td><span class="check">✓</span>Revenu principal</td>
+                  <td style="color:#94a3b8;">Optionnel (bonus)</td>
+                </tr>
+                <tr>
+                  <td>Posts PPV (contenu à la carte)</td>
+                  <td><span class="check">✓</span>Revenu principal</td>
+                  <td style="color:#94a3b8;">Optionnel (bonus)</td>
+                </tr>
+                <tr>
+                  <td>DMs payants (photos verrouillées)</td>
+                  <td><span class="check">✓</span>Revenu principal</td>
+                  <td style="color:#94a3b8;">Optionnel (bonus)</td>
+                </tr>
+                <tr>
+                  <td>Live shows (billetterie + pourboires)</td>
+                  <td><span class="check">✓</span>Revenu principal</td>
+                  <td style="color:#94a3b8;">Optionnel (bonus)</td>
+                </tr>
+                <tr>
+                  <td>Pourboires</td>
+                  <td><span class="check">✓</span>Revenu principal</td>
+                  <td style="color:#94a3b8;">Optionnel (bonus)</td>
+                </tr>
+                <tr>
+                  <td>Posts & Stories (feed social)</td>
                   <td><span class="check">✓</span>Oui</td>
                   <td><span class="check">✓</span>Oui</td>
                 </tr>
+                <tr><td colspan="3" style="background:#fdf2f8;font-weight:800;font-size:12px;color:#e6339a;letter-spacing:0.5px;text-transform:uppercase;padding:10px 18px;">Services en personne</td></tr>
                 <tr>
-                  <td>Abonnements & PPV</td>
-                  <td><span class="check">✓</span>Oui</td>
-                  <td><span class="check">✓</span>Oui</td>
+                  <td>Annonces de services (Listings)</td>
+                  <td style="color:#94a3b8;">✕ Non disponible</td>
+                  <td><span class="check">✓</span>Revenu principal</td>
                 </tr>
                 <tr>
-                  <td>DMs payants & Pourboires</td>
-                  <td><span class="check">✓</span>Oui</td>
-                  <td><span class="check">✓</span>Oui</td>
+                  <td>Taux horaire affiché</td>
+                  <td style="color:#94a3b8;">✕ Non disponible</td>
+                  <td><span class="check">✓</span>Sur le profil</td>
                 </tr>
                 <tr>
-                  <td>Live shows</td>
-                  <td><span class="check">✓</span>Oui</td>
-                  <td><span class="check">✓</span>Oui</td>
+                  <td>Réservations clients</td>
+                  <td style="color:#94a3b8;">✕ Non disponible</td>
+                  <td><span class="check">✓</span>Gestion complète</td>
                 </tr>
+                <tr>
+                  <td>Disponibilité / Horaires</td>
+                  <td style="color:#94a3b8;">✕ Non disponible</td>
+                  <td><span class="check">✓</span>Toggle on/off</td>
+                </tr>
+                <tr>
+                  <td>Bouton « Enquire » sur le profil</td>
+                  <td style="color:#94a3b8;">✕ Non disponible</td>
+                  <td><span class="check">✓</span>Prise de contact</td>
+                </tr>
+                <tr>
+                  <td>Catégories de services</td>
+                  <td style="color:#94a3b8;">✕ Non disponible</td>
+                  <td><span class="check">✓</span>Incall / Outcall</td>
+                </tr>
+                <tr><td colspan="3" style="background:#f8fafc;font-weight:800;font-size:12px;color:#475569;letter-spacing:0.5px;text-transform:uppercase;padding:10px 18px;">Commun aux deux</td></tr>
                 <tr>
                   <td>Revenus & Retraits</td>
                   <td><span class="check">✓</span>Oui</td>
                   <td><span class="check">✓</span>Oui</td>
                 </tr>
                 <tr>
-                  <td>Listings / Annonces</td>
-                  <td style="color:#94a3b8;">✕ Non</td>
+                  <td>Vérification d'identité</td>
+                  <td><span class="check">✓</span>Oui</td>
                   <td><span class="check">✓</span>Oui</td>
                 </tr>
                 <tr>
-                  <td>Disponibilité / Horaires</td>
-                  <td style="color:#94a3b8;">✕ Non</td>
+                  <td>Messagerie</td>
                   <td><span class="check">✓</span>Oui</td>
-                </tr>
-                <tr>
-                  <td>Réservations</td>
-                  <td style="color:#94a3b8;">✕ Non</td>
-                  <td><span class="check">✓</span>Oui</td>
-                </tr>
-                <tr>
-                  <td>Taux horaire</td>
-                  <td style="color:#94a3b8;">✕ Non</td>
-                  <td><span class="check">✓</span>Oui</td>
-                </tr>
-                <tr>
-                  <td>Bouton « Enquire »</td>
-                  <td style="color:#94a3b8;">✕ Non</td>
                   <td><span class="check">✓</span>Oui</td>
                 </tr>
               </tbody>
